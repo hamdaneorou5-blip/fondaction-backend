@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace membre</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+            color: #111827;
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 35px auto;
+            padding: 20px;
+        }
+
+        .topbar {
+            background: white;
+            border-radius: 22px;
+            padding: 26px 30px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+            margin-bottom: 25px;
+        }
+
+        .topbar h1 {
+            margin: 0 0 10px 0;
+            font-size: 36px;
+            color: #111827;
+        }
+
+        .topbar p {
+            margin: 0 0 14px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .nim-box {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1d4ed8;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 17px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 18px;
+            color: #111827;
+            font-size: 24px;
+        }
+
+        .info-row {
+            margin-bottom: 14px;
+            font-size: 16px;
+            color: #374151;
+            line-height: 1.6;
+        }
+
+        .info-row strong {
+            color: #111827;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-suspended {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-inactive {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        .photo-box {
+            text-align: center;
+        }
+
+        .photo-box img {
+            width: 100%;
+            max-width: 260px;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 14px;
+            border: 1px solid #ddd;
+        }
+
+        .photo-empty {
+            padding: 60px 20px;
+            border: 1px dashed #ccc;
+            border-radius: 14px;
+            color: #6b7280;
+            background: #f9fafb;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            display: block;
+            text-decoration: none;
+            text-align: center;
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .btn-blue {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-green {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-teal {
+            background: #0f766e;
+            color: white;
+        }
+
+        .btn-dark {
+            background: #374151;
+            color: white;
+        }
+
+        .btn-red {
+            background: #dc2626;
+            color: white;
+        }
+
+        .summary-box {
+            margin-top: 18px;
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 14px;
+            color: #374151;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar h1 {
+                font-size: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page">
+        <div class="topbar">
+            <h1>Espace membre</h1>
+            <p>Bienvenue dans votre espace personnel. Retrouvez ici vos informations essentielles et les actions disponibles.</p>
+            <div class="nim-box">NIM : {{ member.nim }}</div>
+        </div>
+
+        <div class="layout">
+            <div>
+                <div class="card">
+                    <h2>Informations personnelles</h2>
+
+                    <div class="info-row"><strong>Nom :</strong> {{ member.last_name|default:"—" }}</div>
+                    <div class="info-row"><strong>Prénom :</strong> {{ member.first_name|default:"—" }}</div>
+                    <div class="info-row"><strong>Téléphone :</strong> {{ member.phone|default:"—" }}</div>
+                    <div class="info-row"><strong>Type de pièce :</strong> {{ member.id_card_type|default:"—" }}</div>
+
+                    <div class="info-row">
+                        <strong>Statut :</strong>
+                        {% if member.status == 'active' %}
+                            <span class="status status-active">Actif</span>
+                        {% elif member.status == 'suspended' %}
+                            <span class="status status-suspended">Suspendu</span>
+                        {% else %}
+                            <span class="status status-inactive">Inactif</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="summary-box">
+                        Depuis cet espace, vous pouvez consulter votre carte, suivre vos transactions,
+                        effectuer votre paiement et modifier votre code PIN en toute simplicité.
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 25px;">
+                    <h2>Mes actions</h2>
+
+                    <div class="actions-grid">
+                        <a href="/admins/member-card/" class="btn btn-blue">Voir ma carte</a>
+                        <a href="/admins/member-payment/" class="btn btn-green">Payer</a>
+                        <a href="/admins/member-transactions/" class="btn btn-teal">Transactions</a>
+                        <a href="/admins/member-change-pin/" class="btn btn-dark">Changer mon PIN</a>
+                        <a href="/admins/member-logout/" class="btn btn-red">Se déconnecter</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card photo-box">
+                <h2>Ma photo</h2>
+
+                {% if member.photo %}
+                    <img src="{{ member.photo.url }}" alt="Photo membre">
+                {% else %}
+                    <div class="photo-empty">Aucune photo disponible</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

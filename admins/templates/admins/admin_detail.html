@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détail administrateur</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        .page {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .topbar, .card {
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .topbar h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+        }
+
+        .topbar a {
+            text-decoration: none;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        .info-row {
+            margin-bottom: 12px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .info-row strong {
+            color: #111827;
+        }
+
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-blue {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-green {
+            background: #16a34a;
+            color: white;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-suspended {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <div class="topbar">
+        <h1>👤 Détail administrateur</h1>
+        <a href="/admins/list/">← Retour à la liste</a>
+    </div>
+
+    <div class="card">
+        <div class="info-row"><strong>NIM :</strong> {{ admin_obj.nim }}</div>
+        <div class="info-row"><strong>Nom :</strong> {{ admin_obj.last_name }}</div>
+        <div class="info-row"><strong>Prénom :</strong> {{ admin_obj.first_name }}</div>
+        <div class="info-row"><strong>Téléphone :</strong> {{ admin_obj.phone }}</div>
+        <div class="info-row"><strong>Email :</strong> {{ admin_obj.email }}</div>
+        <div class="info-row"><strong>Rôle :</strong> {{ admin_obj.role }}</div>
+        <div class="info-row">
+            <strong>Statut :</strong>
+            {% if admin_obj.status == 'active' %}
+                <span class="status status-active">Actif</span>
+            {% else %}
+                <span class="status status-suspended">Suspendu</span>
+            {% endif %}
+        </div>
+        <div class="info-row"><strong>Date de création :</strong> {{ admin_obj.created_at|date:"d/m/Y à H:i" }}</div>
+        <div class="info-row"><strong>Total membres enregistrés :</strong> {{ total_created_members }}</div>
+
+        <a href="/admins/admins/{{ admin_obj.id }}/reset-password/" class="btn btn-green">
+            Réinitialiser le mot de passe
+        </a>
+    </div>
+</div>
+
+</body>
+</html>

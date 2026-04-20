@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réalisations des administrateurs</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .header, .filter-box, .table-box {
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .table-box {
+            overflow-x: auto;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+        }
+
+        .header a {
+            text-decoration: none;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        form {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #374151;
+        }
+
+        input {
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 10px;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1150px;
+        }
+
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f9fafb;
+        }
+
+        .btn-detail {
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: #16a34a;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        .btn-blue {
+            background: #2563eb;
+        }
+
+        .empty-box {
+            text-align: center;
+            padding: 24px;
+            color: #6b7280;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <div class="header">
+        <h1>📈 Réalisations des admins et super admins</h1>
+        <a href="/admins/dashboard/">← Retour dashboard</a>
+    </div>
+
+    <div class="filter-box">
+        <form method="GET">
+            <div class="field">
+                <label>Date début</label>
+                <input type="date" name="start_date" value="{{ start_date }}">
+            </div>
+
+            <div class="field">
+                <label>Date fin</label>
+                <input type="date" name="end_date" value="{{ end_date }}">
+            </div>
+
+            <div class="field">
+                <label>Recherche admin</label>
+                <input type="text" name="search" value="{{ search }}" placeholder="Nom, prénom, email, NIM">
+            </div>
+
+            <button type="submit">Filtrer</button>
+
+            <a href="/admins/admins/performance/export/?start_date={{ start_date }}&end_date={{ end_date }}&search={{ search }}"
+               style="padding: 12px 18px; border-radius: 10px; background: #16a34a; color: white; font-weight: bold; text-decoration: none; display: inline-block;">
+                Export Excel
+            </a>
+        </form>
+    </div>
+
+    <div class="header" style="margin-top: 20px;">
+        <h2 style="margin:0; font-size: 24px;">📊 Total général des réalisations</h2>
+
+        {% if start_date or end_date %}
+            <p style="margin-top:10px; font-size:18px; color:#374151;">
+                Sur la période sélectionnée,
+                tous les admins et super admins ont enregistré
+                <strong style="color:#16a34a;">{{ grand_total_members }}</strong> membre(s).
+            </p>
+        {% else %}
+            <p style="margin-top:10px; font-size:18px; color:#374151;">
+                Depuis le début,
+                tous les admins et super admins ont enregistré
+                <strong style="color:#16a34a;">{{ grand_total_members }}</strong> membre(s).
+            </p>
+        {% endif %}
+
+        <p style="margin-top:10px; font-size:18px; color:#374151;">
+            <strong>Payeurs sur la période :</strong> {{ grand_total_paid_members }}<br>
+            <strong>Non payeurs sur la période :</strong> {{ grand_total_unpaid_members }}<br>
+            <strong>Montant total payé sur la période :</strong> {{ grand_total_paid_amount }} FCFA
+        </p>
+    </div>
+
+    <div class="table-box">
+        <table>
+            <tr>
+                <th>NIM</th>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Statut</th>
+                <th>Membres créés</th>
+                <th>Payeurs</th>
+                <th>Non payeurs</th>
+                <th>Montant payé</th>
+                <th>Action</th>
+            </tr>
+
+            {% for item in performance_data %}
+            <tr>
+                <td>{{ item.admin.nim }}</td>
+                <td>{{ item.admin.last_name }}</td>
+                <td>{{ item.admin.first_name }}</td>
+                <td>{{ item.admin.email }}</td>
+                <td>{{ item.admin.role }}</td>
+                <td>{{ item.admin.status }}</td>
+                <td>{{ item.total_members }}</td>
+                <td>{{ item.paid_count }}</td>
+                <td>{{ item.unpaid_count }}</td>
+                <td>{{ item.total_paid_amount }} FCFA</td>
+                <td>
+                    <a href="/admins/admins/{{ item.admin.id }}/" class="btn-detail btn-blue">
+                        Voir profil
+                    </a>
+
+                    <a href="/admins/admins/{{ item.admin.id }}/payment-control/" class="btn-detail">
+                        Voir contrôle
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="11" class="empty-box">Aucune donnée trouvée</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

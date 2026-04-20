@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Contrôle paiement admin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+            margin: 0;
+            color: #111827;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        h1, h2 {
+            margin-top: 0;
+        }
+
+        p {
+            color: #374151;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            margin-right: 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-green {
+            background: #16a34a;
+        }
+
+        .btn-blue {
+            background: #2563eb;
+        }
+
+        .btn-gray {
+            background: #374151;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-admin {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .badge-super {
+            background: #ede9fe;
+            color: #6d28d9;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: end;
+            margin-top: 18px;
+        }
+
+        .field {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: #374151;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .summary-box {
+            margin-top: 18px;
+            padding: 16px;
+            border-radius: 12px;
+            background: #f9fafb;
+            color: #374151;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+
+        th {
+            background: #f9fafb;
+        }
+
+        .empty-box {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <div class="card">
+        <a class="btn btn-gray" href="/admins/admins/payment-control/">← Retour</a>
+
+        <h1>👤 Contrôle de {{ admin_obj.first_name }} {{ admin_obj.last_name }}</h1>
+
+        <p><strong>NIM :</strong> {{ admin_obj.nim }}</p>
+        <p><strong>Email :</strong> {{ admin_obj.email }}</p>
+        <p>
+            <strong>Rôle :</strong>
+            {% if admin_obj.role == 'super_admin' %}
+                <span class="badge badge-super">Super Admin</span>
+            {% else %}
+                <span class="badge badge-admin">Admin</span>
+            {% endif %}
+        </p>
+
+        <div class="summary-box">
+    <p><strong>Total payeurs ce mois :</strong> {{ paid_count }}</p>
+    <p><strong>Total non payeurs ce mois :</strong> {{ unpaid_count }}</p>
+    <p><strong>Montant total payé ce mois :</strong> {{ total_paid_amount }} FCFA</p>
+
+    <a class="btn btn-green" href="/admins/admins/{{ admin_obj.id }}/payment-control/paid/export/">
+        Exporter payeurs
+    </a>
+    <a class="btn btn-blue" href="/admins/admins/{{ admin_obj.id }}/payment-control/unpaid/export/">
+        Exporter non payeurs
+    </a>
+</div>
+
+        <form method="GET" class="search-form">
+            <div class="field">
+                <label>Recherche membre</label>
+                <input
+                    type="text"
+                    name="member_search"
+                    value="{{ member_search }}"
+                    placeholder="NIM, nom, prénom ou téléphone"
+                >
+            </div>
+
+            <button type="submit" class="btn btn-blue">Rechercher</button>
+
+            <a class="btn btn-green" href="/admins/admins/{{ admin_obj.id }}/payment-control/">
+                Réinitialiser
+            </a>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>✅ Membres ayant payé ce mois</h2>
+        <table>
+            <tr>
+                <th>NIM</th>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Téléphone</th>
+                <th>Ville</th>
+            </tr>
+            {% for member in paid_members %}
+            <tr>
+                <td>{{ member.nim }}</td>
+                <td>{{ member.last_name }}</td>
+                <td>{{ member.first_name }}</td>
+                <td>{{ member.phone }}</td>
+                <td>{{ member.city }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="empty-box">Aucun membre payeur ce mois</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>❌ Membres n’ayant pas payé ce mois</h2>
+        <table>
+            <tr>
+                <th>NIM</th>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Téléphone</th>
+                <th>Ville</th>
+            </tr>
+            {% for member in unpaid_members %}
+            <tr>
+                <td>{{ member.nim }}</td>
+                <td>{{ member.last_name }}</td>
+                <td>{{ member.first_name }}</td>
+                <td>{{ member.phone }}</td>
+                <td>{{ member.city }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="empty-box">Tous les membres ont payé ce mois</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+</div>
+</body>
+</html>

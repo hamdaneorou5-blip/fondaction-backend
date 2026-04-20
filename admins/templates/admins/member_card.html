@@ -1,0 +1,367 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Carte membre</title>
+
+    <style>
+        body {
+            background: #eee;
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+            font-family: Arial;
+        }
+
+        .page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 35px;
+        }
+
+        .top-actions {
+            width: 1000px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-actions a,
+        .top-actions button {
+            text-decoration: none;
+            border: none;
+            background: #2563eb;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .top-actions a.secondary {
+            background: #374151;
+        }
+
+        .capture-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 35px;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+        }
+
+        .card {
+            width: 1000px;
+            height: 600px;
+            position: relative;
+            background: url("{% static 'card-bg.png' %}") no-repeat center;
+            background-size: cover;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        /* LOGO */
+        .logo {
+            position: absolute;
+            top: 30px;
+            left: 40px;
+            width: 90px;
+        }
+
+        /* PHOTO */
+        .photo {
+            position: absolute;
+            top: 200px;
+            left: 180px;
+            width: 200px;
+            height: 250px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 4px solid #f2c300;
+        }
+
+        .photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* NIM */
+        .nim {
+            position: absolute;
+            top: 140px;
+            left: 593px;
+            font-size: 22px;
+            font-weight: bold;
+            background: #f7d73d;
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        /* INFOS */
+        .info {
+            position: absolute;
+            top: 200px;
+            left: 420px;
+            font-size: 18px;
+            line-height: 32px;
+        }
+
+        .info strong {
+            font-weight: bold;
+        }
+
+        /* SIGNATURE */
+        .signature {
+            position: absolute;
+            bottom: 70px;
+            left: 460px;
+        }
+
+        .signature img {
+            width: 80px;
+        }
+
+        /* EXPIRATION */
+        .expire {
+            position: absolute;
+            bottom: 70px;
+            right: 155px;
+            font-weight: bold;
+            font-size: 16px;
+            background: #1f8f3a;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* ===================== */
+        /* VERSO */
+        /* ===================== */
+
+        .card-back {
+            width: 1000px;
+            height: 600px;
+            position: relative;
+            background: url("{% static 'card-back-bg.png' %}") no-repeat center;
+            background-size: cover;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .contacts {
+            position: absolute;
+            top: 220px;
+            left: 510px;
+            font-size: 24px;
+            line-height: 48px;
+            color: #222;
+            font-weight: 500;
+        }
+
+        .footer-text {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 78%;
+            text-align: center;
+            font-size: 21px;
+            line-height: 32px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .top-actions {
+                display: none;
+            }
+
+            .page {
+                gap: 20px;
+            }
+
+            .capture-area {
+                background: transparent;
+                padding: 0;
+                border-radius: 0;
+            }
+
+            .card,
+            .card-back {
+                box-shadow: none;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+
+    <div class="top-actions">
+        <a href="/admins/member-space/" class="secondary">Retour espace membre</a>
+        <button onclick="downloadCardPDF()">Télécharger PDF</button>
+    </div>
+
+    <div class="capture-area" id="capture-area">
+
+        <!-- RECTO -->
+        <div class="card">
+
+           
+
+            <div class="photo">
+                {% if member.photo %}
+                    <img src="{{ member.photo.url }}">
+                {% endif %}
+            </div>
+
+            <div class="nim">
+                NIM : {{ member.nim }}
+            </div>
+
+            <div class="info">
+                <strong>Nom :</strong> {{ member.last_name }}<br>
+                <strong>Prénom :</strong> {{ member.first_name }}<br>
+                <strong>Date de naissance :</strong> {{ member.birth_date|date:"d/m/Y" }}<br>
+                <strong>Lieu de naissance :</strong> {{ member.birth_place }}<br>
+                <strong>Département :</strong> {{ member.department }}<br>
+                <strong>Commune :</strong> {{ member.commune }}<br>
+                <strong>Ville :</strong> {{ member.city }}<br>
+                <strong>Quartier :</strong> {{ member.district }}
+            </div>
+
+            <div class="signature">
+                {% if member.signature %}
+                    <img src="{{ member.signature.url }}">
+                {% endif %}
+            </div>
+
+            <div class="expire">
+                Expire : 31/12/2031
+            </div>
+
+        </div>
+
+        <!-- VERSO -->
+        <div class="card-back">
+
+            <div class="contacts">
+                <div>📞 +2290199836665</div>
+                <div>📧 contact@fondactionsarl.com</div>
+                <div>🌐 www.foncdactionsarl.com</div>
+            </div>
+
+            <div class="footer-text">
+                Cette pièce donne droit accès aux propriétés de la société FondAction SARL.
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="{% static 'js/html2canvas.min.js' %}"></script>
+<script src="{% static 'js/jspdf.umd.min.js' %}"></script>
+
+<script>
+console.log("script principal chargé ✅");
+
+async function waitForImages(container) {
+    const images = container.querySelectorAll('img');
+    const promises = [];
+
+    images.forEach((img, index) => {
+        if (img.complete) {
+            return;
+        }
+
+        promises.push(new Promise((resolve) => {
+            img.onload = () => {
+                console.log("image chargée ✅", index, img.src);
+                resolve();
+            };
+            img.onerror = () => {
+                console.log("image erreur ⚠️", index, img.src);
+                resolve();
+            };
+        }));
+    });
+
+    await Promise.all(promises);
+}
+
+window.downloadCardPDF = async function () {
+    try {
+        console.log("downloadCardPDF lancé ✅");
+        console.log("window.jspdf =", window.jspdf);
+        console.log("html2canvas =", typeof html2canvas);
+
+        const { jsPDF } = window.jspdf;
+        const captureArea = document.getElementById('capture-area');
+
+        console.log("1. avant waitForImages");
+        await waitForImages(captureArea);
+        console.log("2. après waitForImages");
+
+        const canvas = await html2canvas(captureArea, {
+            scale: 1.5,
+            useCORS: true,
+            backgroundColor: "#ffffff",
+            logging: true
+        });
+
+        console.log("3. canvas généré ✅");
+
+        const imgData = canvas.toDataURL('image/png');
+        console.log("4. image data générée ✅");
+
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        const imgWidth = pageWidth - 10;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let heightLeft = imgHeight;
+        let position = 5;
+
+        pdf.addImage(imgData, 'PNG', 5, position, imgWidth, imgHeight);
+        console.log("5. première page ajoutée ✅");
+
+        heightLeft -= (pageHeight - 10);
+
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight + 5;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 5, position, imgWidth, imgHeight);
+            heightLeft -= (pageHeight - 10);
+            console.log("6. page supplémentaire ajoutée ✅");
+        }
+
+        pdf.save('carte-membre.pdf');
+        console.log("7. PDF sauvegardé ✅");
+
+    } catch (error) {
+        console.error("Erreur downloadCardPDF ❌", error);
+        alert("Erreur JS, regarde la console");
+    }
+};
+
+console.log("downloadCardPDF =", typeof window.downloadCardPDF);
+</script>

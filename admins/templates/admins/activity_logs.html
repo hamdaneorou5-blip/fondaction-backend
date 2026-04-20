@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs d'activité</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 18px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            color: #111827;
+        }
+
+        .header-links a {
+            text-decoration: none;
+            margin-right: 15px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .table-box {
+            background: white;
+            border-radius: 18px;
+            padding: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 14px;
+            background: #f9fafb;
+            font-size: 14px;
+            color: #111827;
+        }
+
+        td {
+            padding: 14px;
+            border-top: 1px solid #eee;
+            font-size: 14px;
+            color: #374151;
+            vertical-align: top;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .action-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .details-box {
+            max-width: 420px;
+            line-height: 1.5;
+            color: #4b5563;
+        }
+
+        .date-box {
+            white-space: nowrap;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .admin-email {
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .empty-box {
+            text-align: center;
+            padding: 24px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+
+    <div class="header">
+        <h1>📊 Logs d'activité</h1>
+
+        <div class="header-links">
+            <a href="/admins/dashboard/">← Dashboard</a>
+        </div>
+    </div>
+
+    <div class="table-box">
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Admin</th>
+                <th>Action</th>
+                <th>Détails</th>
+                <th>Date</th>
+            </tr>
+
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.id }}</td>
+                <td><span class="admin-email">{{ log.admin_user.email }}</span></td>
+                <td><span class="action-badge">{{ log.action }}</span></td>
+                <td><div class="details-box">{{ log.details }}</div></td>
+                <td><span class="date-box">{{ log.created_at }}</span></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="empty-box">Aucun log disponible</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détail des réalisations admin</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .header, .filter-box, .table-box, .summary-box {
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+        }
+
+        .header a {
+            text-decoration: none;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+        form {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #374151;
+        }
+
+        input {
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        button, .btn-export {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 10px;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+
+        th {
+            background: #f9fafb;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <div class="header">
+        <h1>📊 Réalisation de {{ admin_obj.first_name }} {{ admin_obj.last_name }}</h1>
+        <a href="/admins/admins/performance/">← Retour aux réalisations</a>
+    </div>
+
+    <div class="summary-box">
+        <p><strong>NIM :</strong> {{ admin_obj.nim }}</p>
+        <p><strong>Email :</strong> {{ admin_obj.email }}</p>
+        <p><strong>Rôle :</strong> {{ admin_obj.role }}</p>
+        <p><strong>Total de membres enregistrés sur la période :</strong> {{ total_members }}</p>
+    </div>
+
+    <div class="filter-box">
+        <form method="GET">
+            <div class="field">
+                <label>Date début</label>
+                <input type="date" name="start_date" value="{{ start_date }}">
+            </div>
+
+            <div class="field">
+                <label>Date fin</label>
+                <input type="date" name="end_date" value="{{ end_date }}">
+            </div>
+
+            <button type="submit">Filtrer</button>
+
+            <a class="btn-export" href="/admins/admins/{{ admin_obj.id }}/performance/export/?start_date={{ start_date }}&end_date={{ end_date }}">
+                Export Excel
+            </a>
+        </form>
+    </div>
+
+    <div class="table-box">
+        <table>
+            <tr>
+                <th>NIM membre</th>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Téléphone</th>
+                <th>Date création</th>
+            </tr>
+
+            {% for member in members %}
+            <tr>
+                <td>{{ member.nim }}</td>
+                <td>{{ member.last_name }}</td>
+                <td>{{ member.first_name }}</td>
+                <td>{{ member.phone }}</td>
+                <td>{{ member.created_at|date:"d/m/Y à H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">Aucun membre trouvé sur cette période</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

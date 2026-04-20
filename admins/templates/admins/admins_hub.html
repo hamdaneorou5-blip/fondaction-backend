@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace administrateur</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f8fafc;
+            color: #111827;
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 36px auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+            margin-bottom: 26px;
+        }
+
+        .header h1 {
+            margin: 0 0 10px;
+            font-size: 32px;
+        }
+
+        .header p {
+            margin: 0;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            display: block;
+            text-decoration: none;
+            color: #111827;
+            background: white;
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+            border: 1px solid #e5e7eb;
+            transition: 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.10);
+        }
+
+        .card .icon {
+            font-size: 30px;
+            margin-bottom: 14px;
+        }
+
+        .card h3 {
+            margin: 0 0 10px;
+            font-size: 22px;
+        }
+
+        .card p {
+            margin: 0;
+            color: #6b7280;
+            line-height: 1.6;
+            font-size: 14.5px;
+        }
+
+        .actions {
+            margin-top: 28px;
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            text-decoration: none;
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .btn-back {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .btn-logout {
+            background: #dc2626;
+            color: white;
+        }
+
+        @media (max-width: 850px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <h1>Espace administrateur</h1>
+            <p>
+                Retrouvez ici toutes les actions liées aux administrateurs.
+                Cette page regroupe la gestion des comptes admins, les journaux et les performances.
+            </p>
+        </div>
+
+        <div class="grid">
+            <a href="/admins/list/" class="card">
+                <div class="icon">👨‍💼</div>
+                <h3>Liste des admins</h3>
+                <p>Consulter les administrateurs enregistrés sur la plateforme.</p>
+            </a>
+
+            <a href="/admins/create/" class="card">
+                <div class="icon">➕</div>
+                <h3>Créer un admin</h3>
+                <p>Ajouter un nouvel administrateur au système.</p>
+            </a>
+
+            <a href="/admins/logs/" class="card">
+                <div class="icon">📊</div>
+                <h3>Logs d’activité</h3>
+                <p>Voir l’historique des actions effectuées dans le système.</p>
+            </a>
+        </div>
+
+        <div class="actions">
+            <a href="/admins/dashboard/" class="btn btn-back">Retour au dashboard</a>
+            <a href="/admins/logout/" class="btn btn-logout">Se déconnecter</a>
+        </div>
+    </div>
+</body>
+</html>

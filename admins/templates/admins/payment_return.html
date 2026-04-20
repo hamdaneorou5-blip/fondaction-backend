@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Retour paiement</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+        }
+
+        .page {
+            max-width: 700px;
+            margin: 60px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 30px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #111827;
+        }
+
+        .success {
+            color: #166534;
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 15px;
+        }
+
+        .info {
+            color: #374151;
+            margin-top: 12px;
+            line-height: 1.7;
+        }
+
+        .btn {
+            display: inline-block;
+            margin-top: 22px;
+            text-decoration: none;
+            background: #2563eb;
+            color: white;
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="card">
+            <h1>✅ Retour de paiement</h1>
+
+            {% if status == 'approved' %}
+                <div class="success">Votre paiement a été validé avec succès.</div>
+            {% else %}
+                <div class="success">Retour de paiement reçu.</div>
+            {% endif %}
+
+            <div class="info">
+                <p><strong>Statut :</strong> {{ status }}</p>
+                <p><strong>ID transaction :</strong> {{ transaction_id }}</p>
+                <p>Vous pouvez maintenant revenir dans votre espace membre.</p>
+            </div>
+
+            <a href="/admins/member-space/" class="btn">Retour à l’espace membre</a>
+        </div>
+    </div>
+</body>
+</html>

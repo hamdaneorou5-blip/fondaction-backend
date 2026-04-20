@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mes transactions</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f3f4f6;
+            margin: 0;
+        }
+
+        .page {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+
+        th {
+            background: #f9fafb;
+        }
+
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+
+        .pending {
+            color: orange;
+            font-weight: bold;
+        }
+
+        .failed {
+            color: red;
+            font-weight: bold;
+        }
+
+        .btn-back {
+            display: inline-block;
+            margin-bottom: 15px;
+            text-decoration: none;
+            color: #2563eb;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <a href="/admins/member-space/" class="btn-back">← Retour</a>
+
+    <div class="card">
+        <h1>📄 Mes transactions</h1>
+
+        <table>
+            <tr>
+                <th>Référence</th>
+                <th>Type</th>
+                <th>Montant</th>
+                <th>Statut</th>
+                <th>Date</th>
+            </tr>
+
+            {% for tx in transactions %}
+            <tr>
+                <td>{{ tx.reference }}</td>
+                <td>{{ tx.transaction_type }}</td>
+                <td>{{ tx.amount }} FCFA</td>
+                <td>
+                    {% if tx.status == 'success' %}
+                        <span class="success">Succès</span>
+                    {% elif tx.status == 'pending' %}
+                        <span class="pending">En attente</span>
+                    {% else %}
+                        <span class="failed">Échoué</span>
+                    {% endif %}
+                </td>
+                <td>{{ tx.created_at|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">Aucune transaction pour le moment</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

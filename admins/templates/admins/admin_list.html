@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des admins</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+        }
+
+        .page {
+            max-width: 1150px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 18px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            color: #111827;
+        }
+
+        .header-links a {
+            text-decoration: none;
+            margin-right: 15px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .table-box {
+            background: white;
+            border-radius: 18px;
+            padding: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 14px;
+            background: #f9fafb;
+            font-size: 14px;
+            color: #111827;
+        }
+
+        td {
+            padding: 14px;
+            border-top: 1px solid #eee;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .role-badge,
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .role-super {
+            background: #ede9fe;
+            color: #6d28d9;
+        }
+
+        .role-admin {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-suspended {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .btn-suspend {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-reactivate {
+            background: #16a34a;
+            color: white;
+        }
+
+        .protected {
+            color: #9ca3af;
+            font-style: italic;
+            font-size: 12px;
+        }
+
+        .empty-box {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+
+    <div class="header">
+        <h1>📋 Liste des admins</h1>
+
+        <div class="header-links">
+            <a href="/admins/dashboard/">← Dashboard</a>
+            <a href="/admins/create/">➕ Créer un admin</a>
+        </div>
+    </div>
+
+    <div class="table-box">
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>NIM</th>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Statut</th>
+                <th>Action</th>
+            </tr>
+
+            {% for admin in admins %}
+            <tr>
+                <td>{{ admin.id }}</td>
+                <td>{{ admin.nim }}</td>
+                <td>{{ admin.last_name }}</td>
+                <td>{{ admin.first_name }}</td>
+                <td>{{ admin.email }}</td>
+
+                <td>
+                    {% if admin.role == 'super_admin' %}
+                        <span class="role-badge role-super">Super Admin</span>
+                    {% else %}
+                        <span class="role-badge role-admin">Admin</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if admin.status == 'active' %}
+                        <span class="status-badge status-active">Actif</span>
+                    {% else %}
+                        <span class="status-badge status-suspended">Suspendu</span>
+                    {% endif %}
+                </td>
+
+                <td>
+    <a href="/admins/admins/{{ admin.id }}/" class="btn btn-reactivate">Voir plus</a>
+
+    {% if admin.email != 'admin@fondaction.com' %}
+        <a href="/admins/admins/{{ admin.id }}/reset-password/" class="btn btn-reactivate">
+            Réinitialiser mot de passe
+        </a>
+    {% endif %}
+
+    {% if admin.email != 'admin@fondaction.com' and admin.role != 'super_admin' %}
+        {% if admin.status == 'active' %}
+            <a href="/admins/suspend/{{ admin.id }}/" class="btn btn-suspend">Suspendre</a>
+        {% elif admin.status == 'suspended' %}
+            <a href="/admins/reactivate/{{ admin.id }}/" class="btn btn-reactivate">Réactiver</a>
+        {% endif %}
+    {% else %}
+        <span class="protected">Protégé</span>
+    {% endif %}
+</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="empty-box">Aucun administrateur trouvé</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <a href="/admins/admins/export/" class="btn btn-green">
+    📥 Exporter la liste des admins
+</a>
+
+    <a href="/admins/admins/performance/">📈 Réalisations des admins</a>
+
+</div>
+
+</body>
+</html>

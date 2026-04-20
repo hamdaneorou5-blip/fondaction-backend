@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un admin</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+        }
+
+        .page {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white;
+            padding: 25px;
+            border-radius: 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 18px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+
+        .form-card h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 22px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            color: #111827;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .full {
+            grid-column: span 2;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            font-size: 14px;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .note {
+            margin-top: 18px;
+            padding: 14px;
+            background: #f9fafb;
+            border-radius: 12px;
+            color: #4b5563;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 22px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 22px;
+            border-radius: 12px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        @media (max-width: 800px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+
+    <div class="header">
+        <h1>➕ Créer un administrateur</h1>
+    </div>
+
+    <form method="POST">
+    {% csrf_token %}
+
+    <div class="form-card">
+        <h3>Informations de l’administrateur</h3>
+
+        <div class="grid">
+            <div class="full">
+                <label>NIM du membre</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="nim" name="nim" required placeholder="Ex: FAS-0000000001">
+                    <button type="button" class="btn btn-secondary" onclick="fetchMemberByNim()">Vérifier NIM</button>
+                </div>
+            </div>
+
+            <div>
+                <label>Prénom</label>
+                <input type="text" id="preview_first_name" readonly>
+            </div>
+
+            <div>
+                <label>Nom</label>
+                <input type="text" id="preview_last_name" readonly>
+            </div>
+
+            <div class="full">
+                <label>Téléphone</label>
+                <input type="text" id="preview_phone" readonly>
+            </div>
+
+            <div class="full">
+                <label>Email administrateur</label>
+                <input type="email" name="email" required>
+            </div>
+
+            <div class="full">
+                <label>Rôle</label>
+                <select name="role" required>
+                    <option value="admin">Admin</option>
+                    <option value="super_admin">Super Admin</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="note">
+            Le mot de passe est attribué automatiquement par le système. L’administrateur devra le changer à sa première connexion.
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Créer</button>
+            <a href="/admins/dashboard/" class="btn btn-secondary">Retour dashboard</a>
+        </div>
+    </div>
+</form>
+
+<script>
+async function fetchMemberByNim() {
+    const nim = document.getElementById('nim').value.trim();
+
+    if (!nim) {
+        alert("Veuillez saisir un NIM");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/admins/member-by-nim/?nim=${encodeURIComponent(nim)}`);
+        const data = await response.json();
+
+        if (!data.success) {
+            document.getElementById('preview_first_name').value = '';
+            document.getElementById('preview_last_name').value = '';
+            document.getElementById('preview_phone').value = '';
+            alert(data.message || "Membre introuvable");
+            return;
+        }
+
+        document.getElementById('preview_first_name').value = data.member.first_name || '';
+        document.getElementById('preview_last_name').value = data.member.last_name || '';
+        document.getElementById('preview_phone').value = data.member.phone || '';
+    } catch (error) {
+        alert("Erreur lors de la récupération du membre");
+    }
+}
+</script>
+
+</div>
+
+</body>
+</html>

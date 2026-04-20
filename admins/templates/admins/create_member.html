@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un membre</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+            color: #111827;
+        }
+
+        .page {
+            max-width: 1120px;
+            margin: 32px auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1d4ed8, #2563eb, #3b82f6);
+            color: white;
+            padding: 28px;
+            border-radius: 22px;
+            margin-bottom: 22px;
+            box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .header h1 {
+            margin: 0 0 10px;
+            font-size: 32px;
+        }
+
+        .header p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.92);
+            line-height: 1.6;
+            max-width: 760px;
+        }
+
+        .header-links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .header-links a {
+            text-decoration: none;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .btn-back {
+            background: rgba(255, 255, 255, 0.18);
+            color: white;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 22px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .form-card h3 {
+            margin-top: 0;
+            margin-bottom: 18px;
+            font-size: 22px;
+            border-bottom: 1px solid #edf2f7;
+            padding-bottom: 10px;
+            color: #0f172a;
+        }
+
+        .section-note {
+            margin-top: -6px;
+            margin-bottom: 18px;
+            color: #6b7280;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .full {
+            grid-column: span 2;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 13px 14px;
+            border-radius: 12px;
+            border: 1px solid #d1d5db;
+            font-size: 14px;
+            outline: none;
+            background: white;
+        }
+
+        input:focus, select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+        }
+
+        .help-text {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 22px;
+            border-radius: 12px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        @media (max-width: 820px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full {
+                grid-column: span 1;
+            }
+
+            .header-top {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+
+    <div class="header">
+        <div class="header-top">
+            <div>
+                <h1>Enregistrer un membre</h1>
+                <p>
+                    Renseignez soigneusement les informations du membre.
+                    Cette fiche servira à la création complète de son profil et de son accès à l’espace membre.
+                </p>
+            </div>
+
+            <div class="header-links">
+                <a href="/admins/members-hub/" class="btn-back">← Retour espace membres</a>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="form-card">
+            <h3>Informations générales</h3>
+            <div class="section-note">
+                Informations d’identification personnelle du membre.
+            </div>
+
+            <div class="grid">
+                <div>
+                    <label for="first_name">Prénom</label>
+                    <input id="first_name" type="text" name="first_name" required>
+                </div>
+
+                <div>
+                    <label for="last_name">Nom</label>
+                    <input id="last_name" type="text" name="last_name" required>
+                </div>
+
+                <div>
+                    <label for="birth_date">Date de naissance</label>
+                    <input id="birth_date" type="date" name="birth_date" required>
+                </div>
+
+                <div>
+                    <label for="birth_place">Lieu de naissance</label>
+                    <input id="birth_place" type="text" name="birth_place" required>
+                </div>
+
+                <div>
+                    <label for="department">Département</label>
+                    <input id="department" type="text" name="department" required>
+                </div>
+
+                <div>
+                    <label for="commune">Commune</label>
+                    <input id="commune" type="text" name="commune" required>
+                </div>
+
+                <div>
+                    <label for="city">Ville</label>
+                    <input id="city" type="text" name="city" required>
+                </div>
+
+                <div>
+                    <label for="district">Quartier</label>
+                    <input id="district" type="text" name="district" required>
+                </div>
+
+                <div class="full">
+                    <label for="phone">Téléphone</label>
+                    <input id="phone" type="text" name="phone" placeholder="Exemple : 0195404040">
+                    <div class="help-text">
+                        Le numéro doit être unique si tu l’utilises pour identifier le membre.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h3>Pièce d’identité</h3>
+            <div class="section-note">
+                Informations de la pièce utilisée pour enregistrer le membre.
+            </div>
+
+            <div class="grid">
+                <div class="full">
+                    <label for="id_card_type">Type de pièce</label>
+                    <select id="id_card_type" name="id_card_type" required>
+                        <option value="CIP">CIP</option>
+                        <option value="NPI">NPI</option>
+                        <option value="CEDEAO">CEDEAO</option>
+                        <option value="PASSEPORT">PASSEPORT</option>
+                    </select>
+                </div>
+
+                <div class="full">
+                    <label for="id_card_number">Numéro de pièce / NPI</label>
+                    <input id="id_card_number" type="text" name="id_card_number" required>
+                </div>
+
+                <div>
+                    <label for="id_card_front">Photo recto</label>
+                    <input id="id_card_front" type="file" name="id_card_front" accept="image/*" required>
+                </div>
+
+                <div>
+                    <label for="id_card_back">Photo verso</label>
+                    <input id="id_card_back" type="file" name="id_card_back" accept="image/*" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h3>Photo du membre</h3>
+            <div class="section-note">
+                Ajoute une photo d’identité claire du membre.
+            </div>
+
+            <label for="photo">Photo d’identité</label>
+            <input id="photo" type="file" name="photo" accept="image/*" required>
+        </div>
+
+        <div class="form-card">
+            <h3>Personne à contacter</h3>
+            <div class="section-note">
+                Informations de la personne à joindre en cas de besoin.
+            </div>
+
+            <div class="grid">
+                <div>
+                    <label for="emergency_last_name">Nom</label>
+                    <input id="emergency_last_name" type="text" name="emergency_last_name" required>
+                </div>
+
+                <div>
+                    <label for="emergency_first_name">Prénom</label>
+                    <input id="emergency_first_name" type="text" name="emergency_first_name" required>
+                </div>
+
+                <div class="full">
+                    <label for="emergency_phone">Téléphone</label>
+                    <input id="emergency_phone" type="text" name="emergency_phone" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h3>Sécurité</h3>
+            <div class="section-note">
+                Définis le code PIN initial du membre.
+            </div>
+
+            <label for="member_pin">PIN membre (5 chiffres)</label>
+            <input
+                id="member_pin"
+                type="password"
+                name="member_pin"
+                maxlength="5"
+                inputmode="numeric"
+                pattern="[0-9]{5}"
+                required
+            >
+            <div class="help-text">
+                Le PIN doit contenir exactement 5 chiffres.
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h3>Signature finale</h3>
+            <div class="section-note">
+                La signature doit être fournie en format PNG.
+            </div>
+
+            <label for="signature">Signature (PNG uniquement)</label>
+            <input id="signature" type="file" name="signature" accept="image/png" required>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Créer le membre</button>
+            <a href="/admins/members-hub/" class="btn btn-secondary">Annuler</a>
+        </div>
+
+    </form>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+Django==6.0.3
+django-cors-headers
+djangorestframework
+requests
+xhtml2pdf
+openpyxl
+Pillow
+python-dotenv
+psycopg[binary]
+gunicorn

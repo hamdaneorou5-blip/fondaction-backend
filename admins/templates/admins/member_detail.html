@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détail du membre</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+            color: #111827;
+        }
+
+        .page {
+            max-width: 1120px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .topbar {
+            background: white;
+            border-radius: 22px;
+            padding: 26px 28px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+            margin-bottom: 22px;
+        }
+
+        .topbar-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .topbar h1 {
+            margin: 0 0 10px 0;
+            font-size: 34px;
+            color: #0f172a;
+        }
+
+        .topbar p {
+            margin: 0;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .topbar-links {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .topbar-links a {
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            padding: 12px 16px;
+            border-radius: 12px;
+        }
+
+        .btn-back {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .btn-list {
+            background: #2563eb;
+            color: white;
+        }
+
+        .nim-box {
+            display: inline-block;
+            margin-top: 14px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 22px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 22px;
+            padding: 22px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+            margin-bottom: 22px;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 22px;
+            color: #111827;
+            border-bottom: 1px solid #edf2f7;
+            padding-bottom: 10px;
+        }
+
+        .info-row {
+            margin-bottom: 12px;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #374151;
+        }
+
+        .info-row strong {
+            color: #111827;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-suspended {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-inactive {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        .status-locked {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+        }
+
+        .image-box {
+            background: #f9fafb;
+            border: 1px solid #edf2f7;
+            border-radius: 14px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .image-box h4 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #374151;
+        }
+
+        .image-box img {
+            width: 100%;
+            max-width: 220px;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .image-box img:hover {
+            transform: scale(1.02);
+        }
+
+        .view-photo-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+
+        .photo-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.82);
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+        }
+
+        .photo-modal img {
+            max-width: 95%;
+            max-height: 90vh;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            background: white;
+        }
+
+        .photo-modal .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 28px;
+            font-size: 34px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .empty-box {
+            padding: 35px 10px;
+            color: #6b7280;
+            background: #f3f4f6;
+            border-radius: 10px;
+        }
+
+        .action-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            text-decoration: none;
+            display: inline-block;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .btn-blue {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-red {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-green {
+            background: #16a34a;
+            color: white;
+        }
+
+        .security-note {
+            margin-top: 10px;
+            padding: 14px;
+            border-radius: 12px;
+            background: #f9fafb;
+            color: #374151;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="topbar">
+            <div class="topbar-top">
+                <div>
+                    <h1>Détail du membre</h1>
+                    <p>
+                        Consultez les informations complètes du membre, ses documents
+                        et les actions de gestion disponibles.
+                    </p>
+                </div>
+
+                <div class="topbar-links">
+                    <a href="/admins/members-hub/" class="btn-back">← Espace membres</a>
+                    <a href="/admins/members/" class="btn-list">📋 Liste des membres</a>
+                </div>
+            </div>
+
+            <div class="nim-box">NIM : {{ member.nim }}</div>
+        </div>
+
+        <div class="layout">
+            <div>
+                <div class="card">
+                    <h3>Informations générales</h3>
+
+                    <div class="info-row"><strong>Nom :</strong> {{ member.last_name|default:"—" }}</div>
+                    <div class="info-row"><strong>Prénom :</strong> {{ member.first_name|default:"—" }}</div>
+                    <div class="info-row"><strong>Date de naissance :</strong> {{ member.birth_date|default:"—" }}</div>
+                    <div class="info-row"><strong>Lieu de naissance :</strong> {{ member.birth_place|default:"—" }}</div>
+                    <div class="info-row"><strong>Département :</strong> {{ member.department|default:"—" }}</div>
+                    <div class="info-row"><strong>Commune :</strong> {{ member.commune|default:"—" }}</div>
+                    <div class="info-row"><strong>Ville :</strong> {{ member.city|default:"—" }}</div>
+                    <div class="info-row"><strong>Quartier :</strong> {{ member.district|default:"—" }}</div>
+                    <div class="info-row"><strong>Téléphone :</strong> {{ member.phone|default:"—" }}</div>
+                    <div class="info-row"><strong>Type de pièce :</strong> {{ member.id_card_type|default:"—" }}</div>
+                    <div class="info-row"><strong>Numéro de pièce :</strong> {{ member.id_card_number|default:"—" }}</div>
+                    <div class="info-row"><strong>Date d’enregistrement :</strong> {{ member.created_at|date:"d/m/Y à H:i" }}</div>
+
+                    <div class="info-row">
+                        <strong>Créé par :</strong>
+                        {% if member.created_by %}
+                            {{ member.created_by.email }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </div>
+
+                    <div class="info-row">
+                        <strong>Statut :</strong>
+                        {% if member.status == 'active' %}
+                            <span class="status status-active">Actif</span>
+                        {% elif member.status == 'suspended' %}
+                            <span class="status status-suspended">Suspendu</span>
+                        {% else %}
+                            <span class="status status-inactive">Inactif</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Personne à contacter</h3>
+
+                    <div class="info-row"><strong>Nom :</strong> {{ member.emergency_last_name|default:"—" }}</div>
+                    <div class="info-row"><strong>Prénom :</strong> {{ member.emergency_first_name|default:"—" }}</div>
+                    <div class="info-row"><strong>Téléphone :</strong> {{ member.emergency_phone|default:"—" }}</div>
+                </div>
+
+                <div class="card">
+                    <h3>Sécurité du compte</h3>
+
+                    <div class="info-row"><strong>Tentatives PIN échouées :</strong> {{ member.failed_pin_attempts }}</div>
+
+                    <div class="info-row">
+                        <strong>Compte bloqué :</strong>
+                        {% if member.is_locked %}
+                            <span class="status status-locked">Oui</span>
+                        {% else %}
+                            <span class="status status-active">Non</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="security-note">
+                        Utilise la réinitialisation du PIN si le membre a oublié son code
+                        ou si son compte a été bloqué après plusieurs tentatives incorrectes.
+                    </div>
+
+                    <div class="action-box">
+                        <a href="/admins/members/{{ member.id }}/edit/" class="btn btn-blue">
+                            ✏️ Modifier le membre
+                        </a>
+
+                        <a href="/admins/members/{{ member.id }}/reset-pin/" class="btn btn-red">
+                            🔑 Réinitialiser le PIN
+                        </a>
+
+                        {% if member.status == 'active' %}
+                            <a href="/admins/members/{{ member.id }}/suspend/" class="btn btn-red">
+                                ⛔ Suspendre le membre
+                            </a>
+                        {% else %}
+                            <a href="/admins/members/{{ member.id }}/activate/" class="btn btn-green">
+                                ✅ Réactiver le membre
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="card">
+                    <h3>Images & documents</h3>
+
+                    <div class="image-grid">
+                        <div class="image-box">
+                            <h4>Photo du membre</h4>
+                            {% if member.photo %}
+                                <img src="{{ member.photo.url }}" alt="Photo membre" onclick="openPhotoModal('{{ member.photo.url }}')">
+                                <button type="button" class="view-photo-btn" onclick="openPhotoModal('{{ member.photo.url }}')">
+                                    Voir la photo
+                                </button>
+                            {% else %}
+                                <div class="empty-box">Aucune photo</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="image-box">
+                            <h4>Recto de pièce</h4>
+                            {% if member.id_card_front %}
+                                <img src="{{ member.id_card_front.url }}" alt="Recto pièce" onclick="openPhotoModal('{{ member.id_card_front.url }}')">
+                                <button type="button" class="view-photo-btn" onclick="openPhotoModal('{{ member.id_card_front.url }}')">
+                                    Voir le document
+                                </button>
+                            {% else %}
+                                <div class="empty-box">Aucun recto</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="image-box">
+                            <h4>Verso de pièce</h4>
+                            {% if member.id_card_back %}
+                                <img src="{{ member.id_card_back.url }}" alt="Verso pièce" onclick="openPhotoModal('{{ member.id_card_back.url }}')">
+                                <button type="button" class="view-photo-btn" onclick="openPhotoModal('{{ member.id_card_back.url }}')">
+                                    Voir le document
+                                </button>
+                            {% else %}
+                                <div class="empty-box">Aucun verso</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="image-box">
+                            <h4>Signature</h4>
+                            {% if member.signature %}
+                                <img src="{{ member.signature.url }}" alt="Signature" onclick="openPhotoModal('{{ member.signature.url }}')">
+                                <button type="button" class="view-photo-btn" onclick="openPhotoModal('{{ member.signature.url }}')">
+                                    Voir la signature
+                                </button>
+                            {% else %}
+                                <div class="empty-box">Aucune signature</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="photoModal" class="photo-modal" onclick="closePhotoModal()">
+        <span class="close-btn" onclick="closePhotoModal()">&times;</span>
+        <img id="photoModalImg" src="" alt="Aperçu photo">
+    </div>
+
+    <script>
+        function openPhotoModal(imageUrl) {
+            const modal = document.getElementById('photoModal');
+            const modalImg = document.getElementById('photoModalImg');
+            modalImg.src = imageUrl;
+            modal.style.display = 'flex';
+        }
+
+        function closePhotoModal() {
+            const modal = document.getElementById('photoModal');
+            const modalImg = document.getElementById('photoModalImg');
+            modal.style.display = 'none';
+            modalImg.src = '';
+        }
+    </script>
+</body>
+</html>
