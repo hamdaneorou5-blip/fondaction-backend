@@ -116,20 +116,29 @@ def process_fedapay_webhook(payload):
     if not transaction_id:
         raise ValueError("Transaction introuvable")
 
-    attempt = FedapayPaymentAttempt.objects.select_for_update().get(
-        transaction_id=str(transaction_id)
-    )
+    try:
+        attempt = FedapayPaymentAttempt.objects.select_for_update().get(
+            transaction_id=str(transaction_id)
+        )
+    except FedapayPaymentAttempt.DoesNotExist:
+        raise ValueError("Tentative de paiement inexistante")
 
-    verify_response = requests.get(
-        f"{settings.FEDAPAY_API_BASE}/transactions/{transaction_id}",
-        headers=build_fedapay_verify_headers(),
-        timeout=30,
-    )
+    try:
+        verify_response = requests.get(
+            f"{settings.FEDAPAY_API_BASE}/transactions/{transaction_id}",
+            headers=build_fedapay_verify_headers(),
+            timeout=30,
+        )
+    except requests.RequestException:
+        raise ValueError("Erreur réseau lors de la vérification FedaPay")
 
     if verify_response.status_code not in [200, 201]:
-        raise ValueError(f"Vérification FedaPay échouée : {verify_response.text}")
+        raise ValueError("Vérification FedaPay échouée")
 
-    verify_data = verify_response.json()
+    try:
+        verify_data = verify_response.json()
+    except Exception:
+        raise ValueError("Réponse FedaPay invalide")
 
     transaction_verified = (
         verify_data.get('v1/transaction')
@@ -142,23 +151,29 @@ def process_fedapay_webhook(payload):
 
     attempt.fedapay_payload = verify_data
 
+    # 🔴 Paiement refusé
     if verified_status in ['declined', 'failed', 'canceled', 'cancelled']:
         attempt.status = 'declined'
         attempt.save(update_fields=['status', 'fedapay_payload', 'updated_at'])
         return 'declined'
 
+    # 🟡 En attente
     if verified_status not in ['approved', 'successful', 'success']:
         attempt.status = 'pending'
         attempt.save(update_fields=['status', 'fedapay_payload', 'updated_at'])
         return 'pending'
 
+    # 🔁 Anti double traitement
     if attempt.is_processed:
         return 'already_processed'
 
+    # 🔒 Vérification montant
     if amount != attempt.total_amount:
-        raise ValueError(
-            f"Montant incohérent. Attendu={attempt.total_amount}, reçu={amount}"
-        )
+        raise ValueError("Montant incohérent")
+
+    # 🔒 Vérification membre
+    if not attempt.member:
+        raise ValueError("Membre invalide")
 
     existing = MemberTransaction.objects.filter(
         member=attempt.member,

@@ -47,6 +47,7 @@ class Member(models.Model):
     must_change_pin = models.BooleanField(default=False)
     failed_pin_attempts = models.PositiveIntegerField(default=0)
     is_locked = models.BooleanField(default=False)
+
     created_by = models.ForeignKey(AdminUser, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
@@ -56,15 +57,12 @@ class Member(models.Model):
 class MemberTransaction(models.Model):
     TRANSACTION_TYPE_CHOICES = [
         ('payment', 'Paiement'),
-        ('withdrawal', 'Retrait'),
-        ('adjustment', 'Ajustement'),
     ]
 
     STATUS_CHOICES = [
         ('pending', 'En attente'),
         ('success', 'Succès'),
         ('failed', 'Échoué'),
-        ('cancelled', 'Annulé'),
     ]
 
     member = models.ForeignKey(
@@ -88,110 +86,6 @@ class MemberTransaction(models.Model):
 
     def __str__(self):
         return f"{self.reference} - {self.member.nim} - {self.transaction_type}"
-
-
-class WithdrawalRequest(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'En attente'),
-        ('approved', 'Approuvé'),
-        ('rejected', 'Rejeté'),
-    ]
-
-    member = models.ForeignKey(
-        Member,
-        on_delete=models.CASCADE,
-        related_name='withdrawal_requests'
-    )
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
-    receiver_account = models.CharField(max_length=100)
-    account_holder_name = models.CharField(max_length=255)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    admin_note = models.TextField(blank=True, null=True)
-    processed_by = models.ForeignKey(
-        AdminUser,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='processed_withdrawals'
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    processed_at = models.DateTimeField(blank=True, null=True)
-
-    def __str__(self):
-        return f"Retrait {self.member.nim} - {self.amount} - {self.status}"
-
-
-class InfoPost(models.Model):
-    POST_TYPE_CHOICES = [
-        ('text', 'Texte'),
-        ('image', 'Image'),
-        ('video', 'Vidéo'),
-        ('mixed', 'Mixte'),
-    ]
-
-    title = models.CharField(max_length=255)
-    content = models.TextField()
-    post_type = models.CharField(max_length=20, choices=POST_TYPE_CHOICES, default='text')
-    image = models.ImageField(upload_to='members/info_posts/images/', null=True, blank=True)
-    video_url = models.URLField(null=True, blank=True)
-    is_published = models.BooleanField(default=True)
-    published_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.title
-
-
-class Project(models.Model):
-    title = models.CharField(max_length=255)
-    description = models.TextField()
-    pdf_file = models.FileField(upload_to='members/projects/pdfs/')
-    cover_image = models.ImageField(upload_to='members/projects/covers/', null=True, blank=True)
-    is_published = models.BooleanField(default=True)
-    published_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.title
-
-
-class OfficialContract(models.Model):
-    title = models.CharField(max_length=255)
-    pdf_file = models.FileField(upload_to='members/contracts/official/')
-    version = models.CharField(max_length=50, default='1.0')
-    is_active = models.BooleanField(default=False)
-    published_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.title} - v{self.version}"
-
-
-class MemberContractSubmission(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'En attente'),
-        ('approved', 'Approuvé'),
-        ('rejected', 'Rejeté'),
-    ]
-
-    member = models.ForeignKey(
-        Member,
-        on_delete=models.CASCADE,
-        related_name='contract_submissions'
-    )
-    contract = models.ForeignKey(
-        OfficialContract,
-        on_delete=models.CASCADE,
-        related_name='submissions'
-    )
-    signed_file = models.FileField(upload_to='members/contracts/signed/')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    admin_note = models.TextField(blank=True, null=True)
-    submitted_at = models.DateTimeField(auto_now_add=True)
-    reviewed_at = models.DateTimeField(blank=True, null=True)
-
-    def __str__(self):
-        return f"{self.member.nim} - {self.contract.title} - {self.status}"
 
 
 class FedapayPaymentAttempt(models.Model):

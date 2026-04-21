@@ -1,5 +1,6 @@
 [text](../admins/api_views.py)
 
+
 import json
 
 from django.http import JsonResponse
@@ -21,11 +22,7 @@ from members.services import create_member_record
 
 
 def cors_json_response(data, status=200):
-    response = JsonResponse(data, status=status)
-    response["Access-Control-Allow-Origin"] = "*"
-    response["Access-Control-Allow-Headers"] = "Content-Type, Accept, Cookie, ngrok-skip-browser-warning"
-    response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    return response
+    return JsonResponse(data, status=status)
 
 
 @csrf_exempt
@@ -527,7 +524,6 @@ def member_session_required(view_func):
         return view_func(request, *args, **kwargs)
     return wrapper
 
-
 [text](../admins/models.py)
 
 
@@ -678,7 +674,6 @@ urlpatterns = [
 [text](../admins/utils.py)
 
 
-
 import secrets
 import string
 
@@ -706,8 +701,8 @@ def generate_temporary_pin(length=5):
     return ''.join(secrets.choice(digits) for _ in range(length))
 
 
-
 [text](../admins/web_views.py)
+
 
 
 import openpyxl
@@ -1325,7 +1320,7 @@ def edit_member(request, member_id):
         member.commune = request.POST.get('commune')
         member.city = request.POST.get('city')
         member.district = request.POST.get('district')
-        member.phone = request.POST.get('phone')
+        member.phone = (request.POST.get('phone') or '').strip() or None
         member.id_card_type = request.POST.get('id_card_type')
         member.id_card_number = request.POST.get('id_card_number')
         member.emergency_last_name = request.POST.get('emergency_last_name')
@@ -1707,8 +1702,8 @@ def member_transactions(request):
     })    
 
 
+[text](../config/settings.py)
 
-[text](settings.py)
 
 
 import os
@@ -1718,15 +1713,14 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
+DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "change-me-in-dev")
-DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
-
-ALLOWED_HOSTS = os.getenv(
-    "DJANGO_ALLOWED_HOSTS",
-    "127.0.0.1,localhost"
-).split(",")
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+    if host.strip()
+]
 
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
@@ -1789,6 +1783,7 @@ if DATABASE_ENGINE == "postgres":
             'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
             'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
             'PORT': os.getenv('POSTGRES_PORT', '5432'),
+            'CONN_MAX_AGE': 60,
         }
     }
 else:
@@ -1800,18 +1795,10 @@ else:
     }
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 LANGUAGE_CODE = 'fr-fr'
@@ -1847,27 +1834,22 @@ else:
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Sécurité production
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = os.getenv("DJANGO_SECURE_SSL_REDIRECT", "True") == "True"
 
-[text](urls.py)
-
-
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib import admin
-from django.urls import path, include
-
-
-urlpatterns = [
-    path('django-admin/', admin.site.urls),
-    path('admins/', include('admins.urls')),
-]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Sessions
+SESSION_COOKIE_AGE = 60 * 60 * 12  # 12 heures
+SESSION_SAVE_EVERY_REQUEST = True
 
 
-
-[text](../logs/models.py)
+[logs](models.py)
 
 
 
@@ -1889,7 +1871,6 @@ class ActivityLog(models.Model):
 
 
 [text](../members/constants.py)
-
 
 
 from decimal import Decimal
@@ -1914,7 +1895,6 @@ TEMP_MEMBER_PIN_LENGTH = 5
 
 
 [text](../members/models.py)
-
 
 
 from django.db import models
@@ -2153,7 +2133,6 @@ class FedapayPaymentAttempt(models.Model):
 [text](../members/payment_services.py)
 
 
-
 from decimal import Decimal
 
 import requests
@@ -2281,6 +2260,10 @@ def process_fedapay_webhook(payload):
         headers=build_fedapay_verify_headers(),
         timeout=30,
     )
+
+    if verify_response.status_code not in [200, 201]:
+        raise ValueError(f"Vérification FedaPay échouée : {verify_response.text}")
+
     verify_data = verify_response.json()
 
     transaction_verified = (
@@ -2342,9 +2325,7 @@ def process_fedapay_webhook(payload):
     return 'approved'
 
 
-
 [text](../members/permissions.py)
-
 
 
 from django.http import HttpResponse
@@ -2378,10 +2359,7 @@ def forbid_if_no_member_access(request, member):
         return HttpResponse("Accès refusé à ce membre ❌")
     return None
 
-
-
 [text](../members/services.py)
-
 
 
 from decimal import Decimal
@@ -2802,13 +2780,13 @@ def get_admin_total_paid_in_period(admin, start_date=None, end_date=None):
 
 
 def create_member_record(data, files, current_admin):
-    raw_pin = data.get('member_pin')
+    raw_pin = (data.get('member_pin') or '').strip()
 
     if not raw_pin or not raw_pin.isdigit() or len(raw_pin) != 5:
         raise ValueError("Le code PIN doit contenir exactement 5 chiffres")
 
-    id_card_number = data.get('id_card_number')
-    phone = data.get('phone')
+    id_card_number = (data.get('id_card_number') or '').strip()
+    phone = (data.get('phone') or '').strip() or None
 
     if not id_card_number:
         raise ValueError("Le numéro de pièce est obligatoire")
@@ -2816,29 +2794,29 @@ def create_member_record(data, files, current_admin):
     if Member.objects.filter(id_card_number=id_card_number).exists():
         raise ValueError("Un membre avec ce numéro de pièce existe déjà")
 
-    if Member.objects.filter(phone=phone).exists():
+    if phone and Member.objects.filter(phone=phone).exists():
         raise ValueError("Un membre avec ce numéro de téléphone existe déjà")
 
     member = Member.objects.create(
-        first_name=data.get('first_name'),
-        last_name=data.get('last_name'),
+        first_name=(data.get('first_name') or '').strip(),
+        last_name=(data.get('last_name') or '').strip(),
         birth_date=data.get('birth_date'),
-        birth_place=data.get('birth_place'),
-        department=data.get('department'),
-        commune=data.get('commune'),
-        city=data.get('city'),
-        district=data.get('district'),
+        birth_place=(data.get('birth_place') or '').strip(),
+        department=(data.get('department') or '').strip(),
+        commune=(data.get('commune') or '').strip(),
+        city=(data.get('city') or '').strip(),
+        district=(data.get('district') or '').strip(),
         phone=phone,
         photo=files.get('photo'),
-        id_card_type=data.get('id_card_type'),
+        id_card_type=(data.get('id_card_type') or '').strip(),
         id_card_number=id_card_number,
         id_card_front=files.get('id_card_front'),
         id_card_back=files.get('id_card_back'),
         signature=files.get('signature'),
         member_pin=make_password(raw_pin),
-        emergency_last_name=data.get('emergency_last_name'),
-        emergency_first_name=data.get('emergency_first_name'),
-        emergency_phone=data.get('emergency_phone'),
+        emergency_last_name=(data.get('emergency_last_name') or '').strip() or None,
+        emergency_first_name=(data.get('emergency_first_name') or '').strip() or None,
+        emergency_phone=(data.get('emergency_phone') or '').strip() or None,
         created_by=current_admin,
         status='active',
     )
@@ -2850,7 +2828,6 @@ def create_member_record(data, files, current_admin):
 
 
 [text](../.env)
-
 
 
 DJANGO_SECRET_KEY=change-this-local-secret-key
@@ -2865,3 +2842,32 @@ DATABASE_ENGINE=sqlite
 FEDAPAY_MODE=sandbox
 FEDAPAY_PUBLIC_KEY=pk_sandbox_jaHjXxytHbr850sAlKYuabvu
 FEDAPAY_SECRET_KEY=sk_sandbox_EhhaVMxGTzD1LuGjXCuRPwjM
+
+
+[text](../.gitignore)
+
+
+.env
+venv/
+__pycache__/
+*.pyc
+db.sqlite3
+media/
+staticfiles/
+
+
+[text](../requirements.txt)
+
+
+
+
+Django==6.0.3
+django-cors-headers
+djangorestframework
+requests
+xhtml2pdf
+openpyxl
+Pillow
+python-dotenv
+psycopg[binary]
+gunicorn

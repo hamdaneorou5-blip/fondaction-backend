@@ -21,6 +21,15 @@ from admins.decorators import (
     super_admin_required,
     member_session_required,
 )
+
+
+from members.services import (
+    get_total_contributions,
+    get_available_balance,
+    get_recent_transactions,
+)
+
+
 from members.permissions import forbid_if_no_member_access
 from members.constants import (
     DEFAULT_MONTHLY_CONTRIBUTION,
@@ -32,7 +41,7 @@ from members.constants import (
     MAX_MEMBER_PIN_ATTEMPTS,
 )
 from members.payment_services import start_fedapay_payment
-from members.services import create_member_record
+from members.services import create_member_record, validate_uploaded_image
 
 
 def home(request):
@@ -41,11 +50,14 @@ def home(request):
 
 def login(request):
     if request.method == 'POST':
-        email = (request.POST.get('email') or '').strip()
+        email = (request.POST.get('email') or '').strip().lower()
         password = request.POST.get('password') or ''
 
         try:
             user = AdminUser.objects.get(email=email)
+
+            if user.is_locked:
+                return HttpResponse("Compte admin bloqué ❌")
 
             if user.status == ADMIN_STATUS_SUSPENDED:
                 return HttpResponse("Compte suspendu ❌")
@@ -53,25 +65,37 @@ def login(request):
             if user.status != ADMIN_STATUS_ACTIVE:
                 return HttpResponse("Compte inactif ❌")
 
-            if check_password(password, user.password):
-                request.session['admin_id'] = user.id
-                request.session['admin_role'] = user.role
-                request.session['admin_email'] = user.email
+            if not check_password(password, user.password):
+                user.failed_login_attempts += 1
 
-                log_activity(
-                    admin_user=user,
-                    action='login',
-                    target_type='admin',
-                    target_id=user.id,
-                    details=f"{user.email} s’est connecté"
-                )
+                if user.failed_login_attempts >= 5:
+                    user.is_locked = True
+                    user.save(update_fields=['failed_login_attempts', 'is_locked', 'updated_at'])
+                    return HttpResponse("Compte admin bloqué après plusieurs tentatives ❌")
 
-                if user.must_change_password:
-                    return redirect('/admins/change-password/')
+                user.save(update_fields=['failed_login_attempts', 'updated_at'])
+                remaining = 5 - user.failed_login_attempts
+                return HttpResponse(f"Mot de passe incorrect ❌ Il reste {remaining} tentative(s).")
 
-                return redirect('/admins/dashboard/')
+            user.failed_login_attempts = 0
+            user.save(update_fields=['failed_login_attempts', 'updated_at'])
 
-            return HttpResponse("Mot de passe incorrect ❌")
+            request.session['admin_id'] = user.id
+            request.session['admin_role'] = user.role
+            request.session['admin_email'] = user.email
+
+            log_activity(
+                admin_user=user,
+                action='login',
+                target_type='admin',
+                target_id=user.id,
+                details=f"{user.email} s’est connecté"
+            )
+
+            if user.must_change_password:
+                return redirect('/admins/change-password/')
+
+            return redirect('/admins/dashboard/')
 
         except AdminUser.DoesNotExist:
             return HttpResponse("Utilisateur introuvable ❌")
@@ -355,16 +379,23 @@ def activity_logs(request):
 @admin_session_required
 def create_member(request):
     if request.method == 'POST':
-        current_admin = AdminUser.objects.get(id=request.session.get('admin_id'))
-
-        signature = request.FILES.get('signature')
-        if signature and not signature.name.lower().endswith('.png'):
-            return HttpResponse("La signature doit être en format PNG ❌")
+        try:
+            current_admin = AdminUser.objects.get(id=request.session.get('admin_id'))
+        except AdminUser.DoesNotExist:
+            request.session.flush()
+            return redirect('/admins/login/')
 
         try:
+            validate_uploaded_image(request.FILES.get('photo'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+            validate_uploaded_image(request.FILES.get('id_card_front'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+            validate_uploaded_image(request.FILES.get('id_card_back'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+            validate_uploaded_image(request.FILES.get('signature'), ['.png'], max_size_mb=2)
+
             member = create_member_record(request.POST, request.FILES, current_admin)
         except ValueError as e:
             return HttpResponse(f"{str(e)} ❌")
+        except Exception:
+            return HttpResponse("Erreur serveur ❌")
 
         log_activity(
             admin_user=current_admin,
@@ -381,27 +412,19 @@ def create_member(request):
 
 @admin_session_required
 def member_list(request):
-    nim = request.GET.get('nim', '')
-    phone = request.GET.get('phone', '')
+    try:
+        current_admin = AdminUser.objects.get(id=request.session.get('admin_id'))
+    except AdminUser.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/login/')
 
-    role = request.session.get('admin_role')
-    admin_id = request.session.get('admin_id')
-
-    members = Member.objects.all().order_by('-id')
-
-    if role != 'super_admin':
-        members = members.filter(created_by_id=admin_id)
-
-    if nim:
-        members = members.filter(nim__icontains=nim)
-
-    if phone:
-        members = members.filter(phone__icontains=phone)
+    members = Member.objects.filter(
+        created_by=current_admin
+    ).order_by('-created_at')
 
     return render(request, 'admins/member_list.html', {
         'members': members,
-        'nim': nim,
-        'phone': phone,
+        'admin': current_admin
     })
 
 
@@ -500,16 +523,28 @@ def member_change_pin(request):
     return render(request, 'admins/member_change_pin.html')
 
 
-@member_session_required
+@admin_session_required  # ou member session selon ton système
 def member_space(request):
+    member_id = request.session.get('member_id')
+
+    if not member_id:
+        return redirect('/admins/member-login/')
+
     try:
-        member = Member.objects.get(id=request.session.get('member_id'))
+        member = Member.objects.get(id=member_id)
     except Member.DoesNotExist:
         request.session.flush()
         return redirect('/admins/member-login/')
 
+    total_contributions = get_total_contributions(member)
+    available_balance = get_available_balance(member)
+    recent_transactions = get_recent_transactions(member)
+
     return render(request, 'admins/member_space.html', {
-        'member': member
+        'member': member,
+        'total_contributions': total_contributions,
+        'available_balance': available_balance,
+        'recent_transactions': recent_transactions,
     })
 
 
@@ -605,20 +640,20 @@ def edit_member(request, member_id):
         return forbidden
 
     if request.method == 'POST':
-        member.first_name = request.POST.get('first_name')
-        member.last_name = request.POST.get('last_name')
+        member.first_name = (request.POST.get('first_name') or '').strip()
+        member.last_name = (request.POST.get('last_name') or '').strip()
         member.birth_date = request.POST.get('birth_date')
-        member.birth_place = request.POST.get('birth_place')
-        member.department = request.POST.get('department')
-        member.commune = request.POST.get('commune')
-        member.city = request.POST.get('city')
-        member.district = request.POST.get('district')
+        member.birth_place = (request.POST.get('birth_place') or '').strip()
+        member.department = (request.POST.get('department') or '').strip()
+        member.commune = (request.POST.get('commune') or '').strip()
+        member.city = (request.POST.get('city') or '').strip()
+        member.district = (request.POST.get('district') or '').strip()
         member.phone = (request.POST.get('phone') or '').strip() or None
-        member.id_card_type = request.POST.get('id_card_type')
-        member.id_card_number = request.POST.get('id_card_number')
-        member.emergency_last_name = request.POST.get('emergency_last_name')
-        member.emergency_first_name = request.POST.get('emergency_first_name')
-        member.emergency_phone = request.POST.get('emergency_phone')
+        member.id_card_type = (request.POST.get('id_card_type') or '').strip()
+        member.id_card_number = (request.POST.get('id_card_number') or '').strip()
+        member.emergency_last_name = (request.POST.get('emergency_last_name') or '').strip() or None
+        member.emergency_first_name = (request.POST.get('emergency_first_name') or '').strip() or None
+        member.emergency_phone = (request.POST.get('emergency_phone') or '').strip() or None
 
         if not member.id_card_number:
             return HttpResponse("Le numéro de pièce est obligatoire ❌")
@@ -628,6 +663,14 @@ def edit_member(request, member_id):
 
         if member.phone and Member.objects.filter(phone=member.phone).exclude(id=member.id).exists():
             return HttpResponse("Un autre membre utilise déjà ce numéro de téléphone ❌")
+
+        try:
+            validate_uploaded_image(request.FILES.get('photo'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+            validate_uploaded_image(request.FILES.get('id_card_front'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+            validate_uploaded_image(request.FILES.get('id_card_back'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+            validate_uploaded_image(request.FILES.get('signature'), ['.png'], max_size_mb=2)
+        except ValueError as e:
+            return HttpResponse(f"{str(e)} ❌")
 
         if request.FILES.get('photo'):
             member.photo = request.FILES.get('photo')
@@ -639,14 +682,15 @@ def edit_member(request, member_id):
             member.id_card_back = request.FILES.get('id_card_back')
 
         if request.FILES.get('signature'):
-            signature = request.FILES.get('signature')
-            if not signature.name.lower().endswith('.png'):
-                return HttpResponse("La signature doit être en format PNG ❌")
-            member.signature = signature
+            member.signature = request.FILES.get('signature')
 
         member.save()
 
-        current_admin = AdminUser.objects.get(id=request.session.get('admin_id'))
+        try:
+            current_admin = AdminUser.objects.get(id=request.session.get('admin_id'))
+        except AdminUser.DoesNotExist:
+            request.session.flush()
+            return redirect('/admins/login/')
 
         log_activity(
             admin_user=current_admin,

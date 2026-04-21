@@ -22,6 +22,8 @@ class AdminUser(models.Model):
     role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='admin')
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='active')
     must_change_password = models.BooleanField(default=False)
+    failed_login_attempts = models.PositiveIntegerField(default=0)
+    is_locked = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

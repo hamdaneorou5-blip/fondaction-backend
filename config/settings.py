@@ -5,8 +5,15 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("DJANGO_SECRET_KEY manquant dans le .env")
+
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
+
+DATABASE_ENGINE = os.getenv("DATABASE_ENGINE", "sqlite")
+if not DEBUG and DATABASE_ENGINE == "sqlite":
+    print("ATTENTION: le projet tourne en production avec SQLite")
 
 ALLOWED_HOSTS = [
     host.strip()
@@ -63,8 +70,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
-
-DATABASE_ENGINE = os.getenv("DATABASE_ENGINE", "sqlite")
 
 if DATABASE_ENGINE == "postgres":
     DATABASES = {
@@ -129,12 +134,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Sécurité production
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
     CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_HTTPONLY = False
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = os.getenv("DJANGO_SECURE_SSL_REDIRECT", "True") == "True"
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # Sessions
 SESSION_COOKIE_AGE = 60 * 60 * 12  # 12 heures

@@ -22,7 +22,6 @@ def cors_json_response(data, status=200):
     return JsonResponse(data, status=status)
 
 
-@csrf_exempt
 def api_login(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
@@ -53,6 +52,12 @@ def api_login(request):
     try:
         user = AdminUser.objects.get(email=email)
 
+        if user.is_locked:
+            return cors_json_response({
+                'success': False,
+                'message': 'Compte admin bloqué ❌'
+            }, status=403)
+
         if user.status == ADMIN_STATUS_SUSPENDED:
             return cors_json_response({
                 'success': False,
@@ -66,10 +71,26 @@ def api_login(request):
             }, status=403)
 
         if not check_password(password, user.password):
+            user.failed_login_attempts += 1
+
+            if user.failed_login_attempts >= 5:
+                user.is_locked = True
+                user.save(update_fields=['failed_login_attempts', 'is_locked', 'updated_at'])
+                return cors_json_response({
+                    'success': False,
+                    'message': 'Compte admin bloqué après plusieurs tentatives ❌'
+                }, status=403)
+
+            user.save(update_fields=['failed_login_attempts', 'updated_at'])
+            remaining = 5 - user.failed_login_attempts
+
             return cors_json_response({
                 'success': False,
-                'message': 'Mot de passe incorrect ❌'
+                'message': f'Mot de passe incorrect ❌ Il reste {remaining} tentative(s).'
             }, status=401)
+
+        user.failed_login_attempts = 0
+        user.save(update_fields=['failed_login_attempts', 'updated_at'])
 
         request.session['admin_id'] = user.id
         request.session['admin_role'] = user.role
@@ -105,7 +126,6 @@ def api_login(request):
         }, status=404)
 
 
-@csrf_exempt
 def api_change_admin_password(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
@@ -178,7 +198,6 @@ def api_change_admin_password(request):
     })
 
 
-@csrf_exempt
 def api_create_member(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
@@ -218,11 +237,10 @@ def api_create_member(request):
             'success': False,
             'message': str(e)
         }, status=400)
-    except Exception as e:
+    except Exception:
         return cors_json_response({
             'success': False,
-            'message': 'Erreur serveur',
-            'error': str(e)
+            'message': 'Erreur serveur'
         }, status=500)
 
     log_activity(
@@ -249,7 +267,6 @@ def api_create_member(request):
     }, status=201)
 
 
-@csrf_exempt
 def api_member_history(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
@@ -288,18 +305,22 @@ def api_member_history(request):
             'members': members_data,
         })
 
-    except Exception as e:
+    except Exception:
         return cors_json_response({
             'success': False,
-            'message': 'Erreur serveur',
-            'error': str(e),
+            'message': 'Erreur serveur'
         }, status=500)
 
 
-@csrf_exempt
 def get_member_by_nim(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
+
+    if request.method != 'GET':
+        return cors_json_response({
+            'success': False,
+            'message': 'Méthode non autorisée'
+        }, status=405)
 
     admin_id = request.session.get('admin_id')
     if not admin_id:
@@ -334,7 +355,6 @@ def get_member_by_nim(request):
         }, status=404)
 
 
-@csrf_exempt
 def api_member_login(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
@@ -448,6 +468,13 @@ def fedapay_webhook(request):
             'message': 'Méthode non autorisée'
         }, status=405)
 
+    content_type = request.headers.get('Content-Type', '')
+    if 'application/json' not in content_type:
+        return cors_json_response({
+            'success': False,
+            'message': 'Content-Type invalide'
+        }, status=400)
+
     try:
         payload = json.loads(request.body)
     except json.JSONDecodeError:
@@ -455,6 +482,21 @@ def fedapay_webhook(request):
             'success': False,
             'message': 'JSON invalide'
         }, status=400)
+
+    event_name = payload.get('name') or payload.get('event')
+    allowed_events = {
+        'transaction.approved',
+        'transaction.declined',
+        'transaction.created',
+        'transaction.canceled',
+        'transaction.cancelled',
+    }
+
+    if event_name and event_name not in allowed_events:
+        return cors_json_response({
+            'success': True,
+            'message': 'Événement ignoré'
+        })
 
     try:
         result = process_fedapay_webhook(payload)
@@ -477,9 +519,8 @@ def fedapay_webhook(request):
             'message': 'Tentative de paiement introuvable'
         }, status=404)
 
-    except Exception as e:
+    except Exception:
         return cors_json_response({
             'success': False,
-            'message': 'Erreur webhook',
-            'error': str(e),
+            'message': 'Erreur webhook'
         }, status=500)
