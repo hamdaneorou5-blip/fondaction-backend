@@ -57,6 +57,7 @@ class Member(models.Model):
 class MemberTransaction(models.Model):
     TRANSACTION_TYPE_CHOICES = [
         ('payment', 'Paiement'),
+        ('withdrawal', 'Retrait'),
     ]
 
     STATUS_CHOICES = [
@@ -73,10 +74,12 @@ class MemberTransaction(models.Model):
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPE_CHOICES)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     reference = models.CharField(max_length=100, unique=True)
+    receipt_number = models.CharField(max_length=30, unique=True, null=True, blank=True, db_index=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     validated_at = models.DateTimeField(blank=True, null=True)
+
 
     class Meta:
         indexes = [
@@ -86,6 +89,71 @@ class MemberTransaction(models.Model):
 
     def __str__(self):
         return f"{self.reference} - {self.member.nim} - {self.transaction_type}"
+
+
+class WithdrawalRequest(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'En attente'),
+        ('approved', 'Approuvé'),
+        ('rejected', 'Rejeté'),
+    ]
+
+    member = models.ForeignKey(
+        Member,
+        on_delete=models.CASCADE,
+        related_name='withdrawal_requests'
+    )
+    transaction = models.OneToOneField(
+        MemberTransaction,
+        on_delete=models.CASCADE,
+        related_name='withdrawal_request'
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    receiver_phone = models.CharField(max_length=20)
+    reason = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    admin_note = models.TextField(blank=True, null=True)
+    processed_by = models.ForeignKey(
+        AdminUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='processed_withdrawals'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['member', 'status']),
+            models.Index(fields=['created_at']),
+        ]
+
+    def __str__(self):
+        return f"Retrait {self.member.nim} - {self.amount} - {self.status}"
+
+
+class InfoPost(models.Model):
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    image = models.ImageField(upload_to='members/info_posts/images/', null=True, blank=True)
+    video_url = models.URLField(null=True, blank=True)
+    is_published = models.BooleanField(default=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        AdminUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='info_posts'
+    )
+
+    class Meta:
+        ordering = ['-published_at', '-created_at']
+
+    def __str__(self):
+        return self.title
 
 
 class FedapayPaymentAttempt(models.Model):

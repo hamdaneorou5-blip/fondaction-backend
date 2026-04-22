@@ -2,15 +2,18 @@ import openpyxl
 from io import BytesIO
 from datetime import timedelta
 
+
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.hashers import check_password, make_password
 from django.template.loader import get_template
 from django.utils import timezone
 from xhtml2pdf import pisa
-
+from members.models import InfoPost
+from django.utils import timezone
+from django.shortcuts import get_object_or_404
 from admins.models import AdminUser
-from members.models import Member, MemberTransaction
+from members.models import Member, MemberTransaction, WithdrawalRequest
 from admins.utils import (
     log_activity,
     generate_temporary_password,
@@ -27,6 +30,9 @@ from members.services import (
     get_total_contributions,
     get_available_balance,
     get_recent_transactions,
+    create_withdrawal_request,
+    approve_withdrawal_request,
+    reject_withdrawal_request,
 )
 
 
@@ -194,6 +200,113 @@ def members_hub(request):
 @admin_session_required
 def admins_hub(request):
     return render(request, 'admins/admins_hub.html')
+
+
+@admin_session_required
+def create_info_post(request):
+    if request.method == 'POST':
+        title = (request.POST.get('title') or '').strip()
+        content = (request.POST.get('content') or '').strip()
+        video_url = (request.POST.get('video_url') or '').strip() or None
+        image = request.FILES.get('image')
+
+        if not title or not content:
+            return HttpResponse("Titre et contenu obligatoires ❌")
+
+        admin = AdminUser.objects.get(id=request.session.get('admin_id'))
+
+        InfoPost.objects.create(
+            title=title,
+            content=content,
+            video_url=video_url,
+            image=image,
+            is_published=True,
+            published_at=timezone.now(),
+            created_by=admin
+        )
+
+        return redirect('/admins/info-posts/')
+
+    return render(request, 'admins/create_info_post.html')
+
+
+@admin_session_required
+def info_post_list(request):
+    posts = InfoPost.objects.all().order_by('-created_at')
+
+    return render(request, 'admins/info_post_list.html', {
+        'posts': posts
+    })
+
+
+
+@admin_session_required
+def edit_info_post(request, post_id):
+    try:
+        post = InfoPost.objects.get(id=post_id)
+    except InfoPost.DoesNotExist:
+        return HttpResponse("Post introuvable ❌")
+
+    if request.method == 'POST':
+        title = (request.POST.get('title') or '').strip()
+        content = (request.POST.get('content') or '').strip()
+        video_url = (request.POST.get('video_url') or '').strip() or None
+        image = request.FILES.get('image')
+
+        if not title or not content:
+            return HttpResponse("Titre et contenu obligatoires ❌")
+
+        post.title = title
+        post.content = content
+        post.video_url = video_url
+
+        if image:
+            post.image = image
+
+        if not post.published_at:
+            post.published_at = timezone.now()
+
+        post.save()
+
+        return redirect('/admins/info-posts/')
+
+    return render(request, 'admins/edit_info_post.html', {
+        'post': post
+    })
+
+
+@admin_session_required
+def delete_info_post(request, post_id):
+    if request.method != 'POST':
+        return redirect('/admins/info-posts/')
+
+    try:
+        post = InfoPost.objects.get(id=post_id)
+    except InfoPost.DoesNotExist:
+        return HttpResponse("Post introuvable ❌")
+
+    post.delete()
+    return redirect('/admins/info-posts/')    
+
+
+def member_info_posts(request):
+    member_id = request.session.get('member_id')
+    if not member_id:
+        return redirect('/admins/member-login/')
+
+    try:
+        member = Member.objects.get(id=member_id)
+    except Member.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/member-login/')
+
+    posts = InfoPost.objects.filter(is_published=True).order_by('-published_at', '-created_at')
+
+    return render(request, 'admins/member_info_posts.html', {
+        'member': member,
+        'posts': posts
+    })
+
 
 
 @super_admin_required
@@ -546,6 +659,136 @@ def member_space(request):
         'available_balance': available_balance,
         'recent_transactions': recent_transactions,
     })
+
+@admin_session_required
+def member_withdrawal(request):
+    member_id = request.session.get('member_id')
+
+    if not member_id:
+        return redirect('/admins/member-login/')
+
+    try:
+        member = Member.objects.get(id=member_id)
+    except Member.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/member-login/')
+
+    error_message = None
+    success_message = None
+
+    if request.method == 'POST':
+        amount = (request.POST.get('amount') or '').strip()
+        receiver_phone = (request.POST.get('receiver_phone') or '').strip()
+        reason = (request.POST.get('reason') or '').strip()
+        pin = (request.POST.get('pin') or '').strip()
+
+        try:
+            create_withdrawal_request(
+                member=member,
+                amount=amount,
+                receiver_phone=receiver_phone,
+                reason=reason,
+                pin=pin,
+            )
+            success_message = "Votre demande de retrait a été envoyée avec succès. Elle est en attente de validation."
+        except ValueError as e:
+            error_message = str(e)
+        except Exception:
+            error_message = "Une erreur est survenue lors de la demande de retrait."
+
+    available_balance = get_available_balance(member)
+
+    return render(request, 'admins/member_withdrawal.html', {
+        'member': member,
+        'available_balance': available_balance,
+        'error_message': error_message,
+        'success_message': success_message,
+    })
+
+@admin_session_required
+def withdrawal_requests(request):
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        return redirect('/admins/login/')
+
+    requests_list = WithdrawalRequest.objects.select_related(
+        'member',
+        'transaction',
+        'processed_by',
+    ).order_by('-created_at')
+
+    return render(request, 'admins/withdrawal_requests.html', {
+        'requests_list': requests_list,
+    })
+
+
+@admin_session_required
+def approve_withdrawal(request, withdrawal_id):
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        return redirect('/admins/login/')
+
+    if request.method != 'POST':
+        return redirect('/admins/withdrawal-requests/')
+
+    try:
+        admin_user = AdminUser.objects.get(id=admin_id)
+    except AdminUser.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/login/')
+
+    withdrawal_request = get_object_or_404(WithdrawalRequest, id=withdrawal_id)
+
+    admin_note = (request.POST.get('admin_note') or '').strip()
+
+    try:
+        approve_withdrawal_request(
+            withdrawal_request=withdrawal_request,
+            admin_user=admin_user,
+            admin_note=admin_note,
+        )
+    except ValueError as e:
+        return HttpResponse(str(e))
+    except Exception:
+        return HttpResponse("Erreur lors de la validation du retrait.")
+
+    return redirect('/admins/withdrawal-requests/')
+
+
+@admin_session_required
+def reject_withdrawal(request, withdrawal_id):
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        return redirect('/admins/login/')
+
+    if request.method != 'POST':
+        return redirect('/admins/withdrawal-requests/')
+
+    try:
+        admin_user = AdminUser.objects.get(id=admin_id)
+    except AdminUser.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/login/')
+
+    withdrawal_request = get_object_or_404(WithdrawalRequest, id=withdrawal_id)
+
+    admin_note = (request.POST.get('admin_note') or '').strip()
+
+    try:
+        reject_withdrawal_request(
+            withdrawal_request=withdrawal_request,
+            admin_user=admin_user,
+            admin_note=admin_note,
+        )
+    except ValueError as e:
+        return HttpResponse(str(e))
+    except Exception:
+        return HttpResponse("Erreur lors du refus du retrait.")
+
+    return redirect('/admins/withdrawal-requests/')
+
+
+
 
 
 @member_session_required
@@ -1036,4 +1279,82 @@ def member_transactions(request):
     return render(request, 'admins/member_transactions.html', {
         'member': member,
         'transactions': transactions
-    })    
+    }) 
+
+@admin_session_required
+def member_transaction_detail(request, transaction_id):
+    member_id = request.session.get('member_id')
+
+    if not member_id:
+        return redirect('/admins/member-login/')
+
+    try:
+        member = Member.objects.get(id=member_id)
+    except Member.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/member-login/')
+
+    transaction = get_object_or_404(
+        MemberTransaction,
+        id=transaction_id,
+        member=member
+    )
+
+    withdrawal_request = None
+    try:
+        withdrawal_request = transaction.withdrawal_request
+    except WithdrawalRequest.DoesNotExist:
+        withdrawal_request = None
+    except AttributeError:
+        withdrawal_request = None
+
+    return render(request, 'admins/member_transaction_detail.html', {
+        'member': member,
+        'transaction': transaction,
+        'withdrawal_request': withdrawal_request,
+    })   
+
+
+def member_profile(request):
+    try:
+        member = Member.objects.get(id=request.session.get('member_id'))
+    except Member.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/member-login/')
+
+    return render(request, 'admins/member_profile.html', {
+        'member': member
+    })
+
+
+def member_settings(request):
+    try:
+        member = Member.objects.get(id=request.session.get('member_id'))
+    except Member.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/member-login/')
+
+    return render(request, 'admins/member_settings.html', {
+        'member': member
+    })
+
+
+@admin_session_required
+def search_transactions(request):
+    admin_id = request.session.get('admin_id')
+
+    if not admin_id:
+        return redirect('/admins/login/')
+
+    query = (request.GET.get('q') or '').strip()
+    transactions = []
+
+    if query:
+        transactions = MemberTransaction.objects.select_related('member').filter(
+            receipt_number__icontains=query
+        ).order_by('-created_at')
+
+    return render(request, 'admins/search_transactions.html', {
+        'query': query,
+        'transactions': transactions,
+    })

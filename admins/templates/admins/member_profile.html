@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil membre</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #111827;
+        }
+
+        body {
+            padding-top: 78px;
+            padding-bottom: 100px;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            height: 78px;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        .header-logo img {
+            height: 85px;
+            width: auto;
+            object-fit: contain;
+            transform: translateX(-18px);
+        }
+
+        .header-nim {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            background: #f1f5f9;
+            padding: 8px 12px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            line-height: 1.2;
+        }
+
+        .nim-label {
+            font-size: 10px;
+            color: #6b7280;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        .nim-value {
+            font-size: 13px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .page {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 18px 16px 0;
+        }
+
+        .title-box {
+            margin-bottom: 18px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0 0 8px 0;
+            color: #111827;
+        }
+
+        .page-subtitle {
+            margin: 0;
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .profile-card {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            border-radius: 28px;
+            padding: 22px 18px;
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.18);
+            margin-bottom: 18px;
+        }
+
+        .profile-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .profile-photo-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .profile-photo {
+            width: 86px;
+            height: 86px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-photo-empty {
+            color: white;
+            font-size: 12px;
+            text-align: center;
+            padding: 8px;
+            line-height: 1.4;
+        }
+
+        .cert-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(59, 130, 246, 0.16);
+            border: 1px solid rgba(96, 165, 250, 0.35);
+            color: #bfdbfe;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .cert-badge svg {
+            width: 16px;
+            height: 16px;
+            fill: #3b82f6;
+        }
+
+        .profile-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .profile-name {
+            font-size: 24px;
+            font-weight: bold;
+            line-height: 1.25;
+            margin-bottom: 8px;
+            word-break: break-word;
+        }
+
+        .profile-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+        }
+
+        .status-suspended .status-dot {
+            background: #ef4444;
+        }
+
+        .status-inactive .status-dot {
+            background: #9ca3af;
+        }
+
+        .profile-meta-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .meta-item {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 12px;
+        }
+
+        .meta-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.75);
+            margin-bottom: 6px;
+        }
+
+        .meta-value {
+            font-size: 14px;
+            font-weight: bold;
+            word-break: break-word;
+        }
+
+        .info-section {
+            background: white;
+            border-radius: 24px;
+            padding: 20px 16px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            margin: 0 0 16px 0;
+            font-size: 22px;
+            color: #111827;
+        }
+
+        .info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .info-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            padding: 14px;
+        }
+
+        .info-icon {
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            border-radius: 14px;
+            background: #edf4ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .info-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: #2563eb;
+        }
+
+        .info-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .info-label {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: #111827;
+            line-height: 1.5;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .notice-box {
+            background: #eef4ff;
+            border: 1px solid #dbeafe;
+            color: #1e3a8a;
+            border-radius: 18px;
+            padding: 16px 14px;
+            font-size: 14px;
+            line-height: 1.7;
+            margin-top: 14px;
+        }
+
+        .footer-nav {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid #e5e7eb;
+            padding: 10px 8px 14px;
+        }
+
+        .footer-nav-inner {
+            max-width: 500px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            color: #6b7280;
+            padding: 8px 3px;
+            border-radius: 14px;
+            min-height: 62px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .nav-item.active {
+            background: #eaf2ff;
+            color: #2563eb;
+        }
+
+        .nav-item svg {
+            width: 22px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.1;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+        }
+
+        @media (max-width: 420px) {
+            .page-title {
+                font-size: 24px;
+            }
+
+            .profile-top {
+                align-items: flex-start;
+            }
+
+            .profile-name {
+                font-size: 21px;
+            }
+
+            .profile-meta-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-logo">
+            <img src="/static/images/logo.png" alt="FondAction Logo">
+        </div>
+
+        <div class="header-nim">
+            <span class="nim-label">NIM</span>
+            <span class="nim-value">{{ member.nim }}</span>
+        </div>
+    </header>
+
+    <main class="page">
+        <section class="title-box">
+            <h1 class="page-title">Profil</h1>
+            <p class="page-subtitle">
+                Retrouvez ici vos informations personnelles.
+            </p>
+        </section>
+
+        <section class="profile-card">
+            <div class="profile-top">
+                <div class="profile-photo-box">
+                    <div class="profile-photo">
+                        {% if member.photo %}
+                            <img src="{{ member.photo.url }}" alt="Photo membre">
+                        {% else %}
+                            <div class="profile-photo-empty">Aucune photo</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="cert-badge">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10.5857,2.10056 C11.3256895,1.36061789 12.5011493,1.32167357 13.2868927,1.98372704 L13.4141,2.10056 L15.3136,4.00005 L17.9999,4.00005 C19.0542909,4.00005 19.9180678,4.81592733 19.9944144,5.85078759 L19.9999,6.00005 L19.9999,8.68632 L21.8994,10.5858 C22.6393895,11.3257895 22.6783363,12.5012493 22.0162404,13.2870778 L21.8994,13.4143 L19.9999,15.3138 L19.9999,18.0001 C19.9999,19.0543955 19.18405,19.9182591 18.1491661,19.9946139 L17.9999,20.0001 L15.3136,20.0001 L13.4141,21.8995 C12.6742053,22.6394895 11.4987504,22.6784363 10.7129222,22.0163404 L10.5857,21.8995 L8.68622,20.0001 L5.99991,20.0001 C4.94554773,20.0001 4.08174483,19.1841589 4.00539573,18.1493537 L3.99991,18.0001 L3.99991,15.3137 L2.10043,13.4143 C1.36049737,12.6743105 1.32155355,11.4988507 1.98360703,10.7130222 L2.10044,10.5858 L3.99991,8.68636 L3.99991,6.00005 C3.99991,4.94568773 4.81578733,4.08188483 5.85064759,4.00553573 L5.99991,4.00005 L8.68622,4.00005 L10.5857,2.10056 Z M11.9999,3.51477 L10.1004,5.41426 C9.76703111,5.74766444 9.32804642,5.9511963 8.86207199,5.99230949 L8.68622,6.00005 L5.99991,6.00005 L5.99991,8.68636 C5.99991,9.15786222 5.83342309,9.61218716 5.53299532,9.97077196 L5.41412,10.1006 L3.51465,12.0001 L5.41412,13.8995 C5.74752444,14.2329222 5.9510563,14.6719049 5.99216949,15.1378572 L5.99991,15.3137 L5.99991,18.0001 L8.68622,18.0001 C9.15772222,18.0001 9.61204716,18.166579 9.97058982,18.4669488 L10.1004,18.5858 L11.9999,20.4853 L13.8994,18.5858 C14.2328222,18.2524667 14.6718049,18.0489506 15.1377572,18.0078401 L15.3136,18.0001 L17.9999,18.0001 L17.9999,15.3138 C17.9999,14.8422444 18.166379,14.3879136 18.4668191,14.0293984 L18.5857,13.8996 L20.4852,12.0001 L18.5857,10.1005 C18.2522778,9.76714 18.0487519,9.3281563 18.0076402,8.86217495 L17.9999,8.68632 L17.9999,6.00005 L15.3136,6.00005 C14.8421333,6.00005 14.3878123,5.83356309 14.029228,5.53313532 L13.8994,5.41426 L11.9999,3.51477 Z M15.0793,8.98261 C15.4698,8.59209 16.103,8.59209 16.4935,8.98261 C16.8540538,9.34309923 16.8817888,9.91032645 16.5767047,10.3025979 L16.4935,10.3968 L11.6126,15.2778 C11.2136857,15.6766214 10.5846383,15.7051087 10.1529279,15.3632617 L10.057,15.2778 L7.6528,12.8736 C7.26228,12.4831 7.26228,11.8499 7.6528,11.4594 C8.01328,11.0989385 8.58051503,11.0712107 8.9728035,11.3762166 L9.06701,11.4594 L10.8348,13.2271 L15.0793,8.98261 Z"></path>
+                        </svg>
+                        <span>Compte certifié</span>
+                    </div>
+                </div>
+
+                <div class="profile-main">
+                    <div class="profile-name">
+                        {{ member.last_name|default:"" }} {{ member.first_name|default:"" }}
+                    </div>
+
+                    {% if member.status == 'active' %}
+                        <div class="profile-status">
+                            <span class="status-dot"></span>
+                            <span>Membre actif</span>
+                        </div>
+                    {% elif member.status == 'suspended' %}
+                        <div class="profile-status status-suspended">
+                            <span class="status-dot"></span>
+                            <span>Membre suspendu</span>
+                        </div>
+                    {% else %}
+                        <div class="profile-status status-inactive">
+                            <span class="status-dot"></span>
+                            <span>Membre inactif</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="profile-meta-grid">
+                <div class="meta-item">
+                    <div class="meta-label">NIM</div>
+                    <div class="meta-value">{{ member.nim|default:"—" }}</div>
+                </div>
+
+            </div>
+        </section>
+
+        <section class="info-section">
+            <h2 class="section-title">Informations personnelles</h2>
+
+            <div class="info-list">
+                <div class="info-item">
+                    <div class="info-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                        </svg>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Nom complet</div>
+                        <div class="info-value">{{ member.last_name|default:"—" }} {{ member.first_name|default:"—" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
+                        </svg>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Téléphone</div>
+                        <div class="info-value">{{ member.phone|default:"—" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                        </svg>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Date de naissance</div>
+                        <div class="info-value">{{ member.birth_date|date:"d/m/Y"|default:"—" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                        </svg>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Lieu de naissance</div>
+                        <div class="info-value">{{ member.birth_place|default:"—" }}</div>
+                    </div>
+                </div>
+
+
+<div class="info-item">
+                    <div class="info-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205 3 1m1.5.5-1.5-.5M6.75 7.364V3h-3v18m3-13.636 10.5-3.819" />
+                        </svg>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Département</div>
+                        <div class="info-value">{{ member.department|default:"—" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205 3 1m1.5.5-1.5-.5M6.75 7.364V3h-3v18m3-13.636 10.5-3.819" />
+                        </svg>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Commune</div>
+                        <div class="info-value">{{ member.commune|default:"—" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205 3 1m1.5.5-1.5-.5M6.75 7.364V3h-3v18m3-13.636 10.5-3.819" />
+                        </svg>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Ville</div>
+                        <div class="info-value">{{ member.city|default:"—" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                        </svg>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Quartier / Arrondissement</div>
+                        <div class="info-value">{{ member.district|default:"—" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" />
+                        </svg>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Type de pièce</div>
+                        <div class="info-value">{{ member.id_card_type|default:"—" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" />
+                        </svg>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Numéro de pièce</div>
+                        <div class="info-value">{{ member.id_card_number|default:"—" }}</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                        </svg>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-label">Date d’adhésion</div>
+                        <div class="info-value">{{ member.created_at|date:"d/m/Y"|default:"—" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="notice-box">
+                En cas d’anomalie ou de non-conformité dans vos informations, merci de contacter l’administration pour correction.
+            </div>
+        </section>
+    </main>
+
+    <nav class="footer-nav">
+        <div class="footer-nav-inner">
+            <a href="/admins/member-space/" class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
+                <div class="nav-label">Accueil</div>
+            </a>
+
+            <a href="/admins/member-card/" class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" />
+                </svg>
+                <div class="nav-label">Carte</div>
+            </a>
+
+            <a href="/admins/member-infos/" class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                </svg>
+                <div class="nav-label">Infos</div>
+            </a>
+
+            <a href="/admins/member-profile/" class="nav-item active">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+                <div class="nav-label">Profil</div>
+            </a>
+
+            <a href="/admins/member-settings/" class="nav-item">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+                <div class="nav-label">Paramètres</div>
+            </a>
+        </div>
+    </nav>
+
+</body>
+</html>                

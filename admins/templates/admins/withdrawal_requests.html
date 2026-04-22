@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demandes de retrait</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #111827;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+        }
+
+        .row {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .actions form {
+            margin: 0;
+        }
+
+        .actions textarea {
+            width: 260px;
+            min-height: 70px;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            padding: 10px;
+            resize: vertical;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+        }
+
+        .btn-green {
+            background: #16a34a;
+        }
+
+        .btn-red {
+            background: #dc2626;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .approved {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Demandes de retrait</h1>
+
+    <div class="list">
+        {% for item in requests_list %}
+            <div class="card">
+                <div class="row"><strong>Membre :</strong> {{ item.member.last_name }} {{ item.member.first_name }}</div>
+                <div class="row"><strong>NIM :</strong> {{ item.member.nim }}</div>
+                <div class="row"><strong>Montant :</strong> {{ item.amount }} FCFA</div>
+                <div class="row"><strong>Numéro destinataire :</strong> {{ item.receiver_phone }}</div>
+                <div class="row"><strong>Motif :</strong> {{ item.reason|default:"—" }}</div>
+                <div class="row"><strong>Date :</strong> {{ item.created_at|date:"d/m/Y H:i" }}</div>
+                <div class="row">
+                    <strong>Statut :</strong>
+                    <span class="status {{ item.status }}">{{ item.status }}</span>
+                </div>
+
+                {% if item.status == 'pending' %}
+                    <div class="actions">
+                        <form method="POST" action="/admins/withdrawal-requests/{{ item.id }}/approve/">
+                            {% csrf_token %}
+                            <textarea name="admin_note" placeholder="Note admin (optionnelle)"></textarea><br>
+                            <button type="submit" class="btn btn-green">Valider</button>
+                        </form>
+
+                        <form method="POST" action="/admins/withdrawal-requests/{{ item.id }}/reject/">
+                            {% csrf_token %}
+                            <textarea name="admin_note" placeholder="Raison du refus (optionnelle)"></textarea><br>
+                            <button type="submit" class="btn btn-red">Refuser</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+        {% empty %}
+            <div class="card">
+                Aucune demande de retrait pour le moment.
+            </div>
+        {% endfor %}
+    </div>
+
+</body>
+</html>

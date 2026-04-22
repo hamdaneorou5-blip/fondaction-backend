@@ -1,0 +1,554 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reçu de transaction</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #111827;
+        }
+
+        body {
+            padding-bottom: 40px;
+        }
+
+        .page {
+            max-width: 620px;
+            margin: 0 auto;
+            padding: 18px 16px 0;
+        }
+
+        .simple-header {
+            background: white;
+            border-radius: 24px;
+            padding: 22px 18px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+            margin-bottom: 16px;
+        }
+
+        .simple-header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .back-btn,
+        .download-btn {
+            display: inline-block;
+            background: #111827;
+            color: white;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .download-btn {
+            background: #16a34a;
+        }
+
+        .back-btn:hover {
+            background: #000;
+            transform: translateY(-1px);
+        }
+
+        .download-btn:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+        .receipt-wrapper {
+            background: white;
+            border-radius: 24px;
+            padding: 22px 18px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+        }
+
+        .receipt {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 22px;
+            overflow: hidden;
+        }
+
+        .receipt-top {
+    background: #ffffff;   /* fond blanc */
+    color: #111827;        /* texte noir */
+    border-bottom: 1px solid #e5e7eb;
+}
+
+        .receipt-brand {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .receipt-logo-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .receipt-logo {
+            height: 54px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .receipt-brand-text h2 {
+            margin: 0;
+            font-size: 22px;
+            line-height: 1.2;
+        }
+
+        .receipt-brand-text p {
+    color: #6b7280; /* gris normal au lieu de blanc */
+}
+
+        .receipt-status {
+            text-align: right;
+        }
+
+        .receipt-status-label {
+    color: #6b7280;
+}
+
+        .status-badge {
+            display: inline-block;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .receipt-body {
+            padding: 18px;
+        }
+
+        .receipt-title-box {
+            margin-bottom: 18px;
+        }
+
+        .receipt-title {
+            margin: 0;
+            font-size: 24px;
+            color: #111827;
+        }
+
+        .receipt-subtitle {
+            margin: 8px 0 0 0;
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .amount-box {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            padding: 16px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .amount-label {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .amount-value {
+            font-size: 30px;
+            font-weight: bold;
+            color: #166534;
+            line-height: 1.2;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .detail-item {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 14px;
+        }
+
+        .detail-item.full {
+            grid-column: 1 / -1;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: #111827;
+            line-height: 1.6;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .section-box {
+            margin-top: 10px;
+            margin-bottom: 16px;
+        }
+
+        .section-box h3 {
+            margin: 0 0 12px 0;
+            font-size: 18px;
+            color: #111827;
+        }
+
+        .receipt-note {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e3a8a;
+            border-radius: 14px;
+            padding: 14px 16px;
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .receipt-footer {
+            border-top: 1px dashed #d1d5db;
+            padding: 16px 18px 20px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .receipt-footer strong {
+            color: #111827;
+        }
+
+        @media (max-width: 640px) {
+            .simple-header h1 {
+                font-size: 24px;
+            }
+
+            .receipt-brand {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .receipt-status {
+                text-align: left;
+            }
+
+            .receipt-brand-text h2 {
+                font-size: 20px;
+            }
+
+            .amount-value {
+                font-size: 26px;
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .simple-header {
+                display: none;
+            }
+
+            .receipt-wrapper {
+                box-shadow: none;
+                padding: 0;
+                background: transparent;
+            }
+
+            .receipt {
+                border: none;
+                box-shadow: none;
+            }
+        }
+
+        .receipt-header-centered {
+    text-align: center;
+    padding: 18px 10px;
+}
+
+.receipt-main-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: bold;
+    color: #111827;
+}
+
+.receipt-sub-title {
+    margin: 6px 0 10px 0;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.receipt-status-centered {
+    margin-top: 6px;
+}
+
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <div class="simple-header">
+        <h1>Reçu de transaction</h1>
+        <div class="header-actions">
+            <a href="/admins/member-transactions/" class="back-btn">Retour aux transactions</a>
+            <button type="button" class="download-btn" onclick="downloadReceiptPDF()">Télécharger le reçu</button>
+        </div>
+    </div>
+
+    <div class="receipt-wrapper" id="receipt-area">
+        <div class="receipt">
+            <div class="receipt-top">
+                <div class="receipt-header-centered">
+    <h2 class="receipt-main-title">FondAction SARL</h2>
+    <p class="receipt-sub-title">Reçu officiel de transaction</p>
+
+    <div class="receipt-status-centered">
+        {% if transaction.status == 'success' %}
+            <span class="status-badge success">Succès</span>
+        {% elif transaction.status == 'pending' %}
+            <span class="status-badge pending">En attente</span>
+        {% else %}
+            <span class="status-badge failed">Échoué</span>
+        {% endif %}
+    </div>
+</div>
+            </div>
+
+            <div class="receipt-body">
+                <div class="receipt-title-box">
+                    <h2 class="receipt-title">Reçu n° {{ transaction.reference }}</h2>
+                    <p class="receipt-subtitle">
+                        Ce document atteste l’enregistrement de votre opération dans le système FondAction.
+                    </p>
+                </div>
+
+                <div class="amount-box">
+                    <div class="amount-label">Montant de l’opération</div>
+                    <div class="amount-value">{{ transaction.amount }} FCFA</div>
+                </div>
+
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Référence</div>
+                        <div class="detail-value">{{ transaction.reference }}</div>
+                    </div>
+
+                    <div class="detail-item">
+                      <div class="detail-label">Numéro de reçu</div>
+                      <div class="detail-value">{{ transaction.receipt_number|default:"—" }}</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">Type de transaction</div>
+                        <div class="detail-value">{{ transaction.transaction_type }}</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">Nom du membre</div>
+                        <div class="detail-value">{{ member.last_name }} {{ member.first_name }}</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">NIM</div>
+                        <div class="detail-value">{{ member.nim }}</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">Date de création</div>
+                        <div class="detail-value">{{ transaction.created_at|date:"d/m/Y H:i" }}</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">Date de validation</div>
+                        <div class="detail-value">
+                            {% if transaction.validated_at %}
+                                {{ transaction.validated_at|date:"d/m/Y H:i" }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="detail-item full">
+                        <div class="detail-label">Description</div>
+                        <div class="detail-value">{{ transaction.description|default:"—" }}</div>
+                    </div>
+                </div>
+
+                {% if withdrawal_request %}
+                <div class="section-box">
+                    <h3>Détails du retrait</h3>
+
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Numéro destinataire</div>
+                            <div class="detail-value">{{ withdrawal_request.receiver_phone }}</div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-label">Statut de la demande</div>
+                            <div class="detail-value">{{ withdrawal_request.status }}</div>
+                        </div>
+
+                        <div class="detail-item full">
+                            <div class="detail-label">Motif</div>
+                            <div class="detail-value">{{ withdrawal_request.reason|default:"—" }}</div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-label">Traité le</div>
+                            <div class="detail-value">
+                                {% if withdrawal_request.processed_at %}
+                                    {{ withdrawal_request.processed_at|date:"d/m/Y H:i" }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="detail-item">
+                            <div class="detail-label">Note admin</div>
+                            <div class="detail-value">{{ withdrawal_request.admin_note|default:"—" }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="receipt-note">
+                    Conservez ce reçu comme justificatif. Il peut être téléchargé en PDF et présenté en cas de besoin.
+                </div>
+            </div>
+
+            <div class="receipt-footer">
+                <div><strong>FondAction SARL</strong></div>
+                <div>Document généré depuis l’espace membre</div>
+                <div>Date d’émission : {% now "d/m/Y H:i" %}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/html2canvas.min.js' %}"></script>
+<script src="{% static 'js/jspdf.umd.min.js' %}"></script>
+
+<script>
+async function waitForImages(container) {
+    const images = container.querySelectorAll('img');
+    const promises = [];
+
+    images.forEach((img) => {
+        if (img.complete) {
+            return;
+        }
+
+        promises.push(new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+        }));
+    });
+
+    await Promise.all(promises);
+}
+
+async function downloadReceiptPDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const receiptArea = document.getElementById('receipt-area');
+
+        await waitForImages(receiptArea);
+
+        const canvas = await html2canvas(receiptArea, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: "#ffffff"
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        const margin = 8;
+        const maxWidth = pageWidth - (margin * 2);
+        const maxHeight = pageHeight - (margin * 2);
+
+        let imgWidth = maxWidth;
+        let imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        if (imgHeight > maxHeight) {
+            imgHeight = maxHeight;
+            imgWidth = (canvas.width * imgHeight) / canvas.height;
+        }
+
+        const x = (pageWidth - imgWidth) / 2;
+        const y = margin;
+
+        pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+        pdf.save('recu-{{ transaction.reference }}.pdf');
+    } catch (error) {
+        console.error(error);
+        alert("Erreur lors du téléchargement du reçu.");
+    }
+}
+</script>
+
+</body>
+</html>

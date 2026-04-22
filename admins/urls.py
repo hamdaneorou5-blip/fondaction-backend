@@ -37,6 +37,20 @@ from .web_views import (
     start_member_payment,
     payment_return,
     member_transactions,
+    info_post_list,
+    create_info_post,
+    member_info_posts,
+    edit_info_post,
+    delete_info_post,
+    member_profile,
+    member_settings,
+    member_withdrawal,
+    withdrawal_requests,
+    approve_withdrawal,
+    reject_withdrawal,
+    member_transaction_detail,
+    search_transactions,
+
 )
 
 from .api_views import (
@@ -102,6 +116,20 @@ urlpatterns = [
     path('api/members/history/', api_member_history, name='api_member_history'),
     path('api/member/login/', api_member_login, name='api_member_login'),
     path('api/fedapay/webhook/', fedapay_webhook, name='fedapay_webhook'),
-    
+    path('info-posts/', info_post_list),
+    path('info-posts/create/', create_info_post),
+    path('member-infos/', member_info_posts),
+    path('info-posts/<int:post_id>/edit/', edit_info_post),
+    path('info-posts/<int:post_id>/delete/', delete_info_post),
+    path('member-infos/', member_info_posts),
+    path('member-profile/', member_profile),
+    path('member-settings/', member_settings),
+    path('member-withdrawal/', member_withdrawal),
+    path('withdrawal-requests/', withdrawal_requests),
+    path('withdrawal-requests/<int:withdrawal_id>/approve/', approve_withdrawal),
+    path('withdrawal-requests/<int:withdrawal_id>/reject/', reject_withdrawal),
+    path('member-transaction/<int:transaction_id>/', member_transaction_detail),
+    path('search-transactions/', search_transactions),
+
 
 ]

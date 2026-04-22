@@ -1,110 +1,246 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mes transactions</title>
     <style>
-        body {
-            font-family: Arial;
-            background: #f3f4f6;
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
             margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #111827;
+        }
+
+        body {
+            padding-top: 0;
+            padding-bottom: 40px;
         }
 
         .page {
-            max-width: 1000px;
-            margin: 40px auto;
-            padding: 20px;
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 18px 16px 0;
+        }
+
+        .simple-header {
+            background: white;
+            border-radius: 24px;
+            padding: 22px 18px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+            margin-bottom: 16px;
+        }
+
+        .simple-header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 12px;
+            background: #111827;
+            color: white;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: #000;
+            transform: translateY(-1px);
         }
 
         .card {
             background: white;
-            border-radius: 18px;
-            padding: 24px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            border-radius: 24px;
+            padding: 20px 16px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
         }
 
-        h1 {
-            margin-top: 0;
+        .card h2 {
+            margin: 0 0 16px 0;
+            font-size: 22px;
+            color: #111827;
+        }
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            background: white;
+            min-width: 700px;
         }
 
         th, td {
-            padding: 14px;
-            border-bottom: 1px solid #eee;
+            padding: 14px 12px;
+            border-bottom: 1px solid #e5e7eb;
             text-align: left;
+            font-size: 14px;
+            vertical-align: middle;
         }
 
         th {
-            background: #f9fafb;
+            background: #f8fafc;
+            color: #111827;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .tx-ref {
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .tx-amount {
+            font-weight: bold;
+            color: #166534;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
         }
 
         .success {
-            color: green;
-            font-weight: bold;
+            background: #dcfce7;
+            color: #166534;
         }
 
         .pending {
-            color: orange;
-            font-weight: bold;
+            background: #fef3c7;
+            color: #92400e;
         }
 
         .failed {
-            color: red;
-            font-weight: bold;
+            background: #fee2e2;
+            color: #991b1b;
         }
 
-        .btn-back {
+        .view-btn {
             display: inline-block;
-            margin-bottom: 15px;
+            background: #eff6ff;
+            color: #1d4ed8;
             text-decoration: none;
-            color: #2563eb;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 13px;
             font-weight: bold;
+            border: 1px solid #bfdbfe;
+            transition: 0.2s ease;
         }
 
+        .view-btn:hover {
+            background: #dbeafe;
+            transform: translateY(-1px);
+        }
+
+        .empty-box {
+            text-align: center;
+            padding: 28px 16px;
+            color: #6b7280;
+            line-height: 1.7;
+        }
+
+        @media (max-width: 520px) {
+            .simple-header h1 {
+                font-size: 24px;
+            }
+
+            .card h2 {
+                font-size: 20px;
+            }
+
+            th, td {
+                font-size: 13px;
+                padding: 12px 10px;
+            }
+
+            .view-btn {
+                font-size: 12px;
+                padding: 7px 10px;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div class="page">
-    <a href="/admins/member-space/" class="btn-back">← Retour</a>
+    <div class="simple-header">
+        <h1>Mes transactions</h1>
+        <a href="/admins/member-space/" class="back-btn">Retour à l’espace membre</a>
+    </div>
 
     <div class="card">
-        <h1>📄 Mes transactions</h1>
+        <h2>Historique des transactions</h2>
 
-        <table>
-            <tr>
-                <th>Référence</th>
-                <th>Type</th>
-                <th>Montant</th>
-                <th>Statut</th>
-                <th>Date</th>
-            </tr>
+        <div class="table-wrap">
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Référence</th>
+                    <th>Type</th>
+                    <th>Montant</th>
+                    <th>Statut</th>
+                    <th>Date</th>
+                    <th>Voir</th>
+                </tr>
 
-            {% for tx in transactions %}
-            <tr>
-                <td>{{ tx.reference }}</td>
-                <td>{{ tx.transaction_type }}</td>
-                <td>{{ tx.amount }} FCFA</td>
-                <td>
-                    {% if tx.status == 'success' %}
-                        <span class="success">Succès</span>
-                    {% elif tx.status == 'pending' %}
-                        <span class="pending">En attente</span>
-                    {% else %}
-                        <span class="failed">Échoué</span>
-                    {% endif %}
-                </td>
-                <td>{{ tx.created_at|date:"d/m/Y H:i" }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5">Aucune transaction pour le moment</td>
-            </tr>
-            {% endfor %}
-        </table>
+                {% for tx in transactions %}
+                <tr>
+                    <td>#{{ tx.id }}</td>
+    <td class="tx-ref">{{ tx.reference }}</td>
+    <td>{{ tx.transaction_type }}</td>
+    <td class="tx-amount">{{ tx.amount }} FCFA</td>
+                    <td>
+                        {% if tx.status == 'success' %}
+                            <span class="status-badge success">Succès</span>
+                        {% elif tx.status == 'pending' %}
+                            <span class="status-badge pending">En attente</span>
+                        {% else %}
+                            <span class="status-badge failed">Échoué</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ tx.created_at|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <a href="/admins/member-transaction/{{ tx.id }}/" class="view-btn">Voir</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-box">
+                            Aucune transaction pour le moment.
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
     </div>
 </div>
 

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifier une publication</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 28px;
+            color: #111827;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #111827;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #d1d5db;
+            font-size: 15px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 130px;
+        }
+
+        input[type="file"] {
+            padding: 8px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-weight: bold;
+            text-decoration: none;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #374151;
+            color: white;
+            margin-right: 10px;
+        }
+
+        .actions {
+            margin-top: 20px;
+        }
+
+        .hint {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+
+        .current-image {
+            margin-top: 12px;
+        }
+
+        .current-image img {
+            width: 100%;
+            max-width: 280px;
+            max-height: 220px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 20px;
+            }
+
+            .actions {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .btn-secondary,
+            .btn-primary {
+                width: 100%;
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h1>Modifier une publication</h1>
+        <p class="subtitle">Mets à jour le contenu de ton post puis enregistre les changements.</p>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Titre</label>
+                <input type="text" name="title" value="{{ post.title }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Contenu</label>
+                <textarea name="content" required>{{ post.content }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Lien vidéo YouTube (optionnel)</label>
+                <input type="url" name="video_url" value="{{ post.video_url|default:'' }}">
+                <div class="hint">Tu peux coller un lien YouTube normal.</div>
+            </div>
+
+            <div class="form-group">
+                <label>Nouvelle image (optionnelle)</label>
+                <input type="file" name="image" accept="image/*">
+                <div class="hint">Si tu choisis une nouvelle image, elle remplacera l’ancienne.</div>
+
+                {% if post.image %}
+                    <div class="current-image">
+                        <p><strong>Image actuelle :</strong></p>
+                        <img src="{{ post.image.url }}" alt="{{ post.title }}">
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="actions">
+                <a href="/admins/info-posts/" class="btn btn-secondary">← Retour</a>
+                <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

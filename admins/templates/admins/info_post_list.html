@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des publications</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+            color: #111827;
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 35px auto;
+            padding: 20px;
+        }
+
+        .topbar {
+            background: white;
+            border-radius: 22px;
+            padding: 26px 30px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+            margin-bottom: 25px;
+        }
+
+        .topbar h1 {
+            margin: 0 0 10px 0;
+            font-size: 34px;
+            color: #111827;
+        }
+
+        .topbar p {
+            margin: 0;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .top-actions {
+            margin-top: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            text-align: center;
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 15px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-blue {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-dark {
+            background: #374151;
+            color: white;
+        }
+
+        .btn-green {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-orange {
+            background: #ea580c;
+            color: white;
+        }
+
+        .btn-red {
+            background: #dc2626;
+            color: white;
+        }
+
+        .posts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .post-card {
+            background: white;
+            border-radius: 22px;
+            overflow: hidden;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .post-image img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .post-body {
+            padding: 22px;
+        }
+
+        .post-title {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+            color: #111827;
+        }
+
+        .post-meta {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 14px;
+            line-height: 1.6;
+        }
+
+        .post-content {
+            font-size: 16px;
+            color: #374151;
+            line-height: 1.8;
+            white-space: pre-line;
+        }
+
+        .video-link {
+            margin-top: 16px;
+            padding: 14px 16px;
+            background: #f9fafb;
+            border-radius: 14px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .video-link a {
+            color: #dc2626;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .post-actions {
+            margin-top: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .empty-box {
+            background: white;
+            border-radius: 22px;
+            padding: 40px 24px;
+            text-align: center;
+            color: #6b7280;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .empty-box h2 {
+            margin-top: 0;
+            color: #111827;
+        }
+
+        .delete-form {
+            display: inline;
+        }
+
+        @media (max-width: 768px) {
+            .page {
+                padding: 14px;
+                margin: 20px auto;
+            }
+
+            .topbar {
+                padding: 22px 18px;
+            }
+
+            .topbar h1 {
+                font-size: 28px;
+            }
+
+            .post-title {
+                font-size: 23px;
+            }
+
+            .post-image img {
+                height: 220px;
+            }
+
+            .top-actions,
+            .post-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <div class="topbar">
+        <h1>Liste des publications</h1>
+        <p>Gérez ici toutes les informations publiées pour les membres.</p>
+
+        <div class="top-actions">
+            <a href="/admins/info-posts/create/" class="btn btn-blue">➕ Créer un post</a>
+            <a href="/admins/admins-hub/" class="btn btn-dark">← Retour</a>
+        </div>
+    </div>
+
+    {% if posts %}
+        <div class="posts-list">
+            {% for post in posts %}
+                <div class="post-card">
+                    {% if post.image %}
+                        <div class="post-image">
+                            <img src="{{ post.image.url }}" alt="{{ post.title }}">
+                        </div>
+                    {% endif %}
+
+                    <div class="post-body">
+                        <h2 class="post-title">{{ post.title }}</h2>
+
+                        <div class="post-meta">
+                            Publié le
+                            {% if post.published_at %}
+                                {{ post.published_at|date:"d/m/Y à H:i" }}
+                            {% else %}
+                                {{ post.created_at|date:"d/m/Y à H:i" }}
+                            {% endif %}
+                            {% if post.created_by %}
+                                • par {{ post.created_by.first_name }} {{ post.created_by.last_name }}
+                            {% endif %}
+                        </div>
+
+                        <div class="post-content">{{ post.content }}</div>
+
+                        {% if post.video_url %}
+                            <div class="video-link">
+                                <a href="{{ post.video_url }}" target="_blank">▶ Voir la vidéo sur YouTube</a>
+                            </div>
+                        {% endif %}
+
+                        <div class="post-actions">
+                            <a href="/admins/info-posts/{{ post.id }}/edit/" class="btn btn-orange">Modifier</a>
+
+                            <form method="POST" action="/admins/info-posts/{{ post.id }}/delete/" class="delete-form" onsubmit="return confirm('Supprimer ce post ?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-red">Supprimer</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-box">
+            <h2>Aucun post disponible</h2>
+            <p>Commence par publier une première information pour les membres.</p>
+        </div>
+    {% endif %}
+</div>
+
+</body>
+</html>
