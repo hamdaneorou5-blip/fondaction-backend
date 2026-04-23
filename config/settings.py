@@ -123,6 +123,7 @@ STATICFILES_DIRS = [
 FEDAPAY_MODE = os.getenv("FEDAPAY_MODE", "sandbox")
 FEDAPAY_PUBLIC_KEY = os.getenv("FEDAPAY_PUBLIC_KEY", "")
 FEDAPAY_SECRET_KEY = os.getenv("FEDAPAY_SECRET_KEY", "")
+FEDAPAY_WEBHOOK_SECRET = os.getenv("FEDAPAY_WEBHOOK_SECRET", "")
 
 if FEDAPAY_MODE == "sandbox":
     FEDAPAY_API_BASE = "https://sandbox-api.fedapay.com/v1"

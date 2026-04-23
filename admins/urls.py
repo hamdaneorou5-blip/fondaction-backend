@@ -50,6 +50,10 @@ from .web_views import (
     reject_withdrawal,
     member_transaction_detail,
     search_transactions,
+    member_assistance,
+    global_admin_performance,
+    export_global_admin_performance_excel,
+    export_admins_summary_excel,
 
 )
 
@@ -58,8 +62,7 @@ from .api_views import (
     api_change_admin_password,
     api_create_member,
     api_member_history,
-    get_member_by_nim,
-    api_member_login,
+    api_get_member_by_nim,
     fedapay_webhook,
 
 )
@@ -74,7 +77,7 @@ urlpatterns = [
 
     path('list/', admin_list),
     path('create/', create_admin),
-    path('member-by-nim/', get_member_by_nim),
+    path('api/member-by-nim/', api_get_member_by_nim, name='api_member_by_nim'),
     path('change-password/', change_admin_password),
 
     path('admins/<int:admin_id>/', admin_detail),
@@ -114,11 +117,9 @@ urlpatterns = [
     path('api/change-password/', api_change_admin_password, name='api_change_admin_password'),
     path('api/members/create/', api_create_member, name='api_create_member'),
     path('api/members/history/', api_member_history, name='api_member_history'),
-    path('api/member/login/', api_member_login, name='api_member_login'),
     path('api/fedapay/webhook/', fedapay_webhook, name='fedapay_webhook'),
     path('info-posts/', info_post_list),
     path('info-posts/create/', create_info_post),
-    path('member-infos/', member_info_posts),
     path('info-posts/<int:post_id>/edit/', edit_info_post),
     path('info-posts/<int:post_id>/delete/', delete_info_post),
     path('member-infos/', member_info_posts),
@@ -130,6 +131,9 @@ urlpatterns = [
     path('withdrawal-requests/<int:withdrawal_id>/reject/', reject_withdrawal),
     path('member-transaction/<int:transaction_id>/', member_transaction_detail),
     path('search-transactions/', search_transactions),
-
+    path('member-assistance/', member_assistance),
+    path('admins/performance/', global_admin_performance),
+    path('admins/performance/export/', export_global_admin_performance_excel),
+    path('admins/performance/admins-summary/export/', export_admins_summary_excel),
 
 ]

@@ -153,8 +153,11 @@ def create_withdrawal_request(member, amount, receiver_phone, reason, pin):
         amount=amount,
         reference=generate_reference('WDR'),
         status='pending',
-        description=reason or 'Demande de retrait',
+        description='Retrait',
     )
+
+    transaction_record.receipt_number = generate_receipt_number(transaction_record)
+    transaction_record.save(update_fields=['receipt_number'])
 
     withdrawal_request = WithdrawalRequest.objects.create(
         member=member,
@@ -164,20 +167,6 @@ def create_withdrawal_request(member, amount, receiver_phone, reason, pin):
         reason=reason or '',
         status='pending',
     )
-
-    transaction_record = MemberTransaction.objects.create(
-        member=member,
-        transaction_type='withdrawal',
-        amount=amount,
-        reference=generate_reference('WDR'),
-        status='pending',
-        description='Retrait',
-    )
-
-
-    transaction_record.receipt_number = generate_receipt_number(transaction_record)
-    transaction_record.save(update_fields=['receipt_number'])
-
 
     return withdrawal_request
 

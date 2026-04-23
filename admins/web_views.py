@@ -2,6 +2,7 @@ import openpyxl
 from io import BytesIO
 from datetime import timedelta
 
+from django.db.models import Exists, OuterRef, Sum,  Q
 
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
@@ -10,7 +11,6 @@ from django.template.loader import get_template
 from django.utils import timezone
 from xhtml2pdf import pisa
 from members.models import InfoPost
-from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from admins.models import AdminUser
 from members.models import Member, MemberTransaction, WithdrawalRequest
@@ -51,7 +51,13 @@ from members.services import create_member_record, validate_uploaded_image
 
 
 def home(request):
-    return HttpResponse("Admin fonctionne 🔥")
+    if request.session.get('admin_id'):
+        return redirect('/admins/dashboard/')
+
+    if request.session.get('member_id'):
+        return redirect('/admins/member-space/')
+
+    return redirect('/admins/login/')
 
 
 def login(request):
@@ -311,9 +317,16 @@ def member_info_posts(request):
 
 @super_admin_required
 def admin_list(request):
+    search_nim = (request.GET.get('nim') or '').strip()
+
     admins = AdminUser.objects.all().order_by('-created_at')
-    return render(request, 'admins/admin_list.html', {
-        'admins': admins
+
+    if search_nim:
+        admins = admins.filter(nim__icontains=search_nim)
+
+    return render(request, 'admins/admins_list.html', {
+        'admins': admins,
+        'search_nim': search_nim,
     })
 
 
@@ -377,6 +390,67 @@ def create_admin(request):
     return render(request, 'admins/create_admin.html')
 
 
+def get_admin_members_with_payment_status(admin, start_date='', end_date='', payment_status='all'):
+    members = Member.objects.filter(created_by=admin).order_by('-created_at')
+
+    if start_date:
+        members = members.filter(created_at__date__gte=start_date)
+
+    if end_date:
+        members = members.filter(created_at__date__lte=end_date)
+
+    paid_transactions = MemberTransaction.objects.filter(
+        member=OuterRef('pk'),
+        transaction_type='payment',
+        status='success'
+    )
+
+    members = members.annotate(
+        has_paid=Exists(paid_transactions)
+    )
+
+    if payment_status == 'paid':
+        members = members.filter(has_paid=True)
+    elif payment_status == 'unpaid':
+        members = members.filter(has_paid=False)
+
+    return members
+
+
+def get_global_members_with_payment_status(start_date='', end_date='', payment_status='all'):
+    members = Member.objects.select_related('created_by').order_by('-created_at')
+
+    if start_date:
+        members = members.filter(created_at__date__gte=start_date)
+
+    if end_date:
+        members = members.filter(created_at__date__lte=end_date)
+
+    paid_transactions = MemberTransaction.objects.filter(
+        member=OuterRef('pk'),
+        transaction_type='payment',
+        status='success'
+    )
+
+    members = members.annotate(
+        has_paid=Exists(paid_transactions),
+        total_paid_amount=Sum(
+            'transactions__amount',
+            filter=Q(
+                transactions__transaction_type='payment',
+                transactions__status='success'
+            )
+        )
+    )
+
+    if payment_status == 'paid':
+        members = members.filter(has_paid=True)
+    elif payment_status == 'unpaid':
+        members = members.filter(has_paid=False)
+
+    return members
+
+
 @admin_session_required
 def admin_detail(request, admin_id):
     if request.session.get('admin_role') != 'super_admin':
@@ -387,12 +461,265 @@ def admin_detail(request, admin_id):
     except AdminUser.DoesNotExist:
         return HttpResponse("Admin introuvable ❌")
 
-    total_created_members = Member.objects.filter(created_by=admin).count()
+    start_date = (request.GET.get('start_date') or '').strip()
+    end_date = (request.GET.get('end_date') or '').strip()
+    payment_status = (request.GET.get('payment_status') or 'all').strip()
+
+    members = get_admin_members_with_payment_status(
+        admin=admin,
+        start_date=start_date,
+        end_date=end_date,
+        payment_status=payment_status,
+    )
+
+    total_created_members = get_admin_members_with_payment_status(
+        admin=admin,
+        start_date=start_date,
+        end_date=end_date,
+        payment_status='all',
+    ).count()
+
+    total_paid_members = get_admin_members_with_payment_status(
+        admin=admin,
+        start_date=start_date,
+        end_date=end_date,
+        payment_status='paid',
+    ).count()
+
+    total_unpaid_members = get_admin_members_with_payment_status(
+        admin=admin,
+        start_date=start_date,
+        end_date=end_date,
+        payment_status='unpaid',
+    ).count()
 
     return render(request, 'admins/admin_detail.html', {
         'admin_obj': admin,
+        'members': members,
         'total_created_members': total_created_members,
+        'total_paid_members': total_paid_members,
+        'total_unpaid_members': total_unpaid_members,
+        'start_date': start_date,
+        'end_date': end_date,
+        'payment_status': payment_status,
     })
+
+
+@super_admin_required
+def global_admin_performance(request):
+    start_date = (request.GET.get('start_date') or '').strip()
+    end_date = (request.GET.get('end_date') or '').strip()
+    payment_status = (request.GET.get('payment_status') or 'all').strip()
+
+    members = get_global_members_with_payment_status(
+        start_date=start_date,
+        end_date=end_date,
+        payment_status=payment_status,
+    )
+
+    total_created_members = get_global_members_with_payment_status(
+        start_date=start_date,
+        end_date=end_date,
+        payment_status='all',
+    ).count()
+
+    total_paid_members = get_global_members_with_payment_status(
+        start_date=start_date,
+        end_date=end_date,
+        payment_status='paid',
+    ).count()
+
+    total_unpaid_members = get_global_members_with_payment_status(
+        start_date=start_date,
+        end_date=end_date,
+        payment_status='unpaid',
+    ).count()
+
+    total_admins = AdminUser.objects.count()
+    total_members_all_time = Member.objects.count()
+
+    total_payments_amount = MemberTransaction.objects.filter(
+        member__in=get_global_members_with_payment_status(
+            start_date=start_date,
+            end_date=end_date,
+            payment_status='all',
+        ),
+        transaction_type='payment',
+        status='success'
+    ).aggregate(total=Sum('amount'))['total'] or 0
+
+    
+
+    # Version plus robuste pour le résumé par admin
+    admins_summary_data = []
+    admins = AdminUser.objects.all().order_by('-created_at')
+
+    for admin in admins:
+        admin_members = Member.objects.filter(created_by=admin)
+
+        if start_date:
+            admin_members = admin_members.filter(created_at__date__gte=start_date)
+
+        if end_date:
+            admin_members = admin_members.filter(created_at__date__lte=end_date)
+
+        created_count = admin_members.count()
+
+        paid_count = admin_members.filter(
+            transactions__transaction_type='payment',
+            transactions__status='success'
+        ).distinct().count()
+
+        unpaid_count = created_count - paid_count
+
+        admins_summary_data.append({
+            'admin': admin,
+            'created_count': created_count,
+            'paid_count': paid_count,
+            'unpaid_count': unpaid_count,
+        })
+
+    admins_summary_data.sort(key=lambda x: x['created_count'], reverse=True)
+
+    return render(request, 'admins/global_admin_performance.html', {
+        'members': members,
+        'total_created_members': total_created_members,
+        'total_paid_members': total_paid_members,
+        'total_unpaid_members': total_unpaid_members,
+        'total_admins': total_admins,
+        'total_members_all_time': total_members_all_time,
+        'total_payments_amount': total_payments_amount,
+        'admins_summary_data': admins_summary_data,
+        'start_date': start_date,
+        'end_date': end_date,
+        'payment_status': payment_status,
+    })
+
+
+@super_admin_required
+def export_global_admin_performance_excel(request):
+    start_date = (request.GET.get('start_date') or '').strip()
+    end_date = (request.GET.get('end_date') or '').strip()
+    payment_status = (request.GET.get('payment_status') or 'all').strip()
+
+    members = get_global_members_with_payment_status(
+        start_date=start_date,
+        end_date=end_date,
+        payment_status=payment_status,
+    )
+
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "Performance Globale"
+
+    headers = [
+        "Admin créateur",
+        "Email admin",
+        "Rôle admin",
+        "Membre NIM",
+        "Nom membre",
+        "Prénom membre",
+        "Téléphone membre",
+        "Ville",
+        "Date de création",
+        "A payé ?",
+        "Montant total payé",
+    ]
+    sheet.append(headers)
+
+    for member in members:
+        admin = member.created_by
+
+        total_paid_amount = MemberTransaction.objects.filter(
+            member=member,
+            transaction_type='payment',
+            status='success'
+        ).aggregate(total=Sum('amount'))['total'] or 0
+
+        sheet.append([
+            f"{admin.last_name} {admin.first_name}" if admin else "",
+            admin.email if admin else "",
+            admin.role if admin else "",
+            member.nim,
+            member.last_name,
+            member.first_name,
+            member.phone,
+            member.city,
+            member.created_at.strftime("%d/%m/%Y %H:%M"),
+            "Oui" if member.has_paid else "Non",
+            float(total_paid_amount),
+        ])
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = (
+        f'attachment; filename=performance_globale_{payment_status}.xlsx'
+    )
+
+    workbook.save(response)
+    return response
+
+
+@super_admin_required
+def export_admins_summary_excel(request):
+    start_date = (request.GET.get('start_date') or '').strip()
+    end_date = (request.GET.get('end_date') or '').strip()
+
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "Résumé Admins"
+
+    headers = [
+        "NIM Admin",
+        "Nom",
+        "Prénom",
+        "Email",
+        "Rôle",
+        "Membres créés",
+        "Ont payé",
+        "N’ont pas payé",
+    ]
+    sheet.append(headers)
+
+    admins = AdminUser.objects.all().order_by('-created_at')
+
+    for admin in admins:
+        admin_members = Member.objects.filter(created_by=admin)
+
+        if start_date:
+            admin_members = admin_members.filter(created_at__date__gte=start_date)
+
+        if end_date:
+            admin_members = admin_members.filter(created_at__date__lte=end_date)
+
+        created_count = admin_members.count()
+
+        paid_count = admin_members.filter(
+            transactions__transaction_type='payment',
+            transactions__status='success'
+        ).distinct().count()
+
+        unpaid_count = created_count - paid_count
+
+        sheet.append([
+            admin.nim,
+            admin.last_name,
+            admin.first_name,
+            admin.email,
+            admin.role,
+            created_count,
+            paid_count,
+            unpaid_count,
+        ])
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=resume_admins.xlsx'
+
+    workbook.save(response)
+    return response
 
 
 @super_admin_required
@@ -531,15 +858,25 @@ def member_list(request):
         request.session.flush()
         return redirect('/admins/login/')
 
+    nim = (request.GET.get('nim') or '').strip()
+    phone = (request.GET.get('phone') or '').strip()
+
     members = Member.objects.filter(
         created_by=current_admin
     ).order_by('-created_at')
 
+    if nim:
+        members = members.filter(nim__icontains=nim)
+
+    if phone:
+        members = members.filter(phone__icontains=phone)
+
     return render(request, 'admins/member_list.html', {
         'members': members,
-        'admin': current_admin
+        'admin': current_admin,
+        'nim': nim,
+        'phone': phone,
     })
-
 
 @admin_session_required
 def member_detail(request, member_id):
@@ -552,8 +889,13 @@ def member_detail(request, member_id):
     if forbidden:
         return forbidden
 
+    transactions = MemberTransaction.objects.filter(
+        member=member
+    ).order_by('-created_at')
+
     return render(request, 'admins/member_detail.html', {
-        'member': member
+        'member': member,
+        'transactions': transactions,
     })
 
 
@@ -1056,16 +1398,16 @@ def export_admin_performance_excel(request, admin_id):
     except AdminUser.DoesNotExist:
         return HttpResponse("Admin introuvable ❌")
 
-    start_date = request.GET.get('start_date', '')
-    end_date = request.GET.get('end_date', '')
+    start_date = (request.GET.get('start_date') or '').strip()
+    end_date = (request.GET.get('end_date') or '').strip()
+    payment_status = (request.GET.get('payment_status') or 'all').strip()
 
-    members = Member.objects.filter(created_by=admin).order_by('-created_at')
-
-    if start_date:
-        members = members.filter(created_at__date__gte=start_date)
-
-    if end_date:
-        members = members.filter(created_at__date__lte=end_date)
+    members = get_admin_members_with_payment_status(
+        admin=admin,
+        start_date=start_date,
+        end_date=end_date,
+        payment_status=payment_status,
+    )
 
     workbook = openpyxl.Workbook()
     sheet = workbook.active
@@ -1081,7 +1423,9 @@ def export_admin_performance_excel(request, admin_id):
         "Membre Nom",
         "Membre Prénom",
         "Téléphone membre",
-        "Date de création"
+        "Ville",
+        "Date de création",
+        "A payé ?",
     ]
     sheet.append(headers)
 
@@ -1096,13 +1440,18 @@ def export_admin_performance_excel(request, admin_id):
             member.last_name,
             member.first_name,
             member.phone,
-            member.created_at.strftime("%d/%m/%Y %H:%M")
+            member.city,
+            member.created_at.strftime("%d/%m/%Y %H:%M"),
+            "Oui" if member.has_paid else "Non",
         ])
 
+    filename_suffix = payment_status
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    response['Content-Disposition'] = f'attachment; filename=performance_{admin.id}.xlsx'
+    response['Content-Disposition'] = (
+        f'attachment; filename=performance_admin_{admin.id}_{filename_suffix}.xlsx'
+    )
 
     workbook.save(response)
     return response
@@ -1281,7 +1630,7 @@ def member_transactions(request):
         'transactions': transactions
     }) 
 
-@admin_session_required
+@member_session_required
 def member_transaction_detail(request, transaction_id):
     member_id = request.session.get('member_id')
 
@@ -1314,7 +1663,7 @@ def member_transaction_detail(request, transaction_id):
         'withdrawal_request': withdrawal_request,
     })   
 
-
+@member_session_required
 def member_profile(request):
     try:
         member = Member.objects.get(id=request.session.get('member_id'))
@@ -1326,7 +1675,7 @@ def member_profile(request):
         'member': member
     })
 
-
+@member_session_required
 def member_settings(request):
     try:
         member = Member.objects.get(id=request.session.get('member_id'))
@@ -1358,3 +1707,7 @@ def search_transactions(request):
         'query': query,
         'transactions': transactions,
     })
+
+def member_assistance(request):
+    return render(request, 'admins/member_assistance.html')
+

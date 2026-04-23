@@ -5,93 +5,297 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administration des membres</title>
     <style>
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #f3f6fb;
+            --card: rgba(255, 255, 255, 0.95);
+            --text: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --purple: #7c3aed;
+            --cyan: #0891b2;
+            --orange: #d97706;
+            --shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+            --radius-xl: 28px;
+            --radius-lg: 22px;
+            --radius-md: 16px;
+        }
 
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: #f8fafc;
-            color: #111827;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
+                radial-gradient(circle at top right, rgba(124, 58, 237, 0.08), transparent 26%),
+                linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
         }
 
         .page {
-            max-width: 1100px;
-            margin: 36px auto;
+            max-width: 1320px;
+            margin: 32px auto;
             padding: 20px;
         }
 
-        .header {
-            background: white;
-            border-radius: 24px;
-            padding: 28px;
-            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
-            margin-bottom: 26px;
+        .hero {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #2563eb 100%);
+            color: white;
+            border-radius: 32px;
+            padding: 34px 32px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
         }
 
-        .header h1 {
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: -80px;
+            right: -70px;
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            bottom: -90px;
+            left: -70px;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .hero small {
+            display: inline-block;
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            opacity: 0.82;
+            margin-bottom: 12px;
+        }
+
+        .hero h1 {
             margin: 0 0 10px;
-            font-size: 32px;
+            font-size: 36px;
+            line-height: 1.15;
+            position: relative;
+            z-index: 1;
         }
 
-        .header p {
+        .hero p {
             margin: 0;
-            color: #6b7280;
+            max-width: 850px;
+            line-height: 1.7;
+            color: rgba(255,255,255,0.88);
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-actions {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-btn,
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            padding: 12px 18px;
+            border-radius: 14px;
+            font-weight: bold;
+            font-size: 14px;
+            transition: 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hero-btn:hover,
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .hero-btn-light {
+            background: white;
+            color: #0f172a;
+        }
+
+        .hero-btn-outline {
+            background: rgba(255,255,255,0.12);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .section-card {
+            background: var(--card);
+            border: 1px solid rgba(255,255,255,0.7);
+            border-radius: var(--radius-xl);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .section-head h2 {
+            margin: 0 0 6px;
+            font-size: 24px;
+        }
+
+        .section-head p {
+            margin: 0;
+            color: var(--muted);
             line-height: 1.6;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-box {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            padding: 20px;
+            min-height: 120px;
+        }
+
+        .stat-box span {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .stat-box strong {
+            display: block;
+            font-size: 30px;
+            line-height: 1.1;
+            margin-bottom: 8px;
+        }
+
+        .stat-box p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.5;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, minmax(240px, 1fr));
             gap: 20px;
         }
 
         .card {
             display: block;
             text-decoration: none;
-            color: #111827;
+            color: var(--text);
             background: white;
-            border-radius: 22px;
+            border-radius: 24px;
             padding: 24px;
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-            border: 1px solid #e5e7eb;
-            transition: 0.2s ease;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+            border: 1px solid var(--line);
+            transition: 0.22s ease;
+            min-height: 210px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::after {
+            content: "";
+            position: absolute;
+            right: -20px;
+            top: -20px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            opacity: 0.08;
+            background: currentColor;
         }
 
         .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.10);
+            transform: translateY(-5px);
+            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.10);
         }
 
         .card .icon {
-            font-size: 30px;
-            margin-bottom: 14px;
+            width: 58px;
+            height: 58px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 16px;
+            background: rgba(15, 23, 42, 0.06);
         }
 
         .card h3 {
             margin: 0 0 10px;
             font-size: 22px;
+            line-height: 1.3;
         }
 
         .card p {
             margin: 0;
-            color: #6b7280;
-            line-height: 1.6;
+            color: var(--muted);
+            line-height: 1.7;
             font-size: 14.5px;
         }
 
-        .actions {
-            margin-top: 28px;
+        .card-tag {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: bold;
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .card-blue { color: var(--primary); }
+        .card-green { color: var(--success); }
+        .card-purple { color: var(--purple); }
+        .card-cyan { color: var(--cyan); }
+        .card-orange { color: var(--orange); }
+
+        .bottom-actions {
             display: flex;
             gap: 14px;
             flex-wrap: wrap;
-        }
-
-        .btn {
-            text-decoration: none;
-            padding: 12px 18px;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 14px;
+            margin-top: 8px;
         }
 
         .btn-back {
@@ -100,63 +304,172 @@
         }
 
         .btn-logout {
-            background: #dc2626;
+            background: var(--danger);
             color: white;
         }
 
-        @media (max-width: 850px) {
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-dark {
+            background: #0f172a;
+            color: white;
+        }
+
+        @media (max-width: 1100px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 760px) {
             .grid {
                 grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero {
+                padding: 24px 22px;
+                border-radius: 24px;
+            }
+
+            .hero h1 {
+                font-size: 28px;
+            }
+
+            .section-card {
+                padding: 18px;
+                border-radius: 22px;
+            }
+
+            .card {
+                min-height: auto;
+            }
+
+            .hero-actions,
+            .bottom-actions {
+                flex-direction: column;
+            }
+
+            .hero-btn,
+            .btn {
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
     <div class="page">
-        <div class="header">
+        <div class="hero">
+            <small>Administration • Espace membres</small>
             <h1>Administration des membres</h1>
             <p>
-                Retrouvez ici toutes les actions liées à la gestion des membres.
-                Cette page centralise uniquement les fonctionnalités utiles pour garder l’interface claire et simple.
+                Retrouvez ici toutes les actions liées à la gestion des membres :
+                consultation, création, historique, exportation et accès rapide aux outils
+                essentiels pour garder une interface élégante, claire et efficace.
             </p>
+
+            <div class="hero-actions">
+                <a href="/admins/dashboard/" class="hero-btn hero-btn-light">← Retour au dashboard</a>
+                <a href="/admins/members/create/" class="hero-btn hero-btn-outline">📝 Enregistrer un membre</a>
+            </div>
         </div>
 
-        <div class="grid">
-            <a href="/admins/members/" class="card">
-                <div class="icon">📋</div>
-                <h3>Voir les membres</h3>
-                <p>Consulter la liste des membres enregistrés et accéder à leurs détails.</p>
-            </a>
+        <div class="section-card">
+            <div class="section-head">
+                <div>
+                    <h2>Pilotage rapide</h2>
+                    <p>Accédez rapidement aux principaux modules liés à la gestion des membres.</p>
+                </div>
+            </div>
 
-            <a href="/admins/members/create/" class="card">
-                <div class="icon">📝</div>
-                <h3>Enregistrer un membre</h3>
-                <p>Créer une nouvelle fiche membre avec ses informations personnelles.</p>
-            </a>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span>Consultation</span>
+                    <strong>Membres</strong>
+                    <p>Voir la liste des membres et accéder à leurs informations détaillées.</p>
+                </div>
 
-            <a href="/admins/member-login/" class="card">
-                <div class="icon">🔐</div>
-                <h3>Connexion membre</h3>
-                <p>Accéder à l’interface de connexion dédiée aux membres.</p>
-            </a>
+                <div class="stat-box">
+                    <span>Enregistrement</span>
+                    <strong>Création</strong>
+                    <p>Ajouter rapidement de nouveaux membres dans le système.</p>
+                </div>
 
-            <a href="/admins/members/history/" class="card">
-                <div class="icon">📜</div>
-                <h3>Historique de création</h3>
-                <p>Voir l’historique détaillé des membres enregistrés.</p>
-            </a>
+                <div class="stat-box">
+                    <span>Suivi</span>
+                    <strong>Historique</strong>
+                    <p>Contrôler les créations déjà effectuées et suivre l’activité.</p>
+                </div>
 
-            <a href="/admins/members/export/" class="card">
-                <div class="icon">📤</div>
-                <h3>Exporter les membres</h3>
-                <p>Télécharger la liste des membres en fichier Excel.</p>
-            </a>
+                <div class="stat-box">
+                    <span>Export</span>
+                    <strong>Excel</strong>
+                    <p>Télécharger les listes des membres pour traitement ou archivage.</p>
+                </div>
+            </div>
+
+            <div class="grid">
+                <a href="/admins/members/" class="card card-blue">
+                    <div class="icon">📋</div>
+                    <h3>Voir les membres</h3>
+                    <p>Consulter la liste des membres enregistrés, accéder à leurs détails et suivre leur situation dans le système.</p>
+                    <span class="card-tag">Consultation</span>
+                </a>
+
+                <a href="/admins/members/create/" class="card card-green">
+                    <div class="icon">📝</div>
+                    <h3>Enregistrer un membre</h3>
+                    <p>Créer une nouvelle fiche membre avec toutes les informations personnelles, administratives et utiles au suivi.</p>
+                    <span class="card-tag">Création rapide</span>
+                </a>
+
+                <a href="/admins/member-login/" class="card card-purple">
+                    <div class="icon">🔐</div>
+                    <h3>Connexion membre</h3>
+                    <p>Accéder à l’interface de connexion dédiée aux membres pour tester ou vérifier leur parcours utilisateur.</p>
+                    <span class="card-tag">Accès membre</span>
+                </a>
+
+                <a href="/admins/members/history/" class="card card-cyan">
+                    <div class="icon">📜</div>
+                    <h3>Historique de création</h3>
+                    <p>Voir l’historique détaillé des membres enregistrés et suivre les actions déjà réalisées dans le temps.</p>
+                    <span class="card-tag">Suivi</span>
+                </a>
+
+                <a href="/admins/members/export/" class="card card-orange">
+                    <div class="icon">📤</div>
+                    <h3>Exporter les membres</h3>
+                    <p>Télécharger la liste des membres au format Excel pour archivage, contrôle, impression ou exploitation externe.</p>
+                    <span class="card-tag">Export Excel</span>
+                </a>
+            </div>
         </div>
 
-        <div class="actions">
-            <a href="/admins/dashboard/" class="btn btn-back">Retour au dashboard</a>
-            <a href="/admins/logout/" class="btn btn-logout">Se déconnecter</a>
-            
+        <div class="section-card">
+            <div class="section-head">
+                <div>
+                    <h2>Actions rapides</h2>
+                    <p>Accès direct aux principales actions générales liées à cette section.</p>
+                </div>
+            </div>
+
+            <div class="bottom-actions">
+                <a href="/admins/dashboard/" class="btn btn-back">Retour au dashboard</a>
+                <a href="/admins/members/" class="btn btn-primary">Voir les membres</a>
+                <a href="/admins/members/export/" class="btn btn-dark">Exporter les membres</a>
+                <a href="/admins/logout/" class="btn btn-logout">Se déconnecter</a>
+            </div>
         </div>
     </div>
 </body>

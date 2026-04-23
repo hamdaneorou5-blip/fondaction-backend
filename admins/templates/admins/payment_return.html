@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Retour paiement</title>
+
     <style>
         body {
             margin: 0;
@@ -11,68 +14,89 @@
         }
 
         .page {
-            max-width: 700px;
-            margin: 60px auto;
             padding: 20px;
         }
 
         .card {
             background: white;
-            border-radius: 18px;
-            padding: 30px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-            text-align: center;
+            border-radius: 16px;
+            padding: 22px 18px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.06);
         }
 
         h1 {
             margin-top: 0;
+            font-size: 22px;
             color: #111827;
+        }
+
+        .status {
+            margin-top: 12px;
+            font-weight: bold;
+            font-size: 16px;
         }
 
         .success {
             color: #166534;
-            font-weight: bold;
-            font-size: 18px;
-            margin-top: 15px;
+        }
+
+        .pending {
+            color: #92400e;
+        }
+
+        .failed {
+            color: #991b1b;
         }
 
         .info {
+            margin-top: 14px;
             color: #374151;
-            margin-top: 12px;
-            line-height: 1.7;
+            line-height: 1.6;
+            font-size: 14px;
         }
 
         .btn {
-            display: inline-block;
-            margin-top: 22px;
-            text-decoration: none;
-            background: #2563eb;
-            color: white;
-            padding: 12px 18px;
-            border-radius: 12px;
-            font-weight: bold;
-        }
+    display: block;
+    width: 85%;              /* réduit la largeur */
+    margin: 18px auto 0;     /* centre horizontalement */
+    text-align: center;
+    text-decoration: none;
+    background: #2563eb;
+    color: white;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: bold;
+}
     </style>
 </head>
+
 <body>
-    <div class="page">
-        <div class="card">
-            <h1>✅ Retour de paiement</h1>
 
-            {% if status == 'approved' %}
-                <div class="success">Votre paiement a été validé avec succès.</div>
-            {% else %}
-                <div class="success">Retour de paiement reçu.</div>
-            {% endif %}
+<div class="page">
+    <div class="card">
 
-            <div class="info">
-                <p><strong>Statut :</strong> {{ status }}</p>
-                <p><strong>ID transaction :</strong> {{ transaction_id }}</p>
-                <p>Vous pouvez maintenant revenir dans votre espace membre.</p>
-            </div>
+        <h1>Retour de paiement</h1>
 
-            <a href="/admins/member-space/" class="btn">Retour à l’espace membre</a>
+        {% if status == 'approved' %}
+            <div class="status success"> Paiement validé avec succès</div>
+        {% elif status == 'pending' %}
+            <div class="status pending">⏳ Paiement en attente</div>
+        {% else %}
+            <div class="status failed"> Paiement non confirmé</div>
+        {% endif %}
+
+        <div class="info">
+            <p><strong>Statut :</strong> {{ status }}</p>
+            <p><strong>ID transaction :</strong> {{ transaction_id }}</p>
+            <p>Vous pouvez retourner dans votre espace membre.</p>
         </div>
+
+        <a href="/admins/member-space/" class="btn">
+            Retour à l’espace membre
+        </a>
+
     </div>
+</div>
+
 </body>
 </html>

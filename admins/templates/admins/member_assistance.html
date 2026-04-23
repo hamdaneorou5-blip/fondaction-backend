@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistance</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+        }
+
+        .page {
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 22px 18px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 22px;
+            color: #111827;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 8px;
+            margin-bottom: 20px;
+        }
+
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            border-radius: 14px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .action-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Couleurs */
+        .call {
+            background: #2563eb;
+        }
+
+        .whatsapp {
+            background: #16a34a;
+        }
+
+        .email {
+            background: #ea580c;
+        }
+
+        .footer {
+            margin-top: 18px;
+            text-align: center;
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .action-btn span {
+            flex: 1;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <div class="card">
+
+        <h1>Assistance</h1>
+        <div class="subtitle">
+            Nous sommes disponibles pour vous aider en cas de besoin.
+        </div>
+
+        <div class="actions">
+
+            <!-- Appel -->
+            <a href="tel:+2290160212109" class="action-btn call">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="white">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
+                </svg>
+                <span>Appeler</span>
+            </a>
+
+            <!-- WhatsApp -->
+            <a href="https://wa.me/2290160212109" class="action-btn whatsapp" target="_blank">
+                <svg viewBox="0 0 24 24" fill="white">
+                    <path d="M17.6 6.32C16.87 5.58 15.99 5 15.03 4.6C14.07 4.2 13.04 4 12 4C10.61 4 9.24 4.37 8.04 5.06C6.83 5.76 5.83 6.76 5.14 7.96C4.44 9.17 4.07 10.53 4.07 11.92C4.07 13.31 4.43 14.68 5.12 15.89L4 20L8.2 18.9C9.36 19.55 10.66 19.89 11.99 19.9C14.1 19.9 16.12 19.07 17.62 17.58C19.12 16.1 19.97 14.08 19.99 11.97C19.98 10.92 19.77 9.88 19.36 8.91C18.95 7.94 18.35 7.06 17.6 6.32Z"/>
+                </svg>
+                <span>WhatsApp</span>
+            </a>
+
+            <!-- Email -->
+            <a href="mailto:contact@fondactionsarl.com" class="action-btn email">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="white">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm0 0c0 1.657 1.007 3 2.25 3S21 13.657 21 12a9 9 0 1 0-2.636 6.364M16.5 12V8.25" />
+                </svg>
+                <span>Envoyer un email</span>
+            </a>
+
+        </div>
+
+        <div class="footer">
+            Notre équipe vous répondra dans les plus brefs délais.
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

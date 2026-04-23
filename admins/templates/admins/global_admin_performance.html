@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Détail administrateur</title>
+    <title>Performance globale des administrateurs</title>
     <style>
         * {
             box-sizing: border-box;
@@ -30,15 +30,15 @@
         body {
             margin: 0;
             font-family: Arial, sans-serif;
+            color: var(--text);
             background:
                 radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
                 radial-gradient(circle at top right, rgba(14, 165, 233, 0.08), transparent 30%),
                 linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
-            color: var(--text);
         }
 
         .page {
-            max-width: 1320px;
+            max-width: 1460px;
             margin: 28px auto;
             padding: 20px;
         }
@@ -47,7 +47,7 @@
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #1d4ed8 100%);
             color: white;
             border-radius: 30px;
-            padding: 28px;
+            padding: 30px;
             box-shadow: var(--shadow);
             margin-bottom: 22px;
             position: relative;
@@ -57,12 +57,12 @@
         .topbar::after {
             content: "";
             position: absolute;
-            width: 280px;
-            height: 280px;
+            width: 320px;
+            height: 320px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.08);
-            top: -120px;
-            right: -80px;
+            top: -130px;
+            right: -90px;
         }
 
         .topbar small {
@@ -76,14 +76,14 @@
 
         .topbar h1 {
             margin: 0 0 10px 0;
-            font-size: 34px;
+            font-size: 36px;
             line-height: 1.2;
         }
 
         .topbar p {
             margin: 0;
-            max-width: 760px;
-            color: rgba(255,255,255,0.86);
+            max-width: 900px;
+            color: rgba(255,255,255,0.88);
             line-height: 1.6;
         }
 
@@ -151,20 +151,15 @@
             color: #0f172a;
         }
 
-        .btn-success {
-            background: #16a34a;
-            color: white;
-        }
-
         .btn-outline {
             background: white;
             color: var(--primary);
             border: 1px solid #bfdbfe;
         }
 
-        .admin-grid {
+        .summary-grid {
             display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
+            grid-template-columns: 1.1fr 0.9fr;
             gap: 22px;
             margin-bottom: 22px;
         }
@@ -194,27 +189,9 @@
             color: var(--text);
         }
 
-        .status {
-            display: inline-block;
-            padding: 8px 14px;
-            border-radius: 999px;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .status-active {
-            background: var(--success-bg);
-            color: var(--success-text);
-        }
-
-        .status-suspended {
-            background: var(--danger-bg);
-            color: var(--danger-text);
-        }
-
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(180px, 1fr));
+            grid-template-columns: repeat(6, minmax(180px, 1fr));
             gap: 18px;
             margin-bottom: 22px;
         }
@@ -237,8 +214,8 @@
         }
 
         .stat-card strong {
-            font-size: 34px;
-            line-height: 1;
+            font-size: 30px;
+            line-height: 1.1;
             display: block;
             margin-bottom: 8px;
         }
@@ -281,14 +258,9 @@
             outline: none;
         }
 
-        .field input:focus,
-        .field select:focus {
-            border-color: #60a5fa;
-            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
-        }
-
         .filter-actions,
-        .export-actions {
+        .export-actions,
+        .top-actions {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
@@ -320,7 +292,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 980px;
+            min-width: 1280px;
         }
 
         thead th {
@@ -345,13 +317,15 @@
             background: #f8fbff;
         }
 
-        .member-name {
+        .member-name,
+        .admin-name {
             font-weight: bold;
             color: #0f172a;
             margin-bottom: 4px;
         }
 
-        .member-sub {
+        .member-sub,
+        .admin-sub {
             color: var(--muted);
             font-size: 13px;
         }
@@ -374,21 +348,44 @@
             color: var(--danger-text);
         }
 
+        .money {
+            font-weight: bold;
+            color: #0f172a;
+        }
+
         .empty-state {
-            padding: 32px 24px 36px;
+            padding: 34px 24px 40px;
             text-align: center;
             color: var(--muted);
         }
 
-        @media (max-width: 1024px) {
-            .admin-grid {
-                grid-template-columns: 1fr;
-            }
+        .hidden-row {
+            display: none;
+        }
 
+        .see-more-wrap {
+            padding: 18px 24px 24px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .toggle-btn {
+            background: #eff6ff;
+            color: var(--primary);
+            border: 1px solid #bfdbfe;
+        }
+
+        @media (max-width: 1200px) {
             .stats-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
             }
 
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 1024px) {
             .filters-wrap {
                 grid-template-columns: 1fr;
             }
@@ -421,10 +418,6 @@
                 border-radius: 20px;
             }
 
-            .toolbar {
-                align-items: stretch;
-            }
-
             .filter-actions,
             .export-actions,
             .top-actions {
@@ -434,6 +427,10 @@
             .btn {
                 width: 100%;
             }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -441,79 +438,28 @@
 
 <div class="page">
     <div class="topbar">
-        <small>Administration • Performance détaillée</small>
-        <h1>👤 Détail administrateur</h1>
+        <small>Administration • Suivi global</small>
+        <h1>📊 Performance globale des administrateurs</h1>
         <p>
-            Analyse complète des membres créés par cet administrateur sur la période choisie,
-            avec distinction claire entre membres ayant payé et membres n’ayant pas payé.
+            Cette vue affiche tous les membres créés sur la période choisie, leur statut de paiement,
+            le montant total déjà payé et l’administrateur qui les a créés.
         </p>
 
         <div class="top-actions">
-            <a href="/admins/list/" class="btn btn-outline">← Retour à la liste</a>
-            <a href="/admins/admins/{{ admin_obj.id }}/reset-password/" class="btn btn-success">
-                Réinitialiser le mot de passe
+            <a href="/admins/dashboard/" class="btn btn-outline">← Retour au dashboard</a>
+            <a href="/admins/admins/performance/export/?start_date={{ start_date }}&end_date={{ end_date }}&payment_status={{ payment_status }}"
+               class="btn btn-dark">
+                Exporter la vue actuelle
             </a>
         </div>
     </div>
 
-    <div class="admin-grid">
+    <div class="summary-grid">
         <div class="card">
-            <h2 class="section-title">Informations de l’administrateur</h2>
-
-            <div class="info-grid">
-                <div class="info-box">
-                    <span>NIM</span>
-                    <strong>{{ admin_obj.nim }}</strong>
-                </div>
-
-                <div class="info-box">
-                    <span>Rôle</span>
-                    <strong>{{ admin_obj.role }}</strong>
-                </div>
-
-                <div class="info-box">
-                    <span>Nom</span>
-                    <strong>{{ admin_obj.last_name }}</strong>
-                </div>
-
-                <div class="info-box">
-                    <span>Prénom</span>
-                    <strong>{{ admin_obj.first_name }}</strong>
-                </div>
-
-                <div class="info-box">
-                    <span>Téléphone</span>
-                    <strong>{{ admin_obj.phone|default:"Non renseigné" }}</strong>
-                </div>
-
-                <div class="info-box">
-                    <span>Email</span>
-                    <strong>{{ admin_obj.email }}</strong>
-                </div>
-
-                <div class="info-box">
-                    <span>Date de création</span>
-                    <strong>{{ admin_obj.created_at|date:"d/m/Y à H:i" }}</strong>
-                </div>
-
-                <div class="info-box">
-                    <span>Statut</span>
-                    <strong>
-                        {% if admin_obj.status == 'active' %}
-                            <span class="status status-active">Actif</span>
-                        {% else %}
-                            <span class="status status-suspended">Suspendu</span>
-                        {% endif %}
-                    </strong>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2 class="section-title">Résumé de la période</h2>
+            <h2 class="section-title">Résumé de l’analyse globale</h2>
             <p class="muted" style="margin-top: 0; line-height: 1.6;">
-                Ces chiffres portent uniquement sur les membres créés dans la période sélectionnée.
-                Ensuite, on distingue parmi eux ceux qui ont payé et ceux qui n’ont pas payé.
+                On filtre les membres selon leur date de création, puis on observe parmi eux ceux qui ont payé ou non,
+                avec l’admin créateur affiché directement dans le tableau.
             </p>
 
             <div class="info-grid">
@@ -541,8 +487,28 @@
                 </div>
 
                 <div class="info-box">
-                    <span>Export rapide</span>
-                    <strong>Excel disponible ci-dessous</strong>
+                    <span>Vue affichée</span>
+                    <strong>Membres + admin + paiements</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">Lecture métier</h2>
+            <p class="muted" style="margin-top: 0; line-height: 1.7;">
+                Aucun membre créé dans la période n’est masqué. Même s’il n’a pas payé, il reste visible.
+                Cette page permet aussi de suivre globalement la production des admins.
+            </p>
+
+            <div class="info-grid">
+                <div class="info-box">
+                    <span>Export</span>
+                    <strong>Excel global disponible</strong>
+                </div>
+
+                <div class="info-box">
+                    <span>Logique</span>
+                    <strong>Date création → statut paiement</strong>
                 </div>
             </div>
         </div>
@@ -550,9 +516,21 @@
 
     <div class="stats-grid">
         <div class="stat-card">
-            <span>Total membres créés</span>
+            <span>Total admins</span>
+            <strong>{{ total_admins }}</strong>
+            <p>Nombre total d’administrateurs</p>
+        </div>
+
+        <div class="stat-card">
+            <span>Total membres global</span>
+            <strong>{{ total_members_all_time }}</strong>
+            <p>Nombre total de membres enregistrés</p>
+        </div>
+
+        <div class="stat-card">
+            <span>Membres créés période</span>
             <strong>{{ total_created_members }}</strong>
-            <p>Membres créés dans la période filtrée</p>
+            <p>Membres visibles selon les filtres</p>
         </div>
 
         <div class="stat-card">
@@ -562,17 +540,23 @@
         </div>
 
         <div class="stat-card">
-            <span>Membres n’ayant pas payé</span>
+            <span>Membres non payés</span>
             <strong>{{ total_unpaid_members }}</strong>
-            <p>Aucun paiement validé enregistré</p>
+            <p>Aucun paiement validé</p>
+        </div>
+
+        <div class="stat-card">
+            <span>Montant total des paiements</span>
+            <strong>{{ total_payments_amount }}</strong>
+            <p>Somme payée par les membres de la période</p>
         </div>
     </div>
 
     <div class="card">
         <div class="toolbar">
             <div>
-                <h2 class="section-title" style="margin-bottom: 6px;">Filtres d’analyse</h2>
-                <div class="muted">Filtrer par date de création des membres puis par statut de paiement.</div>
+                <h2 class="section-title" style="margin-bottom: 6px;">Filtres globaux</h2>
+                <div class="muted">Filtrer les membres par date de création puis par statut de paiement.</div>
             </div>
         </div>
 
@@ -601,31 +585,102 @@
 
                 <div class="filter-actions">
                     <button type="submit" class="btn btn-primary">Appliquer les filtres</button>
-                    <a href="/admins/admins/{{ admin_obj.id }}/" class="btn btn-light">Réinitialiser</a>
+                    <a href="/admins/admins/performance/" class="btn btn-light">Réinitialiser</a>
                 </div>
             </div>
         </form>
     </div>
 
+    <div class="card table-card">
+        <div class="table-head">
+            <div class="toolbar">
+                <div>
+                    <h2 class="section-title" style="margin-bottom: 6px;">Résumé par administrateur</h2>
+                    <div class="muted">
+                        Vue synthétique des réalisations de chaque admin sur la période choisie.
+                    </div>
+                </div>
+
+                <div class="export-actions">
+                    <a href="/admins/admins/performance/admins-summary/export/?start_date={{ start_date }}&end_date={{ end_date }}"
+                       class="btn btn-dark">
+                        Télécharger le résumé des admins
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% if admins_summary_data %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Administrateur</th>
+                            <th>Email</th>
+                            <th>Rôle</th>
+                            <th>Membres créés</th>
+                            <th>Ont payé</th>
+                            <th>N’ont pas payé</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in admins_summary_data %}
+                            <tr class="admin-row {% if forloop.counter > 5 %}hidden-row extra-admin-row{% endif %}">
+                                <td>
+                                    <div class="admin-name">{{ item.admin.last_name }} {{ item.admin.first_name }}</div>
+                                    <div class="admin-sub">NIM : {{ item.admin.nim }}</div>
+                                </td>
+                                <td>{{ item.admin.email }}</td>
+                                <td>{{ item.admin.role }}</td>
+                                <td><strong>{{ item.created_count }}</strong></td>
+                                <td><span class="badge badge-paid">{{ item.paid_count }}</span></td>
+                                <td><span class="badge badge-unpaid">{{ item.unpaid_count }}</span></td>
+                                <td>
+                                    <a href="/admins/admins/{{ item.admin.id }}/?start_date={{ start_date }}&end_date={{ end_date }}&payment_status=all"
+                                       class="btn btn-outline">
+                                        Voir détail
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if admins_summary_data|length > 5 %}
+                <div class="see-more-wrap">
+                    <button type="button" class="btn toggle-btn" id="toggle-admins-btn" onclick="toggleRows('extra-admin-row', 'toggle-admins-btn', 'Voir plus d’admins', 'Voir moins')">
+                        Voir plus d’admins
+                    </button>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                Aucun administrateur trouvé.
+            </div>
+        {% endif %}
+    </div>
+
     <div class="card">
         <div class="toolbar">
             <div>
-                <h2 class="section-title" style="margin-bottom: 6px;">Exports Excel</h2>
-                <div class="muted">Télécharger la liste complète, les payés ou les non payés sur la période choisie.</div>
+                <h2 class="section-title" style="margin-bottom: 6px;">Export Excel global</h2>
+                <div class="muted">Télécharger la vue filtrée actuelle avec l’admin créateur et le montant payé.</div>
             </div>
 
             <div class="export-actions">
-                <a href="/admins/admins/{{ admin_obj.id }}/performance/export/?start_date={{ start_date }}&end_date={{ end_date }}&payment_status=all"
+                <a href="/admins/admins/performance/export/?start_date={{ start_date }}&end_date={{ end_date }}&payment_status=all"
                    class="btn btn-dark">
                     Exporter tout
                 </a>
 
-                <a href="/admins/admins/{{ admin_obj.id }}/performance/export/?start_date={{ start_date }}&end_date={{ end_date }}&payment_status=paid"
-                   class="btn btn-success">
+                <a href="/admins/admins/performance/export/?start_date={{ start_date }}&end_date={{ end_date }}&payment_status=paid"
+                   class="btn btn-primary">
                     Exporter les payés
                 </a>
 
-                <a href="/admins/admins/{{ admin_obj.id }}/performance/export/?start_date={{ start_date }}&end_date={{ end_date }}&payment_status=unpaid"
+                <a href="/admins/admins/performance/export/?start_date={{ start_date }}&end_date={{ end_date }}&payment_status=unpaid"
                    class="btn btn-outline">
                     Exporter les non payés
                 </a>
@@ -635,9 +690,9 @@
 
     <div class="card table-card">
         <div class="table-head">
-            <h2 class="section-title" style="margin-bottom: 6px;">Membres créés par cet administrateur</h2>
+            <h2 class="section-title" style="margin-bottom: 6px;">Tableau global des membres créés</h2>
             <div class="muted">
-                Tableau construit sur la date de création des membres, avec indication de paiement.
+                Chaque ligne affiche le membre, son paiement total et l’administrateur qui l’a créé.
             </div>
         </div>
 
@@ -646,21 +701,26 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>NIM</th>
+                            <th>NIM membre</th>
                             <th>Membre</th>
                             <th>Téléphone</th>
                             <th>Ville</th>
                             <th>Date de création</th>
                             <th>Statut paiement</th>
+                            <th>Montant total payé</th>
+                            <th>Admin créateur</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for member in members %}
-                            <tr>
+                            <tr class="member-row {% if forloop.counter > 8 %}hidden-row extra-member-row{% endif %}">
                                 <td><strong>{{ member.nim }}</strong></td>
                                 <td>
                                     <div class="member-name">{{ member.last_name }} {{ member.first_name }}</div>
-                                    <div class="member-sub">Pièce : {{ member.id_card_type }}{% if member.id_card_number %} • {{ member.id_card_number }}{% endif %}</div>
+                                    <div class="member-sub">
+                                        Pièce : {{ member.id_card_type }}
+                                        {% if member.id_card_number %}• {{ member.id_card_number }}{% endif %}
+                                    </div>
                                 </td>
                                 <td>{{ member.phone|default:"Non renseigné" }}</td>
                                 <td>{{ member.city|default:"Non renseignée" }}</td>
@@ -669,7 +729,16 @@
                                     {% if member.has_paid %}
                                         <span class="badge badge-paid">A payé</span>
                                     {% else %}
-                                    <span class="badge badge-unpaid">N’a pas payé</span>
+                                        <span class="badge badge-unpaid">N’a pas payé</span>
+                                    {% endif %}
+                                </td>
+                                <td class="money">{{ member.total_paid_amount|default:0 }}</td>
+                                <td>
+                                    {% if member.created_by %}
+                                        <div class="admin-name">{{ member.created_by.last_name }} {{ member.created_by.first_name }}</div>
+                                        <div class="admin-sub">{{ member.created_by.email }}</div>
+                                    {% else %}
+                                        <span class="muted">Non défini</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -677,6 +746,14 @@
                     </tbody>
                 </table>
             </div>
+
+            {% if members|length > 8 %}
+                <div class="see-more-wrap">
+                    <button type="button" class="btn toggle-btn" id="toggle-members-btn" onclick="toggleRows('extra-member-row', 'toggle-members-btn', 'Voir plus de membres', 'Voir moins')">
+                        Voir plus de membres
+                    </button>
+                </div>
+            {% endif %}
         {% else %}
             <div class="empty-state">
                 Aucun membre trouvé pour les filtres sélectionnés.
@@ -684,6 +761,27 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+    function toggleRows(rowClass, buttonId, expandText, collapseText) {
+        const rows = document.querySelectorAll('.' + rowClass);
+        const button = document.getElementById(buttonId);
+
+        if (!rows.length || !button) return;
+
+        const isHidden = rows[0].classList.contains('hidden-row');
+
+        rows.forEach(row => {
+            if (isHidden) {
+                row.classList.remove('hidden-row');
+            } else {
+                row.classList.add('hidden-row');
+            }
+        });
+
+        button.textContent = isHidden ? collapseText : expandText;
+    }
+</script>
 
 </body>
 </html>

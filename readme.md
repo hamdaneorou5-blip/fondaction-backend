@@ -1,6 +1,3 @@
-[text](../admins/api_views.py)
-
-
 import json
 
 from django.http import JsonResponse
@@ -11,11 +8,10 @@ from admins.models import AdminUser
 from members.models import Member, FedapayPaymentAttempt
 from admins.utils import log_activity
 from members.constants import (
-    MEMBER_STATUS_ACTIVE,
-    MEMBER_STATUS_SUSPENDED,
+    
     ADMIN_STATUS_ACTIVE,
     ADMIN_STATUS_SUSPENDED,
-    MAX_MEMBER_PIN_ATTEMPTS,
+    
 )
 from members.payment_services import process_fedapay_webhook
 from members.services import create_member_record
@@ -25,7 +21,6 @@ def cors_json_response(data, status=200):
     return JsonResponse(data, status=status)
 
 
-@csrf_exempt
 def api_login(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
@@ -56,6 +51,12 @@ def api_login(request):
     try:
         user = AdminUser.objects.get(email=email)
 
+        if user.is_locked:
+            return cors_json_response({
+                'success': False,
+                'message': 'Compte admin bloqué ❌'
+            }, status=403)
+
         if user.status == ADMIN_STATUS_SUSPENDED:
             return cors_json_response({
                 'success': False,
@@ -69,10 +70,26 @@ def api_login(request):
             }, status=403)
 
         if not check_password(password, user.password):
+            user.failed_login_attempts += 1
+
+            if user.failed_login_attempts >= 5:
+                user.is_locked = True
+                user.save(update_fields=['failed_login_attempts', 'is_locked', 'updated_at'])
+                return cors_json_response({
+                    'success': False,
+                    'message': 'Compte admin bloqué après plusieurs tentatives ❌'
+                }, status=403)
+
+            user.save(update_fields=['failed_login_attempts', 'updated_at'])
+            remaining = 5 - user.failed_login_attempts
+
             return cors_json_response({
                 'success': False,
-                'message': 'Mot de passe incorrect ❌'
+                'message': f'Mot de passe incorrect ❌ Il reste {remaining} tentative(s).'
             }, status=401)
+
+        user.failed_login_attempts = 0
+        user.save(update_fields=['failed_login_attempts', 'updated_at'])
 
         request.session['admin_id'] = user.id
         request.session['admin_role'] = user.role
@@ -108,7 +125,6 @@ def api_login(request):
         }, status=404)
 
 
-@csrf_exempt
 def api_change_admin_password(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
@@ -181,7 +197,6 @@ def api_change_admin_password(request):
     })
 
 
-@csrf_exempt
 def api_create_member(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
@@ -221,11 +236,10 @@ def api_create_member(request):
             'success': False,
             'message': str(e)
         }, status=400)
-    except Exception as e:
+    except Exception:
         return cors_json_response({
             'success': False,
-            'message': 'Erreur serveur',
-            'error': str(e)
+            'message': 'Erreur serveur'
         }, status=500)
 
     log_activity(
@@ -252,7 +266,6 @@ def api_create_member(request):
     }, status=201)
 
 
-@csrf_exempt
 def api_member_history(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
@@ -291,18 +304,22 @@ def api_member_history(request):
             'members': members_data,
         })
 
-    except Exception as e:
+    except Exception:
         return cors_json_response({
             'success': False,
-            'message': 'Erreur serveur',
-            'error': str(e),
+            'message': 'Erreur serveur'
         }, status=500)
 
 
-@csrf_exempt
-def get_member_by_nim(request):
+def api_get_member_by_nim(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
+
+    if request.method != 'GET':
+        return cors_json_response({
+            'success': False,
+            'message': 'Méthode non autorisée'
+        }, status=405)
 
     admin_id = request.session.get('admin_id')
     if not admin_id:
@@ -337,111 +354,6 @@ def get_member_by_nim(request):
         }, status=404)
 
 
-@csrf_exempt
-def api_member_login(request):
-    if request.method == 'OPTIONS':
-        return cors_json_response({'success': True})
-
-    if request.method != 'POST':
-        return cors_json_response({
-            'success': False,
-            'message': 'Méthode non autorisée'
-        }, status=405)
-
-    try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return cors_json_response({
-            'success': False,
-            'message': 'JSON invalide'
-        }, status=400)
-
-    nim = (data.get('nim') or '').strip()
-    pin = (data.get('pin') or '').strip()
-
-    if not nim or not pin:
-        return cors_json_response({
-            'success': False,
-            'message': 'NIM et PIN obligatoires'
-        }, status=400)
-
-    try:
-        member = Member.objects.get(nim=nim)
-
-        if member.status == MEMBER_STATUS_SUSPENDED:
-            return cors_json_response({
-                'success': False,
-                'message': 'Compte suspendu'
-            }, status=403)
-
-        if member.status != MEMBER_STATUS_ACTIVE:
-            return cors_json_response({
-                'success': False,
-                'message': 'Compte membre inactif'
-            }, status=403)
-
-        if member.is_locked:
-            return cors_json_response({
-                'success': False,
-                'message': 'Compte bloqué. Veuillez contacter l’administration.'
-            }, status=403)
-
-        if check_password(pin, member.member_pin):
-            member.failed_pin_attempts = 0
-            member.save(update_fields=['failed_pin_attempts'])
-
-            request.session['member_id'] = member.id
-            request.session['member_nim'] = member.nim
-            request.session['member_name'] = f"{member.first_name} {member.last_name}"
-
-            return cors_json_response({
-                'success': True,
-                'message': 'Connexion réussie',
-                'must_change_pin': member.must_change_pin,
-                'member': {
-                    'id': member.id,
-                    'nim': member.nim,
-                    'first_name': member.first_name,
-                    'last_name': member.last_name,
-                    'phone': member.phone,
-                    'status': member.status,
-                    'birth_date': member.birth_date.isoformat() if member.birth_date else None,
-                    'birth_place': member.birth_place,
-                    'department': member.department,
-                    'commune': member.commune,
-                    'city': member.city,
-                    'district': member.district,
-                    'created_at': member.created_at.isoformat() if member.created_at else None,
-                    'photo_url': request.build_absolute_uri(member.photo.url) if member.photo else None,
-                    'signature_url': request.build_absolute_uri(member.signature.url) if member.signature else None,
-                }
-            })
-
-        member.failed_pin_attempts += 1
-
-        if member.failed_pin_attempts >= MAX_MEMBER_PIN_ATTEMPTS:
-            member.is_locked = True
-            member.save(update_fields=['failed_pin_attempts', 'is_locked'])
-
-            return cors_json_response({
-                'success': False,
-                'message': 'Compte bloqué après 3 tentatives incorrectes'
-            }, status=403)
-
-        member.save(update_fields=['failed_pin_attempts'])
-        remaining = MAX_MEMBER_PIN_ATTEMPTS - member.failed_pin_attempts
-
-        return cors_json_response({
-            'success': False,
-            'message': f'PIN incorrect. Il vous reste {remaining} tentative(s).'
-        }, status=401)
-
-    except Member.DoesNotExist:
-        return cors_json_response({
-            'success': False,
-            'message': 'Membre introuvable'
-        }, status=404)
-
 
 @csrf_exempt
 def fedapay_webhook(request):
@@ -451,6 +363,13 @@ def fedapay_webhook(request):
             'message': 'Méthode non autorisée'
         }, status=405)
 
+    content_type = request.headers.get('Content-Type', '')
+    if 'application/json' not in content_type:
+        return cors_json_response({
+            'success': False,
+            'message': 'Content-Type invalide'
+        }, status=400)
+
     try:
         payload = json.loads(request.body)
     except json.JSONDecodeError:
@@ -458,6 +377,21 @@ def fedapay_webhook(request):
             'success': False,
             'message': 'JSON invalide'
         }, status=400)
+
+    event_name = payload.get('name') or payload.get('event')
+    allowed_events = {
+        'transaction.approved',
+        'transaction.declined',
+        'transaction.created',
+        'transaction.canceled',
+        'transaction.cancelled',
+    }
+
+    if event_name and event_name not in allowed_events:
+        return cors_json_response({
+            'success': True,
+            'message': 'Événement ignoré'
+        })
 
     try:
         result = process_fedapay_webhook(payload)
@@ -480,15 +414,14 @@ def fedapay_webhook(request):
             'message': 'Tentative de paiement introuvable'
         }, status=404)
 
-    except Exception as e:
+    except Exception:
         return cors_json_response({
             'success': False,
-            'message': 'Erreur webhook',
-            'error': str(e),
+            'message': 'Erreur webhook'
         }, status=500)
 
 
-[text](../admins/decorators.py)
+
 
 
 from functools import wraps
@@ -524,7 +457,8 @@ def member_session_required(view_func):
         return view_func(request, *args, **kwargs)
     return wrapper
 
-[text](../admins/models.py)
+
+
 
 
 from django.db import models
@@ -551,14 +485,14 @@ class AdminUser(models.Model):
     role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='admin')
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='active')
     must_change_password = models.BooleanField(default=False)
+    failed_login_attempts = models.PositiveIntegerField(default=0)
+    is_locked = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.email
 
-
-[text](../admins/urls.py)
 
 
 
@@ -601,6 +535,21 @@ from .web_views import (
     start_member_payment,
     payment_return,
     member_transactions,
+    info_post_list,
+    create_info_post,
+    member_info_posts,
+    edit_info_post,
+    delete_info_post,
+    member_profile,
+    member_settings,
+    member_withdrawal,
+    withdrawal_requests,
+    approve_withdrawal,
+    reject_withdrawal,
+    member_transaction_detail,
+    search_transactions,
+    member_assistance,
+
 )
 
 from .api_views import (
@@ -608,8 +557,7 @@ from .api_views import (
     api_change_admin_password,
     api_create_member,
     api_member_history,
-    get_member_by_nim,
-    api_member_login,
+    api_get_member_by_nim,
     fedapay_webhook,
 
 )
@@ -624,7 +572,7 @@ urlpatterns = [
 
     path('list/', admin_list),
     path('create/', create_admin),
-    path('member-by-nim/', get_member_by_nim),
+    path('api/member-by-nim/', api_get_member_by_nim, name='api_member_by_nim'),
     path('change-password/', change_admin_password),
 
     path('admins/<int:admin_id>/', admin_detail),
@@ -664,14 +612,24 @@ urlpatterns = [
     path('api/change-password/', api_change_admin_password, name='api_change_admin_password'),
     path('api/members/create/', api_create_member, name='api_create_member'),
     path('api/members/history/', api_member_history, name='api_member_history'),
-    path('api/member/login/', api_member_login, name='api_member_login'),
     path('api/fedapay/webhook/', fedapay_webhook, name='fedapay_webhook'),
-    
+    path('info-posts/', info_post_list),
+    path('info-posts/create/', create_info_post),
+    path('info-posts/<int:post_id>/edit/', edit_info_post),
+    path('info-posts/<int:post_id>/delete/', delete_info_post),
+    path('member-infos/', member_info_posts),
+    path('member-profile/', member_profile),
+    path('member-settings/', member_settings),
+    path('member-withdrawal/', member_withdrawal),
+    path('withdrawal-requests/', withdrawal_requests),
+    path('withdrawal-requests/<int:withdrawal_id>/approve/', approve_withdrawal),
+    path('withdrawal-requests/<int:withdrawal_id>/reject/', reject_withdrawal),
+    path('member-transaction/<int:transaction_id>/', member_transaction_detail),
+    path('search-transactions/', search_transactions),
+    path('member-assistance/', member_assistance),
 
 ]
 
-
-[text](../admins/utils.py)
 
 
 import secrets
@@ -701,7 +659,6 @@ def generate_temporary_pin(length=5):
     return ''.join(secrets.choice(digits) for _ in range(length))
 
 
-[text](../admins/web_views.py)
 
 
 
@@ -709,15 +666,18 @@ import openpyxl
 from io import BytesIO
 from datetime import timedelta
 
+
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.hashers import check_password, make_password
 from django.template.loader import get_template
 from django.utils import timezone
 from xhtml2pdf import pisa
-
+from members.models import InfoPost
+from django.utils import timezone
+from django.shortcuts import get_object_or_404
 from admins.models import AdminUser
-from members.models import Member, MemberTransaction
+from members.models import Member, MemberTransaction, WithdrawalRequest
 from admins.utils import (
     log_activity,
     generate_temporary_password,
@@ -728,6 +688,18 @@ from admins.decorators import (
     super_admin_required,
     member_session_required,
 )
+
+
+from members.services import (
+    get_total_contributions,
+    get_available_balance,
+    get_recent_transactions,
+    create_withdrawal_request,
+    approve_withdrawal_request,
+    reject_withdrawal_request,
+)
+
+
 from members.permissions import forbid_if_no_member_access
 from members.constants import (
     DEFAULT_MONTHLY_CONTRIBUTION,
@@ -739,20 +711,29 @@ from members.constants import (
     MAX_MEMBER_PIN_ATTEMPTS,
 )
 from members.payment_services import start_fedapay_payment
-from members.services import create_member_record
+from members.services import create_member_record, validate_uploaded_image
 
 
 def home(request):
-    return HttpResponse("Admin fonctionne 🔥")
+    if request.session.get('admin_id'):
+        return redirect('/admins/dashboard/')
+
+    if request.session.get('member_id'):
+        return redirect('/admins/member-space/')
+
+    return redirect('/admins/login/')
 
 
 def login(request):
     if request.method == 'POST':
-        email = (request.POST.get('email') or '').strip()
+        email = (request.POST.get('email') or '').strip().lower()
         password = request.POST.get('password') or ''
 
         try:
             user = AdminUser.objects.get(email=email)
+
+            if user.is_locked:
+                return HttpResponse("Compte admin bloqué ❌")
 
             if user.status == ADMIN_STATUS_SUSPENDED:
                 return HttpResponse("Compte suspendu ❌")
@@ -760,25 +741,37 @@ def login(request):
             if user.status != ADMIN_STATUS_ACTIVE:
                 return HttpResponse("Compte inactif ❌")
 
-            if check_password(password, user.password):
-                request.session['admin_id'] = user.id
-                request.session['admin_role'] = user.role
-                request.session['admin_email'] = user.email
+            if not check_password(password, user.password):
+                user.failed_login_attempts += 1
 
-                log_activity(
-                    admin_user=user,
-                    action='login',
-                    target_type='admin',
-                    target_id=user.id,
-                    details=f"{user.email} s’est connecté"
-                )
+                if user.failed_login_attempts >= 5:
+                    user.is_locked = True
+                    user.save(update_fields=['failed_login_attempts', 'is_locked', 'updated_at'])
+                    return HttpResponse("Compte admin bloqué après plusieurs tentatives ❌")
 
-                if user.must_change_password:
-                    return redirect('/admins/change-password/')
+                user.save(update_fields=['failed_login_attempts', 'updated_at'])
+                remaining = 5 - user.failed_login_attempts
+                return HttpResponse(f"Mot de passe incorrect ❌ Il reste {remaining} tentative(s).")
 
-                return redirect('/admins/dashboard/')
+            user.failed_login_attempts = 0
+            user.save(update_fields=['failed_login_attempts', 'updated_at'])
 
-            return HttpResponse("Mot de passe incorrect ❌")
+            request.session['admin_id'] = user.id
+            request.session['admin_role'] = user.role
+            request.session['admin_email'] = user.email
+
+            log_activity(
+                admin_user=user,
+                action='login',
+                target_type='admin',
+                target_id=user.id,
+                details=f"{user.email} s’est connecté"
+            )
+
+            if user.must_change_password:
+                return redirect('/admins/change-password/')
+
+            return redirect('/admins/dashboard/')
 
         except AdminUser.DoesNotExist:
             return HttpResponse("Utilisateur introuvable ❌")
@@ -877,6 +870,113 @@ def members_hub(request):
 @admin_session_required
 def admins_hub(request):
     return render(request, 'admins/admins_hub.html')
+
+
+@admin_session_required
+def create_info_post(request):
+    if request.method == 'POST':
+        title = (request.POST.get('title') or '').strip()
+        content = (request.POST.get('content') or '').strip()
+        video_url = (request.POST.get('video_url') or '').strip() or None
+        image = request.FILES.get('image')
+
+        if not title or not content:
+            return HttpResponse("Titre et contenu obligatoires ❌")
+
+        admin = AdminUser.objects.get(id=request.session.get('admin_id'))
+
+        InfoPost.objects.create(
+            title=title,
+            content=content,
+            video_url=video_url,
+            image=image,
+            is_published=True,
+            published_at=timezone.now(),
+            created_by=admin
+        )
+
+        return redirect('/admins/info-posts/')
+
+    return render(request, 'admins/create_info_post.html')
+
+
+@admin_session_required
+def info_post_list(request):
+    posts = InfoPost.objects.all().order_by('-created_at')
+
+    return render(request, 'admins/info_post_list.html', {
+        'posts': posts
+    })
+
+
+
+@admin_session_required
+def edit_info_post(request, post_id):
+    try:
+        post = InfoPost.objects.get(id=post_id)
+    except InfoPost.DoesNotExist:
+        return HttpResponse("Post introuvable ❌")
+
+    if request.method == 'POST':
+        title = (request.POST.get('title') or '').strip()
+        content = (request.POST.get('content') or '').strip()
+        video_url = (request.POST.get('video_url') or '').strip() or None
+        image = request.FILES.get('image')
+
+        if not title or not content:
+            return HttpResponse("Titre et contenu obligatoires ❌")
+
+        post.title = title
+        post.content = content
+        post.video_url = video_url
+
+        if image:
+            post.image = image
+
+        if not post.published_at:
+            post.published_at = timezone.now()
+
+        post.save()
+
+        return redirect('/admins/info-posts/')
+
+    return render(request, 'admins/edit_info_post.html', {
+        'post': post
+    })
+
+
+@admin_session_required
+def delete_info_post(request, post_id):
+    if request.method != 'POST':
+        return redirect('/admins/info-posts/')
+
+    try:
+        post = InfoPost.objects.get(id=post_id)
+    except InfoPost.DoesNotExist:
+        return HttpResponse("Post introuvable ❌")
+
+    post.delete()
+    return redirect('/admins/info-posts/')    
+
+
+def member_info_posts(request):
+    member_id = request.session.get('member_id')
+    if not member_id:
+        return redirect('/admins/member-login/')
+
+    try:
+        member = Member.objects.get(id=member_id)
+    except Member.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/member-login/')
+
+    posts = InfoPost.objects.filter(is_published=True).order_by('-published_at', '-created_at')
+
+    return render(request, 'admins/member_info_posts.html', {
+        'member': member,
+        'posts': posts
+    })
+
 
 
 @super_admin_required
@@ -1062,16 +1162,23 @@ def activity_logs(request):
 @admin_session_required
 def create_member(request):
     if request.method == 'POST':
-        current_admin = AdminUser.objects.get(id=request.session.get('admin_id'))
-
-        signature = request.FILES.get('signature')
-        if signature and not signature.name.lower().endswith('.png'):
-            return HttpResponse("La signature doit être en format PNG ❌")
+        try:
+            current_admin = AdminUser.objects.get(id=request.session.get('admin_id'))
+        except AdminUser.DoesNotExist:
+            request.session.flush()
+            return redirect('/admins/login/')
 
         try:
+            validate_uploaded_image(request.FILES.get('photo'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+            validate_uploaded_image(request.FILES.get('id_card_front'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+            validate_uploaded_image(request.FILES.get('id_card_back'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+            validate_uploaded_image(request.FILES.get('signature'), ['.png'], max_size_mb=2)
+
             member = create_member_record(request.POST, request.FILES, current_admin)
         except ValueError as e:
             return HttpResponse(f"{str(e)} ❌")
+        except Exception:
+            return HttpResponse("Erreur serveur ❌")
 
         log_activity(
             admin_user=current_admin,
@@ -1088,16 +1195,18 @@ def create_member(request):
 
 @admin_session_required
 def member_list(request):
-    nim = request.GET.get('nim', '')
-    phone = request.GET.get('phone', '')
+    try:
+        current_admin = AdminUser.objects.get(id=request.session.get('admin_id'))
+    except AdminUser.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/login/')
 
-    role = request.session.get('admin_role')
-    admin_id = request.session.get('admin_id')
+    nim = (request.GET.get('nim') or '').strip()
+    phone = (request.GET.get('phone') or '').strip()
 
-    members = Member.objects.all().order_by('-id')
-
-    if role != 'super_admin':
-        members = members.filter(created_by_id=admin_id)
+    members = Member.objects.filter(
+        created_by=current_admin
+    ).order_by('-created_at')
 
     if nim:
         members = members.filter(nim__icontains=nim)
@@ -1107,10 +1216,10 @@ def member_list(request):
 
     return render(request, 'admins/member_list.html', {
         'members': members,
+        'admin': current_admin,
         'nim': nim,
         'phone': phone,
     })
-
 
 @admin_session_required
 def member_detail(request, member_id):
@@ -1123,8 +1232,13 @@ def member_detail(request, member_id):
     if forbidden:
         return forbidden
 
+    transactions = MemberTransaction.objects.filter(
+        member=member
+    ).order_by('-created_at')
+
     return render(request, 'admins/member_detail.html', {
-        'member': member
+        'member': member,
+        'transactions': transactions,
     })
 
 
@@ -1207,17 +1321,159 @@ def member_change_pin(request):
     return render(request, 'admins/member_change_pin.html')
 
 
-@member_session_required
+@admin_session_required  # ou member session selon ton système
 def member_space(request):
+    member_id = request.session.get('member_id')
+
+    if not member_id:
+        return redirect('/admins/member-login/')
+
     try:
-        member = Member.objects.get(id=request.session.get('member_id'))
+        member = Member.objects.get(id=member_id)
     except Member.DoesNotExist:
         request.session.flush()
         return redirect('/admins/member-login/')
 
+    total_contributions = get_total_contributions(member)
+    available_balance = get_available_balance(member)
+    recent_transactions = get_recent_transactions(member)
+
     return render(request, 'admins/member_space.html', {
-        'member': member
+        'member': member,
+        'total_contributions': total_contributions,
+        'available_balance': available_balance,
+        'recent_transactions': recent_transactions,
     })
+
+@admin_session_required
+def member_withdrawal(request):
+    member_id = request.session.get('member_id')
+
+    if not member_id:
+        return redirect('/admins/member-login/')
+
+    try:
+        member = Member.objects.get(id=member_id)
+    except Member.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/member-login/')
+
+    error_message = None
+    success_message = None
+
+    if request.method == 'POST':
+        amount = (request.POST.get('amount') or '').strip()
+        receiver_phone = (request.POST.get('receiver_phone') or '').strip()
+        reason = (request.POST.get('reason') or '').strip()
+        pin = (request.POST.get('pin') or '').strip()
+
+        try:
+            create_withdrawal_request(
+                member=member,
+                amount=amount,
+                receiver_phone=receiver_phone,
+                reason=reason,
+                pin=pin,
+            )
+            success_message = "Votre demande de retrait a été envoyée avec succès. Elle est en attente de validation."
+        except ValueError as e:
+            error_message = str(e)
+        except Exception:
+            error_message = "Une erreur est survenue lors de la demande de retrait."
+
+    available_balance = get_available_balance(member)
+
+    return render(request, 'admins/member_withdrawal.html', {
+        'member': member,
+        'available_balance': available_balance,
+        'error_message': error_message,
+        'success_message': success_message,
+    })
+
+@admin_session_required
+def withdrawal_requests(request):
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        return redirect('/admins/login/')
+
+    requests_list = WithdrawalRequest.objects.select_related(
+        'member',
+        'transaction',
+        'processed_by',
+    ).order_by('-created_at')
+
+    return render(request, 'admins/withdrawal_requests.html', {
+        'requests_list': requests_list,
+    })
+
+
+@admin_session_required
+def approve_withdrawal(request, withdrawal_id):
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        return redirect('/admins/login/')
+
+    if request.method != 'POST':
+        return redirect('/admins/withdrawal-requests/')
+
+    try:
+        admin_user = AdminUser.objects.get(id=admin_id)
+    except AdminUser.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/login/')
+
+    withdrawal_request = get_object_or_404(WithdrawalRequest, id=withdrawal_id)
+
+    admin_note = (request.POST.get('admin_note') or '').strip()
+
+    try:
+        approve_withdrawal_request(
+            withdrawal_request=withdrawal_request,
+            admin_user=admin_user,
+            admin_note=admin_note,
+        )
+    except ValueError as e:
+        return HttpResponse(str(e))
+    except Exception:
+        return HttpResponse("Erreur lors de la validation du retrait.")
+
+    return redirect('/admins/withdrawal-requests/')
+
+
+@admin_session_required
+def reject_withdrawal(request, withdrawal_id):
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        return redirect('/admins/login/')
+
+    if request.method != 'POST':
+        return redirect('/admins/withdrawal-requests/')
+
+    try:
+        admin_user = AdminUser.objects.get(id=admin_id)
+    except AdminUser.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/login/')
+
+    withdrawal_request = get_object_or_404(WithdrawalRequest, id=withdrawal_id)
+
+    admin_note = (request.POST.get('admin_note') or '').strip()
+
+    try:
+        reject_withdrawal_request(
+            withdrawal_request=withdrawal_request,
+            admin_user=admin_user,
+            admin_note=admin_note,
+        )
+    except ValueError as e:
+        return HttpResponse(str(e))
+    except Exception:
+        return HttpResponse("Erreur lors du refus du retrait.")
+
+    return redirect('/admins/withdrawal-requests/')
+
+
+
 
 
 @member_session_required
@@ -1312,20 +1568,20 @@ def edit_member(request, member_id):
         return forbidden
 
     if request.method == 'POST':
-        member.first_name = request.POST.get('first_name')
-        member.last_name = request.POST.get('last_name')
+        member.first_name = (request.POST.get('first_name') or '').strip()
+        member.last_name = (request.POST.get('last_name') or '').strip()
         member.birth_date = request.POST.get('birth_date')
-        member.birth_place = request.POST.get('birth_place')
-        member.department = request.POST.get('department')
-        member.commune = request.POST.get('commune')
-        member.city = request.POST.get('city')
-        member.district = request.POST.get('district')
+        member.birth_place = (request.POST.get('birth_place') or '').strip()
+        member.department = (request.POST.get('department') or '').strip()
+        member.commune = (request.POST.get('commune') or '').strip()
+        member.city = (request.POST.get('city') or '').strip()
+        member.district = (request.POST.get('district') or '').strip()
         member.phone = (request.POST.get('phone') or '').strip() or None
-        member.id_card_type = request.POST.get('id_card_type')
-        member.id_card_number = request.POST.get('id_card_number')
-        member.emergency_last_name = request.POST.get('emergency_last_name')
-        member.emergency_first_name = request.POST.get('emergency_first_name')
-        member.emergency_phone = request.POST.get('emergency_phone')
+        member.id_card_type = (request.POST.get('id_card_type') or '').strip()
+        member.id_card_number = (request.POST.get('id_card_number') or '').strip()
+        member.emergency_last_name = (request.POST.get('emergency_last_name') or '').strip() or None
+        member.emergency_first_name = (request.POST.get('emergency_first_name') or '').strip() or None
+        member.emergency_phone = (request.POST.get('emergency_phone') or '').strip() or None
 
         if not member.id_card_number:
             return HttpResponse("Le numéro de pièce est obligatoire ❌")
@@ -1335,6 +1591,14 @@ def edit_member(request, member_id):
 
         if member.phone and Member.objects.filter(phone=member.phone).exclude(id=member.id).exists():
             return HttpResponse("Un autre membre utilise déjà ce numéro de téléphone ❌")
+
+        try:
+            validate_uploaded_image(request.FILES.get('photo'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+            validate_uploaded_image(request.FILES.get('id_card_front'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+            validate_uploaded_image(request.FILES.get('id_card_back'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+            validate_uploaded_image(request.FILES.get('signature'), ['.png'], max_size_mb=2)
+        except ValueError as e:
+            return HttpResponse(f"{str(e)} ❌")
 
         if request.FILES.get('photo'):
             member.photo = request.FILES.get('photo')
@@ -1346,14 +1610,15 @@ def edit_member(request, member_id):
             member.id_card_back = request.FILES.get('id_card_back')
 
         if request.FILES.get('signature'):
-            signature = request.FILES.get('signature')
-            if not signature.name.lower().endswith('.png'):
-                return HttpResponse("La signature doit être en format PNG ❌")
-            member.signature = signature
+            member.signature = request.FILES.get('signature')
 
         member.save()
 
-        current_admin = AdminUser.objects.get(id=request.session.get('admin_id'))
+        try:
+            current_admin = AdminUser.objects.get(id=request.session.get('admin_id'))
+        except AdminUser.DoesNotExist:
+            request.session.flush()
+            return redirect('/admins/login/')
 
         log_activity(
             admin_user=current_admin,
@@ -1699,10 +1964,89 @@ def member_transactions(request):
     return render(request, 'admins/member_transactions.html', {
         'member': member,
         'transactions': transactions
-    })    
+    }) 
+
+@member_session_required
+def member_transaction_detail(request, transaction_id):
+    member_id = request.session.get('member_id')
+
+    if not member_id:
+        return redirect('/admins/member-login/')
+
+    try:
+        member = Member.objects.get(id=member_id)
+    except Member.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/member-login/')
+
+    transaction = get_object_or_404(
+        MemberTransaction,
+        id=transaction_id,
+        member=member
+    )
+
+    withdrawal_request = None
+    try:
+        withdrawal_request = transaction.withdrawal_request
+    except WithdrawalRequest.DoesNotExist:
+        withdrawal_request = None
+    except AttributeError:
+        withdrawal_request = None
+
+    return render(request, 'admins/member_transaction_detail.html', {
+        'member': member,
+        'transaction': transaction,
+        'withdrawal_request': withdrawal_request,
+    })   
+
+@member_session_required
+def member_profile(request):
+    try:
+        member = Member.objects.get(id=request.session.get('member_id'))
+    except Member.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/member-login/')
+
+    return render(request, 'admins/member_profile.html', {
+        'member': member
+    })
+
+@member_session_required
+def member_settings(request):
+    try:
+        member = Member.objects.get(id=request.session.get('member_id'))
+    except Member.DoesNotExist:
+        request.session.flush()
+        return redirect('/admins/member-login/')
+
+    return render(request, 'admins/member_settings.html', {
+        'member': member
+    })
 
 
-[text](../config/settings.py)
+@admin_session_required
+def search_transactions(request):
+    admin_id = request.session.get('admin_id')
+
+    if not admin_id:
+        return redirect('/admins/login/')
+
+    query = (request.GET.get('q') or '').strip()
+    transactions = []
+
+    if query:
+        transactions = MemberTransaction.objects.select_related('member').filter(
+            receipt_number__icontains=query
+        ).order_by('-created_at')
+
+    return render(request, 'admins/search_transactions.html', {
+        'query': query,
+        'transactions': transactions,
+    })
+
+def member_assistance(request):
+    return render(request, 'admins/member_assistance.html')
+
 
 
 
@@ -1713,8 +2057,15 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("DJANGO_SECRET_KEY manquant dans le .env")
+
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
+
+DATABASE_ENGINE = os.getenv("DATABASE_ENGINE", "sqlite")
+if not DEBUG and DATABASE_ENGINE == "sqlite":
+    print("ATTENTION: le projet tourne en production avec SQLite")
 
 ALLOWED_HOSTS = [
     host.strip()
@@ -1771,8 +2122,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
-
-DATABASE_ENGINE = os.getenv("DATABASE_ENGINE", "sqlite")
 
 if DATABASE_ENGINE == "postgres":
     DATABASES = {
@@ -1837,19 +2186,22 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Sécurité production
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
     CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_HTTPONLY = False
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = os.getenv("DJANGO_SECURE_SSL_REDIRECT", "True") == "True"
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # Sessions
 SESSION_COOKIE_AGE = 60 * 60 * 12  # 12 heures
 SESSION_SAVE_EVERY_REQUEST = True
 
-
-[logs](models.py)
 
 
 
@@ -1870,7 +2222,7 @@ class ActivityLog(models.Model):
         return f"{self.admin_user.email} - {self.action}"
 
 
-[text](../members/constants.py)
+
 
 
 from decimal import Decimal
@@ -1893,8 +2245,6 @@ MAX_MEMBER_PIN_ATTEMPTS = 3
 TEMP_ADMIN_PASSWORD_LENGTH = 12
 TEMP_MEMBER_PIN_LENGTH = 5
 
-
-[text](../members/models.py)
 
 
 from django.db import models
@@ -1946,6 +2296,7 @@ class Member(models.Model):
     must_change_pin = models.BooleanField(default=False)
     failed_pin_attempts = models.PositiveIntegerField(default=0)
     is_locked = models.BooleanField(default=False)
+
     created_by = models.ForeignKey(AdminUser, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
@@ -1956,14 +2307,12 @@ class MemberTransaction(models.Model):
     TRANSACTION_TYPE_CHOICES = [
         ('payment', 'Paiement'),
         ('withdrawal', 'Retrait'),
-        ('adjustment', 'Ajustement'),
     ]
 
     STATUS_CHOICES = [
         ('pending', 'En attente'),
         ('success', 'Succès'),
         ('failed', 'Échoué'),
-        ('cancelled', 'Annulé'),
     ]
 
     member = models.ForeignKey(
@@ -1974,10 +2323,12 @@ class MemberTransaction(models.Model):
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPE_CHOICES)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     reference = models.CharField(max_length=100, unique=True)
+    receipt_number = models.CharField(max_length=30, unique=True, null=True, blank=True, db_index=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     validated_at = models.DateTimeField(blank=True, null=True)
+
 
     class Meta:
         indexes = [
@@ -2001,9 +2352,14 @@ class WithdrawalRequest(models.Model):
         on_delete=models.CASCADE,
         related_name='withdrawal_requests'
     )
+    transaction = models.OneToOneField(
+        MemberTransaction,
+        on_delete=models.CASCADE,
+        related_name='withdrawal_request'
+    )
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    receiver_account = models.CharField(max_length=100)
-    account_holder_name = models.CharField(max_length=255)
+    receiver_phone = models.CharField(max_length=20)
+    reason = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     admin_note = models.TextField(blank=True, null=True)
     processed_by = models.ForeignKey(
@@ -2016,81 +2372,37 @@ class WithdrawalRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     processed_at = models.DateTimeField(blank=True, null=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['member', 'status']),
+            models.Index(fields=['created_at']),
+        ]
+
     def __str__(self):
         return f"Retrait {self.member.nim} - {self.amount} - {self.status}"
 
 
 class InfoPost(models.Model):
-    POST_TYPE_CHOICES = [
-        ('text', 'Texte'),
-        ('image', 'Image'),
-        ('video', 'Vidéo'),
-        ('mixed', 'Mixte'),
-    ]
-
     title = models.CharField(max_length=255)
     content = models.TextField()
-    post_type = models.CharField(max_length=20, choices=POST_TYPE_CHOICES, default='text')
     image = models.ImageField(upload_to='members/info_posts/images/', null=True, blank=True)
     video_url = models.URLField(null=True, blank=True)
     is_published = models.BooleanField(default=True)
     published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        AdminUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='info_posts'
+    )
+
+    class Meta:
+        ordering = ['-published_at', '-created_at']
 
     def __str__(self):
         return self.title
-
-
-class Project(models.Model):
-    title = models.CharField(max_length=255)
-    description = models.TextField()
-    pdf_file = models.FileField(upload_to='members/projects/pdfs/')
-    cover_image = models.ImageField(upload_to='members/projects/covers/', null=True, blank=True)
-    is_published = models.BooleanField(default=True)
-    published_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.title
-
-
-class OfficialContract(models.Model):
-    title = models.CharField(max_length=255)
-    pdf_file = models.FileField(upload_to='members/contracts/official/')
-    version = models.CharField(max_length=50, default='1.0')
-    is_active = models.BooleanField(default=False)
-    published_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.title} - v{self.version}"
-
-
-class MemberContractSubmission(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'En attente'),
-        ('approved', 'Approuvé'),
-        ('rejected', 'Rejeté'),
-    ]
-
-    member = models.ForeignKey(
-        Member,
-        on_delete=models.CASCADE,
-        related_name='contract_submissions'
-    )
-    contract = models.ForeignKey(
-        OfficialContract,
-        on_delete=models.CASCADE,
-        related_name='submissions'
-    )
-    signed_file = models.FileField(upload_to='members/contracts/signed/')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    admin_note = models.TextField(blank=True, null=True)
-    submitted_at = models.DateTimeField(auto_now_add=True)
-    reviewed_at = models.DateTimeField(blank=True, null=True)
-
-    def __str__(self):
-        return f"{self.member.nim} - {self.contract.title} - {self.status}"
 
 
 class FedapayPaymentAttempt(models.Model):
@@ -2130,7 +2442,6 @@ class FedapayPaymentAttempt(models.Model):
         return f"{self.nim} - {self.transaction_id} - {self.status}"
 
 
-[text](../members/payment_services.py)
 
 
 from decimal import Decimal
@@ -2251,20 +2562,29 @@ def process_fedapay_webhook(payload):
     if not transaction_id:
         raise ValueError("Transaction introuvable")
 
-    attempt = FedapayPaymentAttempt.objects.select_for_update().get(
-        transaction_id=str(transaction_id)
-    )
+    try:
+        attempt = FedapayPaymentAttempt.objects.select_for_update().get(
+            transaction_id=str(transaction_id)
+        )
+    except FedapayPaymentAttempt.DoesNotExist:
+        raise ValueError("Tentative de paiement inexistante")
 
-    verify_response = requests.get(
-        f"{settings.FEDAPAY_API_BASE}/transactions/{transaction_id}",
-        headers=build_fedapay_verify_headers(),
-        timeout=30,
-    )
+    try:
+        verify_response = requests.get(
+            f"{settings.FEDAPAY_API_BASE}/transactions/{transaction_id}",
+            headers=build_fedapay_verify_headers(),
+            timeout=30,
+        )
+    except requests.RequestException:
+        raise ValueError("Erreur réseau lors de la vérification FedaPay")
 
     if verify_response.status_code not in [200, 201]:
-        raise ValueError(f"Vérification FedaPay échouée : {verify_response.text}")
+        raise ValueError("Vérification FedaPay échouée")
 
-    verify_data = verify_response.json()
+    try:
+        verify_data = verify_response.json()
+    except Exception:
+        raise ValueError("Réponse FedaPay invalide")
 
     transaction_verified = (
         verify_data.get('v1/transaction')
@@ -2277,23 +2597,29 @@ def process_fedapay_webhook(payload):
 
     attempt.fedapay_payload = verify_data
 
+    # 🔴 Paiement refusé
     if verified_status in ['declined', 'failed', 'canceled', 'cancelled']:
         attempt.status = 'declined'
         attempt.save(update_fields=['status', 'fedapay_payload', 'updated_at'])
         return 'declined'
 
+    # 🟡 En attente
     if verified_status not in ['approved', 'successful', 'success']:
         attempt.status = 'pending'
         attempt.save(update_fields=['status', 'fedapay_payload', 'updated_at'])
         return 'pending'
 
+    # 🔁 Anti double traitement
     if attempt.is_processed:
         return 'already_processed'
 
+    # 🔒 Vérification montant
     if amount != attempt.total_amount:
-        raise ValueError(
-            f"Montant incohérent. Attendu={attempt.total_amount}, reçu={amount}"
-        )
+        raise ValueError("Montant incohérent")
+
+    # 🔒 Vérification membre
+    if not attempt.member:
+        raise ValueError("Membre invalide")
 
     existing = MemberTransaction.objects.filter(
         member=attempt.member,
@@ -2325,7 +2651,6 @@ def process_fedapay_webhook(payload):
     return 'approved'
 
 
-[text](../members/permissions.py)
 
 
 from django.http import HttpResponse
@@ -2359,25 +2684,19 @@ def forbid_if_no_member_access(request, member):
         return HttpResponse("Accès refusé à ce membre ❌")
     return None
 
-[text](../members/services.py)
+
 
 
 from decimal import Decimal
-from datetime import datetime
 import uuid
 
-from django.contrib.auth.hashers import make_password
-from django.db import models, transaction
-from django.db.models import Sum, Count
+from PIL import Image
+from django.contrib.auth.hashers import make_password, check_password
+from django.db import transaction
+from django.db.models import Sum
 from django.utils import timezone
 
-from .models import (
-    Member,
-    MemberTransaction,
-    WithdrawalRequest,
-    OfficialContract,
-    MemberContractSubmission,
-)
+from .models import Member, MemberTransaction, WithdrawalRequest
 
 
 def generate_reference(prefix='TRX'):
@@ -2393,7 +2712,7 @@ def get_total_payments(member):
     return result['total'] or Decimal('0.00')
 
 
-def get_total_withdrawals(member):
+def get_total_success_withdrawals(member):
     result = MemberTransaction.objects.filter(
         member=member,
         transaction_type='withdrawal',
@@ -2402,9 +2721,10 @@ def get_total_withdrawals(member):
     return result['total'] or Decimal('0.00')
 
 
-def get_pending_withdrawals_total(member):
-    result = WithdrawalRequest.objects.filter(
+def get_total_pending_withdrawals(member):
+    result = MemberTransaction.objects.filter(
         member=member,
+        transaction_type='withdrawal',
         status='pending'
     ).aggregate(total=Sum('amount'))
     return result['total'] or Decimal('0.00')
@@ -2412,26 +2732,27 @@ def get_pending_withdrawals_total(member):
 
 def get_total_contributions(member):
     total_payments = get_total_payments(member)
-    total_withdrawals = get_total_withdrawals(member)
-    remaining = total_payments - total_withdrawals
+    total_success_withdrawals = get_total_success_withdrawals(member)
 
-    if remaining <= 0:
+    total = total_payments - total_success_withdrawals
+
+    if total <= 0:
         return Decimal('0.00')
 
-    return remaining
+    return total
 
 
 def get_available_balance(member):
     total_payments = get_total_payments(member)
-    total_withdrawals = get_total_withdrawals(member)
-    pending_withdrawals = get_pending_withdrawals_total(member)
+    total_success_withdrawals = get_total_success_withdrawals(member)
+    total_pending_withdrawals = get_total_pending_withdrawals(member)
 
-    balance = total_payments - total_withdrawals - pending_withdrawals
+    available = total_payments - total_success_withdrawals - total_pending_withdrawals
 
-    if balance <= 0:
+    if available <= 0:
         return Decimal('0.00')
 
-    return balance
+    return available
 
 
 def get_recent_transactions(member, limit=5):
@@ -2440,18 +2761,11 @@ def get_recent_transactions(member, limit=5):
     ).order_by('-created_at')[:limit]
 
 
-def can_withdraw(member, amount):
-    amount = Decimal(str(amount))
-    if amount <= 0:
-        return False
-    return get_available_balance(member) >= amount
-
-
 @transaction.atomic
 def create_manual_payment_transaction(
     member,
     amount,
-    description='Cotisation membre',
+    description=None,
     reference=None,
     validated_at=None,
 ):
@@ -2460,13 +2774,24 @@ def create_manual_payment_transaction(
     if amount <= 0:
         raise ValueError("Le montant doit être supérieur à zéro.")
 
+    months = [
+        "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+        "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+    ]
+
+    now = timezone.now()
+    current_month = f"{months[now.month - 1]} {now.year}"
+
+    if not description:
+        description = f"Paiement mensuel - {current_month}"
+
     if not reference:
         reference = generate_reference('PAY')
 
     if validated_at is None:
         validated_at = timezone.now()
 
-    transaction, created = MemberTransaction.objects.get_or_create(
+    transaction_record, created = MemberTransaction.objects.get_or_create(
         reference=reference,
         defaults={
             'member': member,
@@ -2478,75 +2803,91 @@ def create_manual_payment_transaction(
         }
     )
 
-    return transaction
+    if not transaction_record.receipt_number:
+        transaction_record.receipt_number = generate_receipt_number(transaction_record)
+        transaction_record.save(update_fields=['receipt_number'])
+
+    return transaction_record
+
+
+def generate_receipt_number(transaction):
+    return f"RCPT-FAS-{transaction.created_at.year}-{transaction.id:08d}"    
 
 
 @transaction.atomic
-def create_withdrawal_request(member, amount, receiver_account, account_holder_name):
+def create_withdrawal_request(member, amount, receiver_phone, reason, pin):
     amount = Decimal(str(amount))
 
     if amount <= 0:
         raise ValueError("Le montant doit être supérieur à zéro.")
 
+    if not receiver_phone:
+        raise ValueError("Le numéro destinataire est obligatoire.")
+
+    if not pin:
+        raise ValueError("Le code PIN est obligatoire.")
+
     member = Member.objects.select_for_update().get(pk=member.pk)
 
-    if not can_withdraw(member, amount):
+    if not member.member_pin or not check_password(pin, member.member_pin):
+        raise ValueError("Code PIN incorrect.")
+
+    available_balance = get_available_balance(member)
+    if amount > available_balance:
         raise ValueError("Solde insuffisant pour effectuer ce retrait.")
 
-    withdrawal = WithdrawalRequest.objects.create(
+    transaction_record = MemberTransaction.objects.create(
         member=member,
+        transaction_type='withdrawal',
         amount=amount,
-        receiver_account=receiver_account,
-        account_holder_name=account_holder_name,
-        status='pending'
+        reference=generate_reference('WDR'),
+        status='pending',
+        description='Retrait',
     )
 
-    return withdrawal
+    transaction_record.receipt_number = generate_receipt_number(transaction_record)
+    transaction_record.save(update_fields=['receipt_number'])
+
+    withdrawal_request = WithdrawalRequest.objects.create(
+        member=member,
+        transaction=transaction_record,
+        amount=amount,
+        receiver_phone=receiver_phone,
+        reason=reason or '',
+        status='pending',
+    )
+
+    return withdrawal_request
 
 
 @transaction.atomic
-def approve_withdrawal(withdrawal_request, admin=None, admin_note=None):
+def approve_withdrawal_request(withdrawal_request, admin_user, admin_note=None):
     withdrawal_request = WithdrawalRequest.objects.select_for_update().get(pk=withdrawal_request.pk)
 
     if withdrawal_request.status != 'pending':
         raise ValueError("Cette demande a déjà été traitée.")
 
-    member = Member.objects.select_for_update().get(pk=withdrawal_request.member_id)
-
-    total_payments = get_total_payments(member)
-    total_withdrawals = get_total_withdrawals(member)
-
-    other_pending = WithdrawalRequest.objects.filter(
-        member=member,
-        status='pending'
-    ).exclude(pk=withdrawal_request.pk).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-
-    available = total_payments - total_withdrawals - other_pending
-
-    if available < withdrawal_request.amount:
-        raise ValueError("Le solde du membre n'est plus suffisant.")
-
     withdrawal_request.status = 'approved'
     withdrawal_request.admin_note = admin_note
+    withdrawal_request.processed_by = admin_user
     withdrawal_request.processed_at = timezone.now()
-    withdrawal_request.processed_by = admin
-    withdrawal_request.save()
+    withdrawal_request.save(update_fields=[
+        'status',
+        'admin_note',
+        'processed_by',
+        'processed_at',
+    ])
 
-    transaction = MemberTransaction.objects.create(
-        member=member,
-        transaction_type='withdrawal',
-        amount=withdrawal_request.amount,
-        reference=generate_reference('WDR'),
-        status='success',
-        description='Retrait validé',
-        validated_at=timezone.now(),
-    )
+    transaction_record = withdrawal_request.transaction
+    transaction_record.status = 'success'
+    transaction_record.validated_at = timezone.now()
+    transaction_record.save(update_fields=['status', 'validated_at'])
 
-    return transaction
+    return withdrawal_request
 
 
 @transaction.atomic
-def reject_withdrawal(withdrawal_request, admin=None, admin_note=None):
+def reject_withdrawal_request(withdrawal_request, admin_user, admin_note=None):
     withdrawal_request = WithdrawalRequest.objects.select_for_update().get(pk=withdrawal_request.pk)
 
     if withdrawal_request.status != 'pending':
@@ -2554,229 +2895,43 @@ def reject_withdrawal(withdrawal_request, admin=None, admin_note=None):
 
     withdrawal_request.status = 'rejected'
     withdrawal_request.admin_note = admin_note
+    withdrawal_request.processed_by = admin_user
     withdrawal_request.processed_at = timezone.now()
-    withdrawal_request.processed_by = admin
-    withdrawal_request.save()
+    withdrawal_request.save(update_fields=[
+        'status',
+        'admin_note',
+        'processed_by',
+        'processed_at',
+    ])
+
+    transaction_record = withdrawal_request.transaction
+    transaction_record.status = 'failed'
+    transaction_record.validated_at = timezone.now()
+    transaction_record.save(update_fields=['status', 'validated_at'])
 
     return withdrawal_request
 
 
-def publish_info_post(post):
-    post.is_published = True
-    post.published_at = timezone.now()
-    post.save()
-    return post
+def validate_uploaded_image(uploaded_file, allowed_extensions=None, max_size_mb=5):
+    if not uploaded_file:
+        return
 
+    allowed_extensions = allowed_extensions or ['.jpg', '.jpeg', '.png']
 
-def unpublish_info_post(post):
-    post.is_published = False
-    post.save()
-    return post
+    filename = uploaded_file.name.lower()
+    if not any(filename.endswith(ext) for ext in allowed_extensions):
+        raise ValueError("Format de fichier non autorisé")
 
+    if uploaded_file.size > max_size_mb * 1024 * 1024:
+        raise ValueError(f"Le fichier dépasse {max_size_mb} Mo")
 
-def publish_project(project):
-    project.is_published = True
-    project.published_at = timezone.now()
-    project.save()
-    return project
-
-
-def unpublish_project(project):
-    project.is_published = False
-    project.save()
-    return project
-
-
-def activate_contract(contract):
-    OfficialContract.objects.filter(is_active=True).update(is_active=False)
-    contract.is_active = True
-    if not contract.published_at:
-        contract.published_at = timezone.now()
-    contract.save()
-    return contract
-
-
-def get_active_contract():
-    return OfficialContract.objects.filter(is_active=True).order_by('-created_at').first()
-
-
-def submit_member_contract(member, contract, signed_file):
-    submission = MemberContractSubmission.objects.create(
-        member=member,
-        contract=contract,
-        signed_file=signed_file,
-        status='pending'
-    )
-    return submission
-
-
-def approve_contract_submission(submission, admin_note=None):
-    submission.status = 'approved'
-    submission.admin_note = admin_note
-    submission.reviewed_at = timezone.now()
-    submission.save()
-    return submission
-
-
-def reject_contract_submission(submission, admin_note=None):
-    submission.status = 'rejected'
-    submission.admin_note = admin_note
-    submission.reviewed_at = timezone.now()
-    submission.save()
-    return submission
-
-
-def get_start_of_current_month():
-    now = timezone.now()
-    return datetime(now.year, now.month, 1, tzinfo=now.tzinfo)
-
-
-def get_admin_paid_members_current_month(admin):
-    start_month = get_start_of_current_month()
-
-    paid_member_ids = MemberTransaction.objects.filter(
-        member__created_by=admin,
-        transaction_type='payment',
-        status='success',
-        created_at__gte=start_month
-    ).values_list('member_id', flat=True).distinct()
-
-    return Member.objects.filter(id__in=paid_member_ids).order_by('last_name', 'first_name')
-
-
-def get_admin_unpaid_members_current_month(admin):
-    start_month = get_start_of_current_month()
-
-    paid_member_ids = MemberTransaction.objects.filter(
-        member__created_by=admin,
-        transaction_type='payment',
-        status='success',
-        created_at__gte=start_month
-    ).values_list('member_id', flat=True).distinct()
-
-    return Member.objects.filter(
-        created_by=admin
-    ).exclude(id__in=paid_member_ids).order_by('last_name', 'first_name')
-
-
-def get_total_payments_today():
-    today = timezone.now().date()
-
-    result = MemberTransaction.objects.filter(
-        transaction_type='payment',
-        status='success',
-        created_at__date=today
-    ).aggregate(total=Sum('amount'))
-
-    return result['total'] or Decimal('0.00')
-
-
-def get_total_payments_current_month():
-    now = timezone.now()
-
-    result = MemberTransaction.objects.filter(
-        transaction_type='payment',
-        status='success',
-        created_at__year=now.year,
-        created_at__month=now.month
-    ).aggregate(total=Sum('amount'))
-
-    return result['total'] or Decimal('0.00')
-
-
-def get_total_payments_current_year():
-    now = timezone.now()
-
-    result = MemberTransaction.objects.filter(
-        transaction_type='payment',
-        status='success',
-        created_at__year=now.year
-    ).aggregate(total=Sum('amount'))
-
-    return result['total'] or Decimal('0.00')
-
-
-def get_most_regular_members(limit=10):
-    return (
-        Member.objects.annotate(
-            payments_count=Count(
-                'transactions',
-                filter=models.Q(
-                    transactions__transaction_type='payment',
-                    transactions__status='success'
-                )
-            )
-        )
-        .order_by('-payments_count', 'last_name', 'first_name')[:limit]
-    )
-
-
-def get_admin_total_paid_current_month(admin):
-    start_month = get_start_of_current_month()
-
-    result = MemberTransaction.objects.filter(
-        member__created_by=admin,
-        transaction_type='payment',
-        status='success',
-        created_at__gte=start_month
-    ).aggregate(total=Sum('amount'))
-
-    return result['total'] or Decimal('0.00')
-
-
-def get_admin_paid_members_in_period(admin, start_date=None, end_date=None):
-    transactions = MemberTransaction.objects.filter(
-        member__created_by=admin,
-        transaction_type='payment',
-        status='success'
-    )
-
-    if start_date:
-        transactions = transactions.filter(created_at__date__gte=start_date)
-
-    if end_date:
-        transactions = transactions.filter(created_at__date__lte=end_date)
-
-    paid_member_ids = transactions.values_list('member_id', flat=True).distinct()
-
-    return Member.objects.filter(id__in=paid_member_ids).order_by('last_name', 'first_name')
-
-
-def get_admin_unpaid_members_in_period(admin, start_date=None, end_date=None):
-    all_members = Member.objects.filter(created_by=admin)
-
-    transactions = MemberTransaction.objects.filter(
-        member__created_by=admin,
-        transaction_type='payment',
-        status='success'
-    )
-
-    if start_date:
-        transactions = transactions.filter(created_at__date__gte=start_date)
-
-    if end_date:
-        transactions = transactions.filter(created_at__date__lte=end_date)
-
-    paid_member_ids = transactions.values_list('member_id', flat=True).distinct()
-
-    return all_members.exclude(id__in=paid_member_ids).order_by('last_name', 'first_name')
-
-
-def get_admin_total_paid_in_period(admin, start_date=None, end_date=None):
-    transactions = MemberTransaction.objects.filter(
-        member__created_by=admin,
-        transaction_type='payment',
-        status='success'
-    )
-
-    if start_date:
-        transactions = transactions.filter(created_at__date__gte=start_date)
-
-    if end_date:
-        transactions = transactions.filter(created_at__date__lte=end_date)
-
-    result = transactions.aggregate(total=Sum('amount'))
-    return result['total'] or Decimal('0.00')
+    try:
+        uploaded_file.seek(0)
+        img = Image.open(uploaded_file)
+        img.verify()
+        uploaded_file.seek(0)
+    except Exception:
+        raise ValueError("Fichier image invalide ou corrompu")
 
 
 def create_member_record(data, files, current_admin):
@@ -2787,6 +2942,11 @@ def create_member_record(data, files, current_admin):
 
     id_card_number = (data.get('id_card_number') or '').strip()
     phone = (data.get('phone') or '').strip() or None
+
+    validate_uploaded_image(files.get('photo'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+    validate_uploaded_image(files.get('id_card_front'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+    validate_uploaded_image(files.get('id_card_back'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+    validate_uploaded_image(files.get('signature'), ['.png'], max_size_mb=2)
 
     if not id_card_number:
         raise ValueError("Le numéro de pièce est obligatoire")
@@ -2827,8 +2987,6 @@ def create_member_record(data, files, current_admin):
     return member
 
 
-[text](../.env)
-
 
 DJANGO_SECRET_KEY=change-this-local-secret-key
 DJANGO_DEBUG=True
@@ -2844,8 +3002,6 @@ FEDAPAY_PUBLIC_KEY=pk_sandbox_jaHjXxytHbr850sAlKYuabvu
 FEDAPAY_SECRET_KEY=sk_sandbox_EhhaVMxGTzD1LuGjXCuRPwjM
 
 
-[text](../.gitignore)
-
 
 .env
 venv/
@@ -2854,20 +3010,3 @@ __pycache__/
 db.sqlite3
 media/
 staticfiles/
-
-
-[text](../requirements.txt)
-
-
-
-
-Django==6.0.3
-django-cors-headers
-djangorestframework
-requests
-xhtml2pdf
-openpyxl
-Pillow
-python-dotenv
-psycopg[binary]
-gunicorn

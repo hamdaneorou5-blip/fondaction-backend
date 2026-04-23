@@ -1,5 +1,11 @@
 import json
 
+import hmac
+import hashlib
+import time
+from django.conf import settings
+
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import check_password, make_password
@@ -8,11 +14,10 @@ from admins.models import AdminUser
 from members.models import Member, FedapayPaymentAttempt
 from admins.utils import log_activity
 from members.constants import (
-    MEMBER_STATUS_ACTIVE,
-    MEMBER_STATUS_SUSPENDED,
+    
     ADMIN_STATUS_ACTIVE,
     ADMIN_STATUS_SUSPENDED,
-    MAX_MEMBER_PIN_ATTEMPTS,
+    
 )
 from members.payment_services import process_fedapay_webhook
 from members.services import create_member_record
@@ -312,7 +317,7 @@ def api_member_history(request):
         }, status=500)
 
 
-def get_member_by_nim(request):
+def api_get_member_by_nim(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
 
@@ -355,109 +360,54 @@ def get_member_by_nim(request):
         }, status=404)
 
 
-def api_member_login(request):
-    if request.method == 'OPTIONS':
-        return cors_json_response({'success': True})
+def verify_fedapay_signature(raw_body: bytes, signature_header: str) -> bool:
+    """
+    Vérifie la signature du webhook FedaPay.
 
-    if request.method != 'POST':
-        return cors_json_response({
-            'success': False,
-            'message': 'Méthode non autorisée'
-        }, status=405)
+    IMPORTANT :
+    - FedaPay documente l'usage de X-FEDAPAY-SIGNATURE + secret webhook + body brut.
+    - La doc publique consultée ne donne pas clairement l'algorithme Python exact.
+    - Cette implémentation suppose un format de type : t=TIMESTAMP,v1=SIGNATURE_HEX
+      avec une signature HMAC SHA256 sur "timestamp.payload".
+    - À valider une fois avec un vrai webhook FedaPay sandbox.
+    """
+    secret = settings.FEDAPAY_WEBHOOK_SECRET
+    if not secret:
+        return False
+
+    if not signature_header:
+        return False
+
+    parts = {}
+    for item in signature_header.split(','):
+        if '=' in item:
+            k, v = item.split('=', 1)
+            parts[k.strip()] = v.strip()
+
+    timestamp = parts.get('t')
+    received_signature = parts.get('v1')
+
+    if not timestamp or not received_signature:
+        return False
 
     try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return cors_json_response({
-            'success': False,
-            'message': 'JSON invalide'
-        }, status=400)
+        ts = int(timestamp)
+    except ValueError:
+        return False
 
-    nim = (data.get('nim') or '').strip()
-    pin = (data.get('pin') or '').strip()
+    # Rejette les signatures trop anciennes (5 min)
+    now = int(time.time())
+    if abs(now - ts) > 300:
+        return False
 
-    if not nim or not pin:
-        return cors_json_response({
-            'success': False,
-            'message': 'NIM et PIN obligatoires'
-        }, status=400)
+    signed_payload = f"{timestamp}.".encode("utf-8") + raw_body
+    expected_signature = hmac.new(
+        secret.encode("utf-8"),
+        signed_payload,
+        hashlib.sha256
+    ).hexdigest()
 
-    try:
-        member = Member.objects.get(nim=nim)
-
-        if member.status == MEMBER_STATUS_SUSPENDED:
-            return cors_json_response({
-                'success': False,
-                'message': 'Compte suspendu'
-            }, status=403)
-
-        if member.status != MEMBER_STATUS_ACTIVE:
-            return cors_json_response({
-                'success': False,
-                'message': 'Compte membre inactif'
-            }, status=403)
-
-        if member.is_locked:
-            return cors_json_response({
-                'success': False,
-                'message': 'Compte bloqué. Veuillez contacter l’administration.'
-            }, status=403)
-
-        if check_password(pin, member.member_pin):
-            member.failed_pin_attempts = 0
-            member.save(update_fields=['failed_pin_attempts'])
-
-            request.session['member_id'] = member.id
-            request.session['member_nim'] = member.nim
-            request.session['member_name'] = f"{member.first_name} {member.last_name}"
-
-            return cors_json_response({
-                'success': True,
-                'message': 'Connexion réussie',
-                'must_change_pin': member.must_change_pin,
-                'member': {
-                    'id': member.id,
-                    'nim': member.nim,
-                    'first_name': member.first_name,
-                    'last_name': member.last_name,
-                    'phone': member.phone,
-                    'status': member.status,
-                    'birth_date': member.birth_date.isoformat() if member.birth_date else None,
-                    'birth_place': member.birth_place,
-                    'department': member.department,
-                    'commune': member.commune,
-                    'city': member.city,
-                    'district': member.district,
-                    'created_at': member.created_at.isoformat() if member.created_at else None,
-                    'photo_url': request.build_absolute_uri(member.photo.url) if member.photo else None,
-                    'signature_url': request.build_absolute_uri(member.signature.url) if member.signature else None,
-                }
-            })
-
-        member.failed_pin_attempts += 1
-
-        if member.failed_pin_attempts >= MAX_MEMBER_PIN_ATTEMPTS:
-            member.is_locked = True
-            member.save(update_fields=['failed_pin_attempts', 'is_locked'])
-
-            return cors_json_response({
-                'success': False,
-                'message': 'Compte bloqué après 3 tentatives incorrectes'
-            }, status=403)
-
-        member.save(update_fields=['failed_pin_attempts'])
-        remaining = MAX_MEMBER_PIN_ATTEMPTS - member.failed_pin_attempts
-
-        return cors_json_response({
-            'success': False,
-            'message': f'PIN incorrect. Il vous reste {remaining} tentative(s).'
-        }, status=401)
-
-    except Member.DoesNotExist:
-        return cors_json_response({
-            'success': False,
-            'message': 'Membre introuvable'
-        }, status=404)
+    return hmac.compare_digest(expected_signature, received_signature)
 
 
 @csrf_exempt
@@ -475,8 +425,29 @@ def fedapay_webhook(request):
             'message': 'Content-Type invalide'
         }, status=400)
 
+    signature = request.headers.get('X-FEDAPAY-SIGNATURE', '')
+    if not signature:
+        return cors_json_response({
+            'success': False,
+            'message': 'Signature webhook manquante'
+        }, status=400)
+
+    raw_body = request.body
+
     try:
-        payload = json.loads(request.body)
+        if not verify_fedapay_signature(raw_body, signature):
+            return cors_json_response({
+                'success': False,
+                'message': 'Signature webhook invalide'
+            }, status=400)
+    except Exception:
+        return cors_json_response({
+            'success': False,
+            'message': 'Erreur vérification signature'
+        }, status=400)
+
+    try:
+        payload = json.loads(raw_body)
     except json.JSONDecodeError:
         return cors_json_response({
             'success': False,
