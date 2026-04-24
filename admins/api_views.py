@@ -5,7 +5,6 @@ import hashlib
 import time
 from django.conf import settings
 
-
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import check_password, make_password
@@ -361,22 +360,17 @@ def api_get_member_by_nim(request):
 
 
 def verify_fedapay_signature(raw_body: bytes, signature_header: str) -> bool:
-    """
-    Vérifie la signature du webhook FedaPay.
-
-    IMPORTANT :
-    - FedaPay documente l'usage de X-FEDAPAY-SIGNATURE + secret webhook + body brut.
-    - La doc publique consultée ne donne pas clairement l'algorithme Python exact.
-    - Cette implémentation suppose un format de type : t=TIMESTAMP,v1=SIGNATURE_HEX
-      avec une signature HMAC SHA256 sur "timestamp.payload".
-    - À valider une fois avec un vrai webhook FedaPay sandbox.
-    """
     secret = settings.FEDAPAY_WEBHOOK_SECRET
+
     if not secret:
+        print("FEDAPAY_SIGNATURE_DEBUG: secret webhook manquant")
         return False
 
     if not signature_header:
+        print("FEDAPAY_SIGNATURE_DEBUG: header signature manquant")
         return False
+
+    print("FEDAPAY_SIGNATURE_DEBUG_HEADER:", signature_header)
 
     parts = {}
     for item in signature_header.split(','):
@@ -387,25 +381,34 @@ def verify_fedapay_signature(raw_body: bytes, signature_header: str) -> bool:
     timestamp = parts.get('t')
     received_signature = parts.get('v1')
 
+    print("FEDAPAY_SIGNATURE_DEBUG_PARTS:", parts)
+
     if not timestamp or not received_signature:
+        print("FEDAPAY_SIGNATURE_DEBUG: format signature non reconnu")
         return False
 
     try:
         ts = int(timestamp)
     except ValueError:
+        print("FEDAPAY_SIGNATURE_DEBUG: timestamp invalide")
         return False
 
-    # Rejette les signatures trop anciennes (5 min)
     now = int(time.time())
+
     if abs(now - ts) > 300:
+        print("FEDAPAY_SIGNATURE_DEBUG: signature expirée")
         return False
 
     signed_payload = f"{timestamp}.".encode("utf-8") + raw_body
+
     expected_signature = hmac.new(
         secret.encode("utf-8"),
         signed_payload,
         hashlib.sha256
     ).hexdigest()
+
+    print("FEDAPAY_SIGNATURE_DEBUG_EXPECTED:", expected_signature)
+    print("FEDAPAY_SIGNATURE_DEBUG_RECEIVED:", received_signature)
 
     return hmac.compare_digest(expected_signature, received_signature)
 
@@ -426,13 +429,16 @@ def fedapay_webhook(request):
         }, status=400)
 
     signature = request.headers.get('X-FEDAPAY-SIGNATURE', '')
+    raw_body = request.body
+
+    print("FEDAPAY_SIGNATURE_HEADER:", signature)
+    print("FEDAPAY_BODY_START:", raw_body[:300])
+
     if not signature:
         return cors_json_response({
             'success': False,
             'message': 'Signature webhook manquante'
         }, status=400)
-
-    raw_body = request.body
 
     try:
         if not verify_fedapay_signature(raw_body, signature):
@@ -440,7 +446,8 @@ def fedapay_webhook(request):
                 'success': False,
                 'message': 'Signature webhook invalide'
             }, status=400)
-    except Exception:
+    except Exception as e:
+        print("FEDAPAY_SIGNATURE_ERROR:", str(e))
         return cors_json_response({
             'success': False,
             'message': 'Erreur vérification signature'
@@ -490,7 +497,8 @@ def fedapay_webhook(request):
             'message': 'Tentative de paiement introuvable'
         }, status=404)
 
-    except Exception:
+    except Exception as e:
+        print("FEDAPAY_WEBHOOK_ERROR:", str(e))
         return cors_json_response({
             'success': False,
             'message': 'Erreur webhook'
