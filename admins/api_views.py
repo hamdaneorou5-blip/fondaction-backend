@@ -363,14 +363,10 @@ def verify_fedapay_signature(raw_body: bytes, signature_header: str) -> bool:
     secret = settings.FEDAPAY_WEBHOOK_SECRET
 
     if not secret:
-        print("FEDAPAY_SIGNATURE_DEBUG: secret webhook manquant")
         return False
 
     if not signature_header:
-        print("FEDAPAY_SIGNATURE_DEBUG: header signature manquant")
         return False
-
-    print("FEDAPAY_SIGNATURE_DEBUG_HEADER:", signature_header)
 
     parts = {}
     for item in signature_header.split(','):
@@ -379,24 +375,14 @@ def verify_fedapay_signature(raw_body: bytes, signature_header: str) -> bool:
             parts[k.strip()] = v.strip()
 
     timestamp = parts.get('t')
-    received_signature = parts.get('v1')
-
-    print("FEDAPAY_SIGNATURE_DEBUG_PARTS:", parts)
+    received_signature = parts.get('s')
 
     if not timestamp or not received_signature:
-        print("FEDAPAY_SIGNATURE_DEBUG: format signature non reconnu")
         return False
 
     try:
-        ts = int(timestamp)
+        int(timestamp)
     except ValueError:
-        print("FEDAPAY_SIGNATURE_DEBUG: timestamp invalide")
-        return False
-
-    now = int(time.time())
-
-    if abs(now - ts) > 300:
-        print("FEDAPAY_SIGNATURE_DEBUG: signature expirée")
         return False
 
     signed_payload = f"{timestamp}.".encode("utf-8") + raw_body
@@ -406,9 +392,6 @@ def verify_fedapay_signature(raw_body: bytes, signature_header: str) -> bool:
         signed_payload,
         hashlib.sha256
     ).hexdigest()
-
-    print("FEDAPAY_SIGNATURE_DEBUG_EXPECTED:", expected_signature)
-    print("FEDAPAY_SIGNATURE_DEBUG_RECEIVED:", received_signature)
 
     return hmac.compare_digest(expected_signature, received_signature)
 
@@ -431,8 +414,6 @@ def fedapay_webhook(request):
     signature = request.headers.get('X-FEDAPAY-SIGNATURE', '')
     raw_body = request.body
 
-    print("FEDAPAY_SIGNATURE_HEADER:", signature)
-    print("FEDAPAY_BODY_START:", raw_body[:300])
 
     if not signature:
         return cors_json_response({
