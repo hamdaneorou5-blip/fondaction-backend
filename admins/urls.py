@@ -60,6 +60,7 @@ from .web_views import (
     privacy_policy_page,
     terms_services_page,
     contact_page,
+    root_router,
 
 )
 
@@ -147,5 +148,6 @@ urlpatterns = [
     path('privacy-policy/', privacy_policy_page, name='privacy_policy_page'),
     path('terms-services/', terms_services_page, name='terms_services_page'),
     path('contact/', contact_page, name='contact_page'),
+    path('', root_router),
 
 ]

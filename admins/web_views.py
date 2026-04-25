@@ -1,6 +1,7 @@
 import openpyxl
 from io import BytesIO
 from datetime import timedelta
+from django.http import JsonResponse
 
 from django.db.models import Exists, OuterRef, Sum,  Q
 
@@ -1730,3 +1731,18 @@ def terms_services_page(request):
 
 def contact_page(request):
     return render(request, 'admins/contact.html')
+
+
+def root_router(request):
+    host = request.get_host().split(':')[0]
+
+    if host == "admin.fondactionsarl.com":
+        return redirect('/admins/login/')
+
+    if host == "api.fondactionsarl.com":
+        return JsonResponse({
+            "success": True,
+            "message": "FondAction API is running"
+        })
+
+    return redirect('/admins/visiteur/')
