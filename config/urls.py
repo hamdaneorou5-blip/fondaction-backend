@@ -2,9 +2,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from admins.web_views import visitor_home
 
 
 urlpatterns = [
+    path('', visitor_home, name='site_home'),
     path('django-admin/', admin.site.urls),
     path('admins/', include('admins.urls')),
 ]

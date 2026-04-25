@@ -54,6 +54,12 @@ from .web_views import (
     global_admin_performance,
     export_global_admin_performance_excel,
     export_admins_summary_excel,
+    visitor_home,
+    secure_registration_page,
+    about_page,
+    privacy_policy_page,
+    terms_services_page,
+    contact_page,
 
 )
 
@@ -135,5 +141,11 @@ urlpatterns = [
     path('admins/performance/', global_admin_performance),
     path('admins/performance/export/', export_global_admin_performance_excel),
     path('admins/performance/admins-summary/export/', export_admins_summary_excel),
+    path('visiteur/', visitor_home, name='visitor_home'),
+    path('inscription-securisee/', secure_registration_page, name='secure_registration_page'),
+    path('about/', about_page, name='about_page'),
+    path('privacy-policy/', privacy_policy_page, name='privacy_policy_page'),
+    path('terms-services/', terms_services_page, name='terms_services_page'),
+    path('contact/', contact_page, name='contact_page'),
 
 ]

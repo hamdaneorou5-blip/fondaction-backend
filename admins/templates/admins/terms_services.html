@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Termes et services - FondAction SARL</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #ffffff;
+    color: #0f172a;
+}
+
+.page {
+    min-height: 100vh;
+    padding: 28px 26px 60px;
+}
+
+.topbar {
+    margin-bottom: 60px;
+}
+
+.back-btn {
+    width: 54px;
+    height: 54px;
+    border: none;
+    border-radius: 999px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.back-btn svg {
+    width: 32px;
+    height: 32px;
+}
+
+.content {
+    max-width: 820px;
+    margin: 0 auto;
+}
+
+.title {
+    margin: 0;
+    text-align: center;
+    font-size: clamp(42px, 8vw, 76px);
+    line-height: 1.08;
+    font-weight: 900;
+}
+
+.title-line {
+    width: 128px;
+    height: 7px;
+    border-radius: 999px;
+    margin: 24px auto 58px;
+    display: flex;
+    overflow: hidden;
+}
+
+.title-line span { flex: 1; }
+.line-green { background: #178a37; }
+.line-yellow { background: #f59e0b; }
+.line-red { background: #dc2626; }
+
+.section {
+    margin-bottom: 42px;
+}
+
+.section h2 {
+    margin: 0 0 14px;
+    color: #178a37;
+    font-size: clamp(25px, 5vw, 38px);
+    line-height: 1.2;
+    font-weight: 900;
+}
+
+.section p,
+.section li {
+    color: #263244;
+    font-size: clamp(20px, 4.4vw, 31px);
+    line-height: 1.55;
+    font-weight: 500;
+}
+
+.section p {
+    margin: 0 0 18px;
+}
+
+ul {
+    margin: 12px 0 0;
+    padding-left: 28px;
+}
+
+strong {
+    color: #0f172a;
+    font-weight: 900;
+}
+
+@media (max-width: 600px) {
+    .page { padding: 24px 22px 54px; }
+    .topbar { margin-bottom: 52px; }
+    .back-btn { width: 50px; height: 50px; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+    <div class="topbar">
+        <button class="back-btn" type="button" onclick="history.back()" aria-label="Retour">
+            <svg viewBox="0 0 24 24" fill="none">
+                <path d="M14.5 9.50002L9.5 14.5M9.49998 9.5L14.5 14.5" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"></path>
+                <path d="M7 3.33782C8.47087 2.48697 10.1786 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 10.1786 2.48697 8.47087 3.33782 7" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"></path>
+            </svg>
+        </button>
+    </div>
+
+    <main class="content">
+        <h1 class="title">Termes et services</h1>
+
+        <div class="title-line">
+            <span class="line-green"></span>
+            <span class="line-yellow"></span>
+            <span class="line-red"></span>
+        </div>
+
+        <section class="section">
+            <p>
+                Bienvenue sur la plateforme <strong>FondAction SARL</strong>.
+                En accédant à nos services, vous acceptez les présentes conditions d’utilisation.
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>1. Présentation</h2>
+            <p>
+                FondAction SARL est une initiative collective visant à regrouper les contributions des membres
+                afin de financer des projets utiles, créer des opportunités et générer de la valeur à travers
+                un système structuré, solidaire et transparent.
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>2. Conditions d’inscription</h2>
+            <p>
+                L’inscription à FondAction est strictement encadrée afin de garantir la sécurité et l’authenticité du système.
+            </p>
+            <ul>
+                <li>L’inscription se fait via un agent habilité ou l’administration</li>
+                <li>Les informations fournies doivent être exactes et vérifiables</li>
+                <li>Un seul compte est autorisé par personne</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2>3. Responsabilité du membre</h2>
+            <p>
+                Chaque membre est responsable de la confidentialité de ses informations d’accès,
+                de l’utilisation correcte de son compte et du respect des règles établies par FondAction.
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>4. Contributions et fonctionnement</h2>
+            <p>
+                Les contributions des membres constituent la base du système FondAction.
+                Elles permettent de financer des projets collectifs, soutenir des initiatives utiles
+                et développer des opportunités économiques.
+            </p>
+            <p>
+                FondAction SARL s’engage à assurer une gestion responsable et transparente des ressources.
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>5. Transparence du système</h2>
+            <p>
+                Toutes les opérations sont suivies et tracées afin de garantir une visibilité claire pour les membres.
+                FondAction repose sur la confiance, la transparence et la responsabilité collective.
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>6. Interdictions</h2>
+            <p>Il est strictement interdit de :</p>
+            <ul>
+                <li>Créer de faux comptes</li>
+                <li>Usurper l’identité d’une autre personne</li>
+                <li>Manipuler ou tenter de détourner le système</li>
+                <li>Utiliser la plateforme à des fins illégales</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2>7. Suspension ou suppression de compte</h2>
+            <p>
+                FondAction SARL se réserve le droit de suspendre ou supprimer un compte en cas de fraude,
+                de fausse déclaration ou de non-respect des règles afin de protéger la communauté.
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>8. Limitation de responsabilité</h2>
+            <p>
+                FondAction met tout en œuvre pour assurer un service fiable et sécurisé.
+                Cependant, chaque utilisateur reste responsable de l’utilisation qu’il fait de la plateforme.
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>9. Évolution des conditions</h2>
+            <p>
+                Les présentes conditions peuvent être modifiées afin d’améliorer le fonctionnement du système.
+                Les membres seront informés des mises à jour importantes.
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>10. Engagement</h2>
+            <p>
+                En rejoignant FondAction, vous devenez acteur d’un système collectif basé sur la confiance,
+                la solidarité, la transparence et la création de valeur.
+            </p>
+        </section>
+    </main>
+</div>
+
+</body>
+</html>

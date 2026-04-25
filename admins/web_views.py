@@ -1688,6 +1688,7 @@ def member_settings(request):
     })
 
 
+
 @admin_session_required
 def search_transactions(request):
     admin_id = request.session.get('admin_id')
@@ -1711,3 +1712,22 @@ def search_transactions(request):
 def member_assistance(request):
     return render(request, 'admins/member_assistance.html')
 
+
+def visitor_home(request):
+    return render(request, 'admins/visitor_home.html')
+
+def secure_registration_page(request):
+    return render(request, 'admins/secure_registration.html')
+
+def about_page(request):
+    return render(request, 'admins/about.html')
+
+def privacy_policy_page(request):
+    return render(request, 'admins/privacy_policy.html')
+
+
+def terms_services_page(request):
+    return render(request, 'admins/terms_services.html')
+
+def contact_page(request):
+    return render(request, 'admins/contact.html')

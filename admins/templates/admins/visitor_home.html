@@ -1,0 +1,870 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FondAction SARL</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+/* ===================== */
+/* 🔧 RÉGLAGES DU LOGO */
+/* ===================== */
+
+:root {
+    --logo-size: 120px;      /* AUGMENTE / DIMINUE LA TAILLE DU LOGO */
+    --logo-x: -50px;          /* GAUCHE (-) / DROITE (+) */
+    --logo-y: 0px;          /* HAUT (-) / BAS (+) */
+
+    --menu-size: 44px;       /* AUGMENTE / DIMINUE LA TAILLE DU BOUTON MENU */
+    --menu-icon-size: 34px;  /* AUGMENTE / DIMINUE LA TAILLE DE L’ICÔNE */
+    --menu-x: 15px;           /* GAUCHE (-) / DROITE (+) */
+    --menu-y: 0px;           /* HAUT (-) / BAS (+) */
+
+    --footer-logo-size: 350px;      /* TAILLE DU LOGO FOOTER SUR PC */
+    --footer-logo-x: 450px;           /* LOGO FOOTER GAUCHE (-) / DROITE (+) */
+    --footer-logo-y: 0px;           /* LOGO FOOTER HAUT (-) / BAS (+) */
+
+    --header-height: 95px;  /* HAUTEUR DU HEADER */
+}
+
+/* ===================== */
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #ffffff;
+    color: #111827;
+}
+
+body.menu-open {
+    overflow: hidden;
+}
+
+/* VRAI HEADER FIXE */
+.site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: var(--header-height);
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(14px);
+    z-index: 1000;
+    transition: transform 0.28s ease, box-shadow 0.28s ease;
+}
+
+/* Quand on descend */
+.site-header.hide {
+    transform: translateY(-110%);
+}
+
+/* Quand on remonte */
+.site-header.show {
+    transform: translateY(0);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.header-inner {
+    height: 100%;
+    padding: 0 26px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* CONTENEUR DU LOGO */
+.logo-container {
+    display: flex;
+    align-items: center;
+    transform: translateX(var(--logo-x)) translateY(var(--logo-y));
+}
+
+/* LOGO */
+.logo {
+    height: var(--logo-size);
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+
+/* MENU */
+.menu-btn {
+    width: var(--menu-size);
+    height: var(--menu-size);
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transform: translateX(var(--menu-x)) translateY(var(--menu-y));
+}
+
+.menu-btn svg {
+    width: var(--menu-icon-size);
+    height: var(--menu-icon-size);
+}
+
+/* MENU PLEIN ÉCRAN */
+.full-menu {
+    position: fixed;
+    inset: 0;
+    background: #ffffff;
+    z-index: 3000;
+    transform: translateX(100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.38s ease, opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.full-menu.open {
+    transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+.full-menu-inner {
+    min-height: 100vh;
+    padding: 34px 26px 50px;
+    display: flex;
+    flex-direction: column;
+}
+
+.full-menu-top {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.close-menu-btn {
+    width: 54px;
+    height: 54px;
+    border: none;
+    border-radius: 999px;
+    background: #f8fafc;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.close-menu-btn svg {
+    width: 32px;
+    height: 32px;
+}
+
+.full-menu-list {
+    margin-top: 70px;
+    display: grid;
+    gap: 28px;
+}
+
+.full-menu-item {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    align-items: center;
+    gap: 24px;
+    text-decoration: none;
+    color: #20242c;
+}
+
+.full-menu-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.full-menu-icon svg {
+    width: 34px;
+    height: 34px;
+}
+
+.icon-blue { background: #eff6ff; }
+.icon-green { background: #eefbea; }
+.icon-orange { background: #fff3e5; }
+.icon-purple { background: #f2edff; }
+.icon-red { background: #fff1f2; }
+
+.full-menu-text {
+    padding-bottom: 26px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: clamp(25px, 5vw, 34px);
+    font-weight: 900;
+}
+
+.full-menu-watermark {
+    margin-top: auto;
+    opacity: 0.035;
+    text-align: center;
+    font-size: 130px;
+    font-weight: 900;
+    color: #0f172a;
+}
+
+/* PAGE */
+.page {
+    min-height: 150vh;
+    padding: calc(var(--header-height) + 38px) 26px 70px;
+}
+
+/* HERO */
+.hero {
+    max-width: 720px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.hero-title {
+    margin: 0;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(48px, 8vw, 88px);
+    line-height: 1.08;
+    font-weight: 900;
+}
+
+.green { color: #2f8f3a; }
+.orange { color: #f19a00; }
+.dark { color: #20242c; }
+
+.subtitle {
+    max-width: 650px;
+    margin: 48px auto 0;
+    color: #5f6b7a;
+    font-size: clamp(22px, 4vw, 34px);
+    font-weight: 700;
+}
+
+/* BOUTONS */
+.actions {
+    margin-top: 70px;
+    display: grid;
+    gap: 24px;
+}
+
+.main-btn {
+    width: 100%;
+    min-height: 86px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: clamp(22px, 4vw, 34px);
+    font-weight: 900;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
+}
+
+.btn-login {
+    background: #1684f7;
+    color: white;
+}
+
+.btn-register {
+    background: linear-gradient(135deg, #2f8f3a, #f19a00);
+    color: white;
+}
+
+.btn-download {
+    background: #ffffff;
+    color: #1684f7;
+    border: 3px solid #1684f7;
+}
+/* SECTIONS TEXTE */
+.info-section {
+    margin-top: 96px;
+    padding: 58px 0;
+    text-align: left;
+}
+
+.info-title {
+    margin: 0 0 32px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(42px, 7vw, 68px);
+    line-height: 1;
+    color: #cf002b;
+    font-weight: 900;
+}
+
+.info-subtitle {
+    margin: 0 0 18px;
+    color: #5f6b7a;
+    font-size: clamp(30px, 5vw, 48px);
+    line-height: 1.28;
+    font-weight: 900;
+}
+
+.info-text {
+    margin: 0;
+    color: #5f6b7a;
+    font-size: clamp(25px, 4.4vw, 42px);
+    line-height: 1.38;
+    font-weight: 500;
+}
+
+/* CARROUSEL */
+.carousel-section {
+    margin-top: 60px;
+}
+
+.carousel-title {
+    margin: 0 0 22px;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(38px, 6vw, 60px);
+    color: #20242c;
+}
+
+.carousel-hint {
+    margin: 0 0 22px;
+    color: #5f6b7a;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.carousel {
+    display: flex;
+    gap: 18px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 16px;
+    scrollbar-width: none;
+}
+
+.carousel::-webkit-scrollbar {
+    display: none;
+}
+
+.slide {
+    flex: 0 0 86%;
+    scroll-snap-align: center;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+    background: #f3f4f6;
+    position: relative;
+}
+
+.slide img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+}
+
+.slide-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 24px 22px;
+    color: #ffffff;
+    background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.78) 100%);
+}
+
+.slide-overlay h3 {
+    margin: 0 0 6px;
+    font-size: 27px;
+    line-height: 1.15;
+    font-weight: 900;
+}
+
+.slide-overlay p {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.4;
+    font-weight: 700;
+}
+
+.dots {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 999px;
+    background: #cbd5e1;
+}
+
+.dot.active {
+    background: #1684f7;
+}
+
+/* LIGNE MULTICOLORE */
+.color-line {
+    width: calc(100% + 52px);
+    margin-left: -26px;
+    margin-top: 78px;
+    height: 9px;
+    display: flex;
+}
+
+.color-line div {
+    flex: 1;
+}
+
+.line-green { background: #2f8f3a; }
+.line-yellow { background: #facc15; }
+.line-red { background: #dc2626; }
+
+/* FOOTER */
+.footer {
+    padding: 64px 0 20px;
+}
+
+.footer-logo {
+    width: var(--footer-logo-size);
+    height: auto;
+    display: block;
+    margin-bottom: 34px;
+    transform: translateX(var(--footer-logo-x)) translateY(var(--footer-logo-y));
+}
+
+.footer-text {
+    color: #5f6b7a;
+    font-size: clamp(24px, 4vw, 36px);
+    line-height: 1.45;
+    font-weight: 500;
+    margin: 0 0 60px;
+}
+
+.socials {
+    display: flex;
+    gap: 34px;
+    align-items: center;
+    margin-bottom: 70px;
+}
+
+.social-link {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #5f6b7a;
+}
+
+.social-link svg {
+    width: 34px;
+    height: 34px;
+}
+
+.social-link svg path,
+.social-link svg rect,
+.social-link svg circle {
+    stroke: #5f6b7a;
+    fill: none;
+}
+
+.social-link.facebook svg path,
+.social-link.twitter svg path {
+    fill: #5f6b7a;
+    stroke: none;
+}
+
+.footer-group {
+    margin-bottom: 56px;
+}
+
+.footer-heading {
+    margin: 0 0 28px;
+    color: #20242c;
+    font-size: clamp(34px, 6vw, 48px);
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+
+.footer-link {
+    display: block;
+    text-decoration: none;
+    color: #5f6b7a;
+    font-size: clamp(24px, 4vw, 36px);
+    margin-bottom: 28px;
+    font-weight: 500;
+}
+
+.footer-bottom {
+    border-top: 1px solid #d1d5db;
+    padding-top: 28px;
+    margin-top: 20px;
+}
+
+.footer-copy {
+    margin: 0;
+    color: #5f6b7a;
+    font-size: clamp(20px, 3.6vw, 30px);
+    line-height: 1.45;
+    font-weight: 500;
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+    :root {
+        --logo-size: 120px;      /* TAILLE LOGO MOBILE */
+        --header-height: 86px;  /* HAUTEUR HEADER MOBILE */
+        --logo-x: -50px;          /* POSITION HORIZONTALE MOBILE */
+        --logo-y: 0px;          /* POSITION VERTICALE MOBILE */
+
+        --menu-size: 44px;       /* TAILLE BOUTON MENU MOBILE */
+        --menu-icon-size: 34px;  /* TAILLE ICÔNE MENU MOBILE */
+        --menu-x: 15px;           /* GAUCHE (-) / DROITE (+) MOBILE */
+        --menu-y: 0px;           /* HAUT (-) / BAS (+) MOBILE */
+
+        --footer-logo-size: 350px;   /* TAILLE DU LOGO FOOTER MOBILE */
+        --footer-logo-x: 0px;        /* LOGO FOOTER MOBILE GAUCHE (-) / DROITE (+) */
+        --footer-logo-y: 0px;        /* LOGO FOOTER MOBILE HAUT (-) / BAS (+) */
+    }
+
+    .header-inner {
+        padding: 0 22px;
+    }
+
+    .page {
+        padding: calc(var(--header-height) + 36px) 22px 60px;
+    }
+
+    .hero-title {
+        font-size: 54px;
+    }
+
+    .subtitle {
+        font-size: 24px;
+    }
+
+    .main-btn {
+        min-height: 82px;
+        font-size: 25px;
+    }
+
+    .info-section {
+        margin-top: 86px;
+    }
+
+    .slide {
+        flex-basis: 88%;
+    }
+
+    .slide-overlay h3 {
+        font-size: 25px;
+    }
+
+    .slide-overlay p {
+        font-size: 15px;
+    }
+
+    .color-line {
+        width: calc(100% + 44px);
+        margin-left: -22px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header class="site-header show" id="siteHeader">
+    <div class="header-inner">
+        <div class="logo-container">
+            <img src="{% static 'images/logo2.png' %}" class="logo" alt="FondAction SARL">
+        </div>
+
+        <button class="menu-btn" type="button" aria-label="Menu" id="openMenuBtn">
+            <svg viewBox="0 0 20 20">
+                <path d="M2 5H18M2 10H18M2 15H18" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </button>
+    </div>
+</header>
+
+<div class="full-menu" id="fullMenu">
+    <div class="full-menu-inner">
+        <div class="full-menu-top">
+            <button class="close-menu-btn" type="button" aria-label="Fermer" id="closeMenuBtn">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14.5 9.50002L9.5 14.5M9.49998 9.5L14.5 14.5" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"></path>
+                    <path d="M7 3.33782C8.47087 2.48697 10.1786 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 10.1786 2.48697 8.47087 3.33782 7" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="full-menu-list">
+            <a href="/admins/member-login/" class="full-menu-item">
+                <span class="full-menu-icon icon-blue">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10.49 2.23006L5.50003 4.10005C4.35003 4.53005 3.41003 5.89004 3.41003 7.12004V14.55C3.41003 15.73 4.19005 17.28 5.14005 17.99L9.44003 21.2001C10.85 22.2601 13.17 22.2601 14.58 21.2001L18.88 17.99C19.83 17.28 20.61 15.73 20.61 14.55V7.12004C20.61 5.89004 19.67 4.53005 18.52 4.10005L13.53 2.23006C12.68 1.92006 11.32 1.92006 10.49 2.23006Z" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M12.0001 10.92C11.9601 10.92 11.9101 10.92 11.8701 10.92C10.9301 10.89 10.1801 10.11 10.1801 9.16003C10.1801 8.19003 10.9701 7.40002 11.9401 7.40002C12.9101 7.40002 13.7001 8.19003 13.7001 9.16003C13.6901 10.12 12.9401 10.89 12.0001 10.92Z" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M10.01 13.72C9.05004 14.36 9.05004 15.41 10.01 16.05C11.1 16.78 12.89 16.78 13.98 16.05C14.94 15.41 14.94 14.36 13.98 13.72C12.9 12.99 11.11 12.99 10.01 13.72Z" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                </span>
+                <span class="full-menu-text">Connexion</span>
+            </a>
+            <a href="/admins/inscription-securisee/" class="full-menu-item">
+                <span class="full-menu-icon icon-green">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14.4399 19.05L15.9599 20.57L18.9999 17.53" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M12.16 10.87C12.06 10.86 11.94 10.86 11.83 10.87C9.44997 10.79 7.55997 8.84 7.55997 6.44C7.54997 3.99 9.53997 2 11.99 2C14.44 2 16.43 3.99 16.43 6.44C16.43 8.84 14.53 10.79 12.16 10.87Z" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M11.99 21.8101C10.17 21.8101 8.36004 21.3501 6.98004 20.4301C4.56004 18.8101 4.56004 16.1701 6.98004 14.5601C9.73004 12.7201 14.24 12.7201 16.99 14.5601" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                </span>
+                <span class="full-menu-text">Inscription</span>
+            </a>
+
+            <a href="{% static 'documents/projet_fondaction.pdf' %}" class="full-menu-item">
+                <span class="full-menu-icon icon-orange">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 7L12 14M12 14L15 11M12 14L9 11" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M16 17H12H8" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"></path>
+                        <path d="M22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C21.5093 4.43821 21.8356 5.80655 21.9449 8" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"></path>
+                    </svg>
+                </span>
+                <span class="full-menu-text">Télécharger le projet</span>
+            </a>
+
+            <a href="/admins/about/" class="full-menu-item">
+                <span class="full-menu-icon icon-purple">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="11.9999" r="9" stroke="#292929" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></circle>
+                        <rect x="12" y="8" width="0.01" height="0.01" stroke="#292929" stroke-width="3.75" stroke-linejoin="round"></rect>
+                        <path d="M12 12V16" stroke="#292929" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                </span>
+                <span class="full-menu-text">À propos</span>
+            </a>
+
+            <a href="#" class="full-menu-item">
+                <span class="full-menu-icon icon-red">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M17.3545 22.2323C15.3344 21.7262 11.1989 20.2993 7.44976 16.5502C3.70065 12.8011 2.2738 8.66559 1.76767 6.6455C1.47681 5.48459 2.00058 4.36434 2.88869 3.72997L5.21694 2.06693C6.57922 1.09388 8.47432 1.42407 9.42724 2.80051L10.893 4.91776C11.5152 5.8165 11.3006 7.0483 10.4111 7.68365L9.24234 8.51849C9.41923 9.1951 9.96939 10.5846 11.6924 12.3076C13.4154 14.0306 14.8049 14.5807 15.4815 14.7576L16.3163 13.5888C16.9517 12.6994 18.1835 12.4847 19.0822 13.1069L21.1995 14.5727C22.5759 15.5257 22.9061 17.4207 21.933 18.783L20.27 21.1113C19.6356 21.9994 18.5154 22.5232 17.3545 22.2323ZM8.86397 15.136C12.2734 18.5454 16.0358 19.8401 17.8405 20.2923C18.1043 20.3583 18.4232 20.2558 18.6425 19.9488L20.3056 17.6205C20.6299 17.1665 20.5199 16.5348 20.061 16.2171L17.9438 14.7513L17.0479 16.0056C16.6818 16.5182 16.0047 16.9202 15.2163 16.7501C14.2323 16.5378 12.4133 15.8569 10.2782 13.7218C8.1431 11.5867 7.46219 9.7677 7.24987 8.7837C7.07977 7.9953 7.48181 7.31821 7.99439 6.95208L9.24864 6.05618L7.78285 3.93893C7.46521 3.48011 6.83351 3.37005 6.37942 3.6944L4.05117 5.35744C3.74413 5.57675 3.64162 5.89565 3.70771 6.15943C4.15989 7.96418 5.45459 11.7266 8.86397 15.136Z" fill="#0F0F0F"></path>
+                    </svg>
+                </span>
+                <span class="full-menu-text">Contacte</span>
+            </a>
+        </div>
+
+        <div class="full-menu-watermark">FAS</div>
+    </div>
+</div>
+
+<div class="page">
+
+    <main class="hero">
+        <h1 class="hero-title">
+            <span class="green">Ensemble, tout</span><br>
+            <span class="orange">devient possible.</span><br>
+            <span class="dark">Chaque contribution compte.</span>
+        </h1>
+
+        <p class="subtitle">
+            FondAction transforme l’effort collectif en richesse partagée
+            et en opportunités concrètes.
+        </p>
+
+        <div class="actions">
+            <a href="/admins/member-login/" class="main-btn btn-login">CONNEXION</a>
+            <a href="/admins/inscription-securisee/" class="main-btn btn-register">INSCRIPTION</a>
+            <a href="{% static 'documents/projet_fondaction.pdf' %}" class="main-btn btn-download">TÉLÉCHARGER LE PROJET</a>
+        </div>
+    </main>
+
+    <section class="info-section">
+        <h2 class="info-title">Nos objectifs</h2>
+        <h3 class="info-subtitle">
+            Construire une force collective au service de chacun.
+        </h3>
+        <p class="info-text">
+            FondAction rassemble les contributions des membres pour créer des opportunités concrètes,
+            financer des projets utiles et bâtir un système solidaire capable de produire de la valeur pour tous.
+        </p>
+    </section>
+
+    <section class="info-section">
+        <h2 class="info-title">Nos visions</h2>
+        <h3 class="info-subtitle">
+            Une nouvelle manière de créer de la richesse ensemble.
+        </h3>
+        <p class="info-text">
+            Nous voulons bâtir une communauté forte capable de financer ses propres projets,
+            soutenir ses membres et transformer les contributions individuelles en opportunités collectives durables.
+        </p>
+    </section>
+
+    <section class="info-section">
+        <h2 class="info-title">La transparence</h2>
+        <h3 class="info-subtitle">
+            Une gestion claire, ouverte et vérifiable à tout moment.
+        </h3>
+        <p class="info-text">
+            FondAction repose sur un principe simple : la confiance. Toutes les opérations,
+            contributions et réalisations sont suivies, tracées et accessibles afin de garantir une visibilité totale.
+            Rien n’est caché : chaque membre peut comprendre comment les ressources sont utilisées
+            et voir concrètement les résultats obtenus.
+        </p>
+    </section>
+
+    <section class="carousel-section">
+        <h2 class="carousel-title">Un avenir prometteur</h2>
+        <p class="carousel-hint">Glissez vers la gauche pour découvrir →</p>
+
+        <div class="carousel" id="carousel">
+            <div class="slide">
+                <img src="{% static 'images/carousel/solidarite.png' %}" alt="Solidarité">
+                <div class="slide-overlay">
+                    <h3>Solidarité</h3>
+                    <p>Ensemble, nous sommes plus forts.</p>
+                </div>
+            </div>
+
+            <div class="slide">
+                <img src="{% static 'images/carousel/croissance.png' %}" alt="Croissance">
+                <div class="slide-overlay">
+                    <h3>Croissance</h3>
+                    <p>Chaque contribution peut devenir une valeur durable.</p>
+                </div>
+            </div>
+
+            <div class="slide">
+                <img src="{% static 'images/carousel/construction.png' %}" alt="Construction">
+                <div class="slide-overlay">
+                    <h3>Construction</h3>
+                    <p>Financer des projets utiles et bâtir du concret.</p>
+                </div>
+            </div>
+
+            <div class="slide">
+                <img src="{% static 'images/carousel/entrepreneur.png' %}" alt="Opportunités">
+                <div class="slide-overlay">
+                    <h3>Opportunités</h3>
+                    <p>Soutenir les initiatives qui améliorent les vies.</p>
+                </div>
+            </div>
+
+            <div class="slide">
+                <img src="{% static 'images/carousel/vision.png' %}" alt="Vision d’avenir">
+                <div class="slide-overlay">
+                    <h3>Vision d’avenir</h3>
+                    <p>Construire un futur prospère, inclusif et durable.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="dots">
+            <span class="dot active"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+    </section>
+
+    <div class="color-line">
+        <div class="line-green"></div>
+        <div class="line-yellow"></div>
+        <div class="line-red"></div>
+    </div>
+
+    <footer class="footer">
+        <img src="{% static 'images/logo3.png' %}" alt="FondAction SARL" class="footer-logo">
+
+        <p class="footer-text">
+            FondAction SARL rassemble les forces individuelles pour créer des opportunités collectives,
+            soutenir des projets utiles et bâtir une valeur durable pour tous.
+        </p>
+
+        <div class="socials">
+            <!-- Tes icônes réseaux sociaux restent ici inchangées -->
+        </div>
+
+        <div class="footer-group">
+            <h3 class="footer-heading">LÉGALE</h3>
+            <a href="/admins/privacy-policy/" class="footer-link">Politique de confidentialité</a>
+            <a href="/admins/terms-services/" class="footer-link">Termes et services</a>
+        </div>
+
+        <div class="footer-group">
+            <h3 class="footer-heading">SOCIÉTÉ</h3>
+            <a href="/admins/about/" class="footer-link">À propos</a>
+            <a href="/admins/contact/" class="footer-link">Contact</a>
+        </div>
+
+        <div class="footer-bottom">
+            <p class="footer-copy">© 2026 FondAction SARL. Tout droits réservés.</p>
+        </div>
+    </footer>
+
+</div>
+
+<script>
+let lastScrollY = window.scrollY;
+const header = document.getElementById("siteHeader");
+
+window.addEventListener("scroll", function () {
+    const currentScrollY = window.scrollY;
+
+    if (currentScrollY <= 10) {
+        header.classList.remove("hide");
+        header.classList.add("show");
+        lastScrollY = currentScrollY;
+        return;
+    }
+
+    if (currentScrollY > lastScrollY) {
+        header.classList.remove("show");
+        header.classList.add("hide");
+    } else {
+        header.classList.remove("hide");
+        header.classList.add("show");
+    }
+
+    lastScrollY = currentScrollY;
+});
+
+const carousel = document.getElementById("carousel");
+const dots = document.querySelectorAll(".dot");
+
+carousel.addEventListener("scroll", function () {
+    const slides = document.querySelectorAll(".slide");
+    let activeIndex = 0;
+    let minDistance = Infinity;
+
+    slides.forEach((slide, index) => {
+        const distance = Math.abs(slide.getBoundingClientRect().left - carousel.getBoundingClientRect().left);
+        if (distance < minDistance) {
+            minDistance = distance;
+            activeIndex = index;
+        }
+    });
+
+    dots.forEach(dot => dot.classList.remove("active"));
+    if (dots[activeIndex]) {
+        dots[activeIndex].classList.add("active");
+    }
+});
+
+const openMenuBtn = document.getElementById("openMenuBtn");
+const closeMenuBtn = document.getElementById("closeMenuBtn");
+const fullMenu = document.getElementById("fullMenu");
+
+openMenuBtn.addEventListener("click", function () {
+    fullMenu.classList.add("open");
+    document.body.classList.add("menu-open");
+});
+
+closeMenuBtn.addEventListener("click", function () {
+    fullMenu.classList.remove("open");
+    document.body.classList.remove("menu-open");
+});
+</script>
+
+</body>
+</html>

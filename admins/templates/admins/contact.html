@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact - FondAction SARL</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #ffffff;
+    color: #0f172a;
+}
+
+.page {
+    min-height: 100vh;
+    padding: 28px 26px 60px;
+}
+
+.topbar {
+    margin-bottom: 58px;
+}
+
+.back-btn {
+    width: 54px;
+    height: 54px;
+    border: none;
+    border-radius: 999px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.back-btn svg {
+    width: 32px;
+    height: 32px;
+}
+
+.content {
+    max-width: 820px;
+    margin: 0 auto;
+}
+
+.title {
+    margin: 0;
+    text-align: center;
+    font-size: clamp(52px, 10vw, 86px);
+    line-height: 1.05;
+    font-weight: 900;
+    color: #0f172a;
+}
+
+.title-line {
+    width: 128px;
+    height: 7px;
+    border-radius: 999px;
+    margin: 24px auto 48px;
+    display: flex;
+    overflow: hidden;
+}
+
+.title-line span { flex: 1; }
+.line-green { background: #178a37; }
+.line-yellow { background: #f59e0b; }
+.line-red { background: #dc2626; }
+
+.intro {
+    margin: 0 auto 44px;
+    color: #263244;
+    font-size: clamp(22px, 4.8vw, 34px);
+    line-height: 1.5;
+    font-weight: 500;
+    text-align: center;
+}
+
+.cards {
+    display: grid;
+    gap: 22px;
+}
+
+.contact-card {
+    text-decoration: none;
+    color: #0f172a;
+    background: #ffffff;
+    border: 1px solid #e8eef0;
+    border-radius: 24px;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 22px;
+    align-items: center;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.07);
+}
+
+.icon-box {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #eef9f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-box svg {
+    width: 38px;
+    height: 38px;
+}
+
+.icon-box svg path,
+.icon-box svg .cls-1 {
+    stroke: #178a37;
+    fill: none;
+}
+
+.icon-box.call svg path,
+.icon-box.email svg path {
+    fill: #178a37;
+    stroke: none;
+}
+
+.card-title {
+    margin: 0 0 8px;
+    color: #178a37;
+    font-size: clamp(22px, 4.8vw, 32px);
+    line-height: 1.2;
+    font-weight: 900;
+}
+
+.card-text {
+    margin: 0;
+    color: #263244;
+    font-size: clamp(18px, 4vw, 26px);
+    line-height: 1.4;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.note {
+    margin: 38px 0 0;
+    padding: 24px;
+    border-radius: 22px;
+    background: rgba(23, 138, 55, 0.06);
+    border: 1px solid rgba(23, 138, 55, 0.18);
+    color: #263244;
+    font-size: clamp(19px, 4.2vw, 28px);
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+.note strong {
+    color: #178a37;
+    font-weight: 900;
+}
+
+@media (max-width: 600px) {
+    .page {
+        padding: 24px 22px 54px;
+    }
+
+    .topbar {
+        margin-bottom: 52px;
+    }
+
+    .back-btn {
+        width: 50px;
+        height: 50px;
+    }
+
+    .contact-card {
+        grid-template-columns: 62px 1fr;
+        gap: 18px;
+        padding: 20px;
+    }
+
+    .icon-box {
+        width: 62px;
+        height: 62px;
+    }
+
+    .icon-box svg {
+        width: 34px;
+        height: 34px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <div class="topbar">
+        <button class="back-btn" type="button" onclick="history.back()" aria-label="Retour">
+            <svg viewBox="0 0 24 24" fill="none">
+                <path d="M14.5 9.50002L9.5 14.5M9.49998 9.5L14.5 14.5" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"></path>
+                <path d="M7 3.33782C8.47087 2.48697 10.1786 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 10.1786 2.48697 8.47087 3.33782 7" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"></path>
+            </svg>
+        </button>
+    </div>
+
+    <main class="content">
+        <h1 class="title">Contact</h1>
+
+        <div class="title-line">
+            <span class="line-green"></span>
+            <span class="line-yellow"></span>
+            <span class="line-red"></span>
+        </div>
+
+        <p class="intro">
+            L’administration FondAction est disponible pour vous accompagner,
+            répondre à vos questions et vous orienter dans vos démarches.
+        </p>
+
+        <div class="cards">
+            <a href="tel:+2290160212109" class="contact-card">
+                <div class="icon-box call">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M17.3545 22.2323C15.3344 21.7262 11.1989 20.2993 7.44976 16.5502C3.70065 12.8011 2.2738 8.66559 1.76767 6.6455C1.47681 5.48459 2.00058 4.36434 2.88869 3.72997L5.21694 2.06693C6.57922 1.09388 8.47432 1.42407 9.42724 2.80051L10.893 4.91776C11.5152 5.8165 11.3006 7.0483 10.4111 7.68365L9.24234 8.51849C9.41923 9.1951 9.96939 10.5846 11.6924 12.3076C13.4154 14.0306 14.8049 14.5807 15.4815 14.7576L16.3163 13.5888C16.9517 12.6994 18.1835 12.4847 19.0822 13.1069L21.1995 14.5727C22.5759 15.5257 22.9061 17.4207 21.933 18.783L20.27 21.1113C19.6356 21.9994 18.5154 22.5232 17.3545 22.2323ZM8.86397 15.136C12.2734 18.5454 16.0358 19.8401 17.8405 20.2923C18.1043 20.3583 18.4232 20.2558 18.6425 19.9488L20.3056 17.6205C20.6299 17.1665 20.5199 16.5348 20.061 16.2171L17.9438 14.7513L17.0479 16.0056C16.6818 16.5182 16.0047 16.9202 15.2163 16.7501C14.2323 16.5378 12.4133 15.8569 10.2782 13.7218C8.1431 11.5867 7.46219 9.7677 7.24987 8.7837C7.07977 7.9953 7.48181 7.31821 7.99439 6.95208L9.24864 6.05618L7.78285 3.93893C7.46521 3.48011 6.83351 3.37005 6.37942 3.6944L4.05117 5.35744C3.74413 5.57675 3.64162 5.89565 3.70771 6.15943C4.15989 7.96418 5.45459 11.7266 8.86397 15.136Z"></path>
+                    </svg>
+                </div>
+
+                <div>
+                    <h2 class="card-title">Appel</h2>
+                    <p class="card-text">+229 01 60 21 21 09</p>
+                </div>
+            </a>
+
+            <a href="https://wa.me/2290160212109" class="contact-card">
+                <div class="icon-box">
+                    <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path class="cls-1" d="M24,2.5A21.52,21.52,0,0,0,5.15,34.36L2.5,45.5l11.14-2.65A21.5,21.5,0,1,0,24,2.5ZM13.25,12.27h5.86a1,1,0,0,1,1,1,10.4,10.4,0,0,0,.66,3.91,1.93,1.93,0,0,1-.66,2.44l-2.05,2a18.6,18.6,0,0,0,3.52,4.79A18.6,18.6,0,0,0,26.35,30l2-2.05c1-1,1.46-1,2.44-.66a10.4,10.4,0,0,0,3.91.66,1.05,1.05,0,0,1,1,1v5.86a1.05,1.05,0,0,1-1,1,23.68,23.68,0,0,1-15.64-6.84,23.6,23.6,0,0,1-6.84-15.64A1.07,1.07,0,0,1,13.25,12.27Z"></path>
+                    </svg>
+                </div>
+
+                <div>
+                    <h2 class="card-title">WhatsApp</h2>
+                    <p class="card-text">Écrire à l’administration</p>
+                </div>
+            </a>
+
+            <a href="mailto:contact@fondactionsarl.com" class="contact-card">
+                <div class="icon-box email">
+                    <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M510.678,112.275c-2.308-11.626-7.463-22.265-14.662-31.054c-1.518-1.915-3.104-3.63-4.823-5.345 c-12.755-12.818-30.657-20.814-50.214-20.814H71.021c-19.557,0-37.395,7.996-50.21,20.814c-1.715,1.715-3.301,3.43-4.823,5.345 C8.785,90.009,3.63,100.649,1.386,112.275C0.464,116.762,0,121.399,0,126.087V385.92c0,9.968,2.114,19.55,5.884,28.203 c3.497,8.26,8.653,15.734,14.926,22.001c1.59,1.586,3.169,3.044,4.892,4.494c12.286,10.175,28.145,16.32,45.319,16.32h369.958 c17.18,0,33.108-6.145,45.323-16.384c1.718-1.386,3.305-2.844,4.891-4.43c6.27-6.267,11.425-13.741,14.994-22.001v-0.064 c3.769-8.653,5.812-18.171,5.812-28.138V126.087C512,121.399,511.543,116.762,510.678,112.275z M46.509,101.571 c6.345-6.338,14.866-10.175,24.512-10.175h369.958c9.646,0,18.242,3.837,24.512,10.175c1.122,1.129,2.179,2.387,3.112,3.637 L274.696,274.203c-5.348,4.687-11.954,7.002-18.696,7.002c-6.674,0-13.276-2.315-18.695-7.002L43.472,105.136 C44.33,103.886,45.387,102.7,46.509,101.571z M36.334,385.92V142.735L176.658,265.15L36.405,387.435 C36.334,386.971,36.334,386.449,36.334,385.92z M440.979,420.597H71.021c-6.281,0-12.158-1.651-17.174-4.552l147.978-128.959 l13.815,12.018c11.561,10.046,26.028,15.134,40.36,15.134c14.406,0,28.872-5.088,40.432-15.134l13.808-12.018l147.92,128.959 C453.137,418.946,447.26,420.597,440.979,420.597z M475.666,385.92c0,0.529,0,1.051-0.068,1.515L335.346,265.221L475.666,142.8 V385.92z"></path>
+                    </svg>
+                </div>
+
+                <div>
+                    <h2 class="card-title">Email</h2>
+                    <p class="card-text">contact@fondactionsarl.com</p>
+                </div>
+            </a>
+        </div>
+
+        <div class="note">
+            <strong>Information :</strong> toutes les demandes liées aux comptes, à l’inscription,
+            aux paiements ou à l’assistance doivent être adressées à l’administration FondAction.
+        </div>
+    </main>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,188 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>À propos - FondAction SARL</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #ffffff;
+    color: #0f172a;
+}
+
+.page {
+    min-height: 100vh;
+    padding: 28px 26px 60px;
+}
+
+.topbar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 70px;
+}
+
+.back-btn {
+    width: 54px;
+    height: 54px;
+    border: none;
+    border-radius: 999px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.back-btn svg {
+    width: 32px;
+    height: 32px;
+}
+
+.content {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+.title {
+    margin: 0;
+    text-align: center;
+    font-size: clamp(52px, 10vw, 86px);
+    line-height: 1.05;
+    font-weight: 900;
+    color: #0f172a;
+}
+
+.title-line {
+    width: 128px;
+    height: 7px;
+    border-radius: 999px;
+    margin: 24px auto 64px;
+    display: flex;
+    overflow: hidden;
+}
+
+.title-line span {
+    flex: 1;
+}
+
+.line-green {
+    background: #178a37;
+}
+
+.line-yellow {
+    background: #f59e0b;
+}
+
+.line-red {
+    background: #dc2626;
+}
+
+.text {
+    color: #0f172a;
+    font-size: clamp(24px, 5vw, 36px);
+    line-height: 1.55;
+    font-weight: 500;
+}
+
+.text p {
+    margin: 0 0 42px;
+}
+
+.text strong {
+    font-weight: 900;
+}
+
+@media (max-width: 600px) {
+    .page {
+        padding: 24px 22px 54px;
+    }
+
+    .topbar {
+        margin-bottom: 62px;
+    }
+
+    .back-btn {
+        width: 50px;
+        height: 50px;
+    }
+
+    .title-line {
+        margin-bottom: 58px;
+    }
+
+    .text p {
+        margin-bottom: 38px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+    <div class="topbar">
+        <button class="back-btn" type="button" onclick="history.back()" aria-label="Retour">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14.5 9.50002L9.5 14.5M9.49998 9.5L14.5 14.5" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"></path>
+                <path d="M7 3.33782C8.47087 2.48697 10.1786 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 10.1786 2.48697 8.47087 3.33782 7" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"></path>
+            </svg>
+        </button>
+    </div>
+
+    <main class="content">
+        <h1 class="title">À propos</h1>
+
+        <div class="title-line">
+            <span class="line-green"></span>
+            <span class="line-yellow"></span>
+            <span class="line-red"></span>
+        </div>
+
+        <div class="text">
+            <p>
+                FondAction SARL est une initiative collective qui transforme les contributions individuelles
+                en opportunités concrètes et durables.
+            </p>
+
+            <p>
+                Notre objectif est de rassembler des personnes autour d’un système structuré capable de créer
+                de la valeur à partir de l’effort collectif.
+            </p>
+
+            <p>
+                Grâce aux contributions des membres, FondAction finance des projets utiles, soutient des initiatives
+                et développe des solutions accessibles à tous.
+            </p>
+
+            <p>
+                Notre mission est de permettre à chaque membre de participer à un système fiable, sécurisé
+                et transparent.
+            </p>
+
+            <p>
+                Nous croyons en une communauté forte, capable de construire son propre avenir et de transformer
+                ses ressources en richesse durable.
+            </p>
+
+            <p>
+                Chez FondAction, chaque membre compte.<br>
+                Chaque contribution a un impact réel.
+            </p>
+        </div>
+    </main>
+
+</div>
+
+</body>
+</html>
