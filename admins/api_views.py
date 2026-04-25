@@ -4,6 +4,8 @@ import hmac
 import hashlib
 import time
 from django.conf import settings
+import logging
+
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -20,6 +22,25 @@ from members.constants import (
 )
 from members.payment_services import process_fedapay_webhook
 from members.services import create_member_record
+
+logger = logging.getLogger(__name__)
+
+
+
+def api_admin_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if request.method == 'OPTIONS':
+            return cors_json_response({'success': True})
+
+        admin_id = request.session.get('admin_id')
+        if not admin_id:
+            return cors_json_response({
+                'success': False,
+                'message': 'Admin non authentifié'
+            }, status=401)
+
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 def cors_json_response(data, status=200):
@@ -129,7 +150,7 @@ def api_login(request):
             'message': 'Utilisateur introuvable ❌'
         }, status=404)
 
-
+@api_admin_required
 def api_change_admin_password(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
@@ -201,7 +222,7 @@ def api_change_admin_password(request):
         'message': 'Mot de passe changé avec succès ✅'
     })
 
-
+@api_admin_required
 def api_create_member(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
@@ -270,7 +291,7 @@ def api_create_member(request):
         }
     }, status=201)
 
-
+@api_admin_required
 def api_member_history(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
@@ -315,7 +336,7 @@ def api_member_history(request):
             'message': 'Erreur serveur'
         }, status=500)
 
-
+@api_admin_required
 def api_get_member_by_nim(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
@@ -427,12 +448,12 @@ def fedapay_webhook(request):
                 'success': False,
                 'message': 'Signature webhook invalide'
             }, status=400)
-    except Exception as e:
-        print("FEDAPAY_SIGNATURE_ERROR:", str(e))
-        return cors_json_response({
-            'success': False,
-            'message': 'Erreur vérification signature'
-        }, status=400)
+    except Exception:
+       logger.exception("Erreur lors de la vérification de la signature FedaPay")
+       return cors_json_response({
+        'success': False,
+        'message': 'Erreur vérification signature'
+    }, status=400)
 
     try:
         payload = json.loads(raw_body)
@@ -478,9 +499,9 @@ def fedapay_webhook(request):
             'message': 'Tentative de paiement introuvable'
         }, status=404)
 
-    except Exception as e:
-        print("FEDAPAY_WEBHOOK_ERROR:", str(e))
-        return cors_json_response({
-            'success': False,
-            'message': 'Erreur webhook'
-        }, status=500)
+    except Exception:
+     logger.exception("Erreur lors du traitement du webhook FedaPay")
+     return cors_json_response({
+        'success': False,
+        'message': 'Erreur webhook'
+    }, status=500)

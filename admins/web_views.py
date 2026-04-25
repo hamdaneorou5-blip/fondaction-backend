@@ -2,6 +2,8 @@ import openpyxl
 from io import BytesIO
 from datetime import timedelta
 from django.http import JsonResponse
+from django.core.cache import cache
+from django.conf import settings
 
 from django.db.models import Exists, OuterRef, Sum,  Q
 
@@ -63,6 +65,16 @@ def home(request):
 
 def login(request):
     if request.method == 'POST':
+
+
+        if is_rate_limited(
+            request,
+            key_prefix='admin_login',
+            max_attempts=settings.LOGIN_RATE_LIMIT_MAX_ATTEMPTS,
+            window_seconds=settings.LOGIN_RATE_LIMIT_WINDOW_SECONDS
+        ):
+            return HttpResponse("Trop de tentatives. Veuillez réessayer dans 10 minutes.")
+
         email = (request.POST.get('email') or '').strip().lower()
         password = request.POST.get('password') or ''
 
@@ -114,6 +126,8 @@ def login(request):
             return HttpResponse("Utilisateur introuvable ❌")
 
     return render(request, 'admins/login.html')
+
+
 
 
 @admin_session_required
@@ -1746,3 +1760,62 @@ def root_router(request):
         })
 
     return redirect('/admins/visiteur/')
+
+def robots_txt(request):
+    host = request.get_host()
+
+    if host.startswith("admin.") or host.startswith("api."):
+        return HttpResponse("User-agent: *\nDisallow: /", content_type="text/plain")
+
+    return HttpResponse("User-agent: *\nAllow: /", content_type="text/plain")
+
+
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+
+    return request.META.get('REMOTE_ADDR', '')
+
+
+def is_rate_limited(request, key_prefix, max_attempts=5, window_seconds=600):
+    ip = get_client_ip(request)
+    cache_key = f"{key_prefix}:{ip}"
+
+    attempts = cache.get(cache_key, 0)
+
+    if attempts >= max_attempts:
+        return True
+
+    cache.set(cache_key, attempts + 1, timeout=window_seconds)
+    return False
+
+
+def sitemap_xml(request):
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://fondactionsarl.com/</loc>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>https://fondactionsarl.com/admins/about/</loc>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://fondactionsarl.com/admins/contact/</loc>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://fondactionsarl.com/admins/privacy-policy/</loc>
+        <priority>0.5</priority>
+    </url>
+    <url>
+        <loc>https://fondactionsarl.com/admins/terms-services/</loc>
+        <priority>0.5</priority>
+    </url>
+</urlset>
+"""
+    return HttpResponse(xml, content_type="application/xml")

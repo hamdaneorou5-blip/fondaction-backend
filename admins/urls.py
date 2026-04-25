@@ -61,6 +61,7 @@ from .web_views import (
     terms_services_page,
     contact_page,
     root_router,
+    robots_txt,
 
 )
 
@@ -149,5 +150,6 @@ urlpatterns = [
     path('terms-services/', terms_services_page, name='terms_services_page'),
     path('contact/', contact_page, name='contact_page'),
     path('', root_router),
+    path('robots.txt', robots_txt),
 
 ]
