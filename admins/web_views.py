@@ -977,8 +977,7 @@ def member_change_pin(request):
 
     return render(request, 'admins/member_change_pin.html')
 
-
-@admin_session_required  # ou member session selon ton système
+@member_session_required
 def member_space(request):
     member_id = request.session.get('member_id')
 
@@ -1002,7 +1001,7 @@ def member_space(request):
         'recent_transactions': recent_transactions,
     })
 
-@admin_session_required
+@member_session_required
 def member_withdrawal(request):
     member_id = request.session.get('member_id')
 
