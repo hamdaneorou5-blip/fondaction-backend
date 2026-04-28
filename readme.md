@@ -2,13 +2,38 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+
+<title>FondAction SARL - Contribution collective</title>
+
+<meta name="description" content="FondAction SARL transforme les contributions en opportunités réelles pour ses membres au Bénin.">
+
+<meta name="keywords" content="FondAction, contribution, investissement collectif, Bénin, épargne">
+
+<meta name="robots" content="index, follow">
+
+<meta property="og:title" content="FondAction SARL">
+<meta property="og:description" content="Chaque contribution compte. Construisons ensemble.">
+<meta property="og:url" content="https://fondactionsarl.com">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://fondactionsarl.com/static/images/logo2.png">
+
+
+<link rel="icon" type="image/png" href="/static/images/favicon.png">
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FondAction SARL</title>
+
 
 <style>
 * {
     box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 /* ===================== */
@@ -16,20 +41,20 @@
 /* ===================== */
 
 :root {
-    --logo-size: 120px;      /* AUGMENTE / DIMINUE LA TAILLE DU LOGO */
-    --logo-x: -50px;          /* GAUCHE (-) / DROITE (+) */
-    --logo-y: 0px;          /* HAUT (-) / BAS (+) */
+    --logo-size: 120px;
+    --logo-x: -50px;
+    --logo-y: 0px;
 
-    --menu-size: 44px;       /* AUGMENTE / DIMINUE LA TAILLE DU BOUTON MENU */
-    --menu-icon-size: 34px;  /* AUGMENTE / DIMINUE LA TAILLE DE L’ICÔNE */
-    --menu-x: 15px;           /* GAUCHE (-) / DROITE (+) */
-    --menu-y: 0px;           /* HAUT (-) / BAS (+) */
+    --menu-size: 44px;
+    --menu-icon-size: 34px;
+    --menu-x: 15px;
+    --menu-y: 0px;
 
-    --footer-logo-size: 350px;      /* TAILLE DU LOGO FOOTER SUR PC */
-    --footer-logo-x: 450px;           /* LOGO FOOTER GAUCHE (-) / DROITE (+) */
-    --footer-logo-y: 0px;           /* LOGO FOOTER HAUT (-) / BAS (+) */
+    --footer-logo-size: 350px;
+    --footer-logo-x: 450px;
+    --footer-logo-y: 0px;
 
-    --header-height: 95px;  /* HAUTEUR DU HEADER */
+    --header-height: 95px;
 }
 
 /* ===================== */
@@ -58,12 +83,10 @@ body.menu-open {
     transition: transform 0.28s ease, box-shadow 0.28s ease;
 }
 
-/* Quand on descend */
 .site-header.hide {
     transform: translateY(-110%);
 }
 
-/* Quand on remonte */
 .site-header.show {
     transform: translateY(0);
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
@@ -77,14 +100,12 @@ body.menu-open {
     justify-content: space-between;
 }
 
-/* CONTENEUR DU LOGO */
 .logo-container {
     display: flex;
     align-items: center;
     transform: translateX(var(--logo-x)) translateY(var(--logo-y));
 }
 
-/* LOGO */
 .logo {
     height: var(--logo-size);
     width: auto;
@@ -92,7 +113,6 @@ body.menu-open {
     display: block;
 }
 
-/* MENU */
 .menu-btn {
     width: var(--menu-size);
     height: var(--menu-size);
@@ -120,6 +140,7 @@ body.menu-open {
     opacity: 0;
     visibility: hidden;
     transition: transform 0.38s ease, opacity 0.25s ease, visibility 0.25s ease;
+    overflow-x: hidden;
 }
 
 .full-menu.open {
@@ -162,12 +183,12 @@ body.menu-open {
 .full-menu-list {
     margin-top: 70px;
     display: grid;
-    gap: 28px;
+    gap: 26px;
 }
 
 .full-menu-item {
     display: grid;
-    grid-template-columns: 70px 1fr;
+    grid-template-columns: 70px minmax(0, 1fr);
     align-items: center;
     gap: 24px;
     text-decoration: none;
@@ -181,6 +202,7 @@ body.menu-open {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .full-menu-icon svg {
@@ -195,10 +217,17 @@ body.menu-open {
 .icon-red { background: #fff1f2; }
 
 .full-menu-text {
-    padding-bottom: 26px;
-    border-bottom: 1px solid #e5e7eb;
+    min-width: 0;
+    padding-bottom: 0;
+    border-bottom: none;
     font-size: clamp(25px, 5vw, 34px);
+    line-height: 1.1;
     font-weight: 900;
+    display: flex;
+    align-items: center;
+    min-height: 70px;
+    border-bottom: 1px solid #e5e7eb;
+    overflow-wrap: break-word;
 }
 
 .full-menu-watermark {
@@ -212,6 +241,8 @@ body.menu-open {
 
 /* PAGE */
 .page {
+    width: 100%;
+    max-width: 100%;
     min-height: 150vh;
     padding: calc(var(--header-height) + 38px) 26px 70px;
 }
@@ -219,16 +250,20 @@ body.menu-open {
 /* HERO */
 .hero {
     max-width: 720px;
+    width: 100%;
     margin: 0 auto;
     text-align: center;
 }
 
 .hero-title {
-    margin: 0;
+    margin: 0 auto;
+    max-width: 100%;
     font-family: Georgia, 'Times New Roman', serif;
     font-size: clamp(48px, 8vw, 88px);
     line-height: 1.08;
     font-weight: 900;
+    text-align: center;
+    overflow-wrap: break-word;
 }
 
 .green { color: #2f8f3a; }
@@ -237,10 +272,14 @@ body.menu-open {
 
 .subtitle {
     max-width: 650px;
+    width: 100%;
     margin: 48px auto 0;
     color: #5f6b7a;
     font-size: clamp(22px, 4vw, 34px);
+    line-height: 1.32;
     font-weight: 700;
+    text-align: center;
+    overflow-wrap: break-word;
 }
 
 /* BOUTONS */
@@ -257,10 +296,13 @@ body.menu-open {
     display: flex;
     align-items: center;
     justify-content: center;
+    text-align: center;
     text-decoration: none;
     font-size: clamp(22px, 4vw, 34px);
     font-weight: 900;
     box-shadow: 0 12px 24px rgba(15, 23, 42, 0.14);
+    padding: 0 14px;
+    overflow-wrap: break-word;
 }
 
 .btn-login {
@@ -278,6 +320,7 @@ body.menu-open {
     color: #1684f7;
     border: 3px solid #1684f7;
 }
+
 /* SECTIONS TEXTE */
 .info-section {
     margin-top: 96px;
@@ -292,6 +335,7 @@ body.menu-open {
     line-height: 1;
     color: #cf002b;
     font-weight: 900;
+    overflow-wrap: break-word;
 }
 
 .info-subtitle {
@@ -300,6 +344,7 @@ body.menu-open {
     font-size: clamp(30px, 5vw, 48px);
     line-height: 1.28;
     font-weight: 900;
+    overflow-wrap: break-word;
 }
 
 .info-text {
@@ -308,6 +353,7 @@ body.menu-open {
     font-size: clamp(25px, 4.4vw, 42px);
     line-height: 1.38;
     font-weight: 500;
+    overflow-wrap: break-word;
 }
 
 /* CARROUSEL */
@@ -320,6 +366,7 @@ body.menu-open {
     font-family: Georgia, 'Times New Roman', serif;
     font-size: clamp(38px, 6vw, 60px);
     color: #20242c;
+    overflow-wrap: break-word;
 }
 
 .carousel-hint {
@@ -333,6 +380,7 @@ body.menu-open {
     display: flex;
     gap: 18px;
     overflow-x: auto;
+    overflow-y: hidden;
     scroll-snap-type: x mandatory;
     padding-bottom: 16px;
     scrollbar-width: none;
@@ -344,6 +392,7 @@ body.menu-open {
 
 .slide {
     flex: 0 0 86%;
+    min-width: 0;
     scroll-snap-align: center;
     border-radius: 28px;
     overflow: hidden;
@@ -403,8 +452,8 @@ body.menu-open {
 
 /* LIGNE MULTICOLORE */
 .color-line {
-    width: calc(100% + 52px);
-    margin-left: -26px;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
     margin-top: 78px;
     height: 9px;
     display: flex;
@@ -425,9 +474,10 @@ body.menu-open {
 
 .footer-logo {
     width: var(--footer-logo-size);
+    max-width: 100%;
     height: auto;
     display: block;
-    margin-bottom: 34px;
+    margin: 0 auto 34px auto;
     transform: translateX(var(--footer-logo-x)) translateY(var(--footer-logo-y));
 }
 
@@ -437,6 +487,7 @@ body.menu-open {
     line-height: 1.45;
     font-weight: 500;
     margin: 0 0 60px;
+    overflow-wrap: break-word;
 }
 
 .socials {
@@ -444,6 +495,7 @@ body.menu-open {
     gap: 34px;
     align-items: center;
     margin-bottom: 70px;
+    flex-wrap: wrap;
 }
 
 .social-link {
@@ -483,6 +535,7 @@ body.menu-open {
     font-size: clamp(34px, 6vw, 48px);
     font-weight: 900;
     letter-spacing: 1px;
+    overflow-wrap: break-word;
 }
 
 .footer-link {
@@ -492,6 +545,7 @@ body.menu-open {
     font-size: clamp(24px, 4vw, 36px);
     margin-bottom: 28px;
     font-weight: 500;
+    overflow-wrap: break-word;
 }
 
 .footer-bottom {
@@ -506,24 +560,25 @@ body.menu-open {
     font-size: clamp(20px, 3.6vw, 30px);
     line-height: 1.45;
     font-weight: 500;
+    overflow-wrap: break-word;
 }
 
 /* RESPONSIVE */
 @media (max-width: 600px) {
     :root {
-        --logo-size: 120px;      /* TAILLE LOGO MOBILE */
-        --header-height: 86px;  /* HAUTEUR HEADER MOBILE */
-        --logo-x: -50px;          /* POSITION HORIZONTALE MOBILE */
-        --logo-y: 0px;          /* POSITION VERTICALE MOBILE */
+        --logo-size: 120px;
+        --header-height: 86px;
+        --logo-x: -50px;
+        --logo-y: 0px;
 
-        --menu-size: 44px;       /* TAILLE BOUTON MENU MOBILE */
-        --menu-icon-size: 34px;  /* TAILLE ICÔNE MENU MOBILE */
-        --menu-x: 15px;           /* GAUCHE (-) / DROITE (+) MOBILE */
-        --menu-y: 0px;           /* HAUT (-) / BAS (+) MOBILE */
+        --menu-size: 44px;
+        --menu-icon-size: 34px;
+        --menu-x: 15px;
+        --menu-y: 0px;
 
-        --footer-logo-size: 350px;   /* TAILLE DU LOGO FOOTER MOBILE */
-        --footer-logo-x: 0px;        /* LOGO FOOTER MOBILE GAUCHE (-) / DROITE (+) */
-        --footer-logo-y: 0px;        /* LOGO FOOTER MOBILE HAUT (-) / BAS (+) */
+        --footer-logo-size: 350px;
+        --footer-logo-x: 0px;
+        --footer-logo-y: 0px;
     }
 
     .header-inner {
@@ -534,21 +589,53 @@ body.menu-open {
         padding: calc(var(--header-height) + 36px) 22px 60px;
     }
 
+    .hero {
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+    }
+
     .hero-title {
-        font-size: 54px;
+        font-size: clamp(40px, 11.5vw, 50px);
+        line-height: 1.08;
+        text-align: center;
+        overflow-wrap: break-word;
     }
 
     .subtitle {
-        font-size: 24px;
+        width: 100%;
+        max-width: 100%;
+        padding: 0 8px;
+        font-size: 22px;
+        line-height: 1.34;
+        text-align: center;
+        overflow-wrap: break-word;
     }
 
     .main-btn {
         min-height: 82px;
-        font-size: 25px;
+        font-size: 24px;
+        padding: 0 12px;
     }
 
     .info-section {
         margin-top: 86px;
+    }
+
+    .info-title {
+        font-size: clamp(38px, 11vw, 56px);
+    }
+
+    .info-subtitle {
+        font-size: clamp(27px, 8vw, 40px);
+    }
+
+    .info-text {
+        font-size: clamp(23px, 6.6vw, 34px);
+    }
+
+    .carousel-title {
+        font-size: clamp(34px, 10vw, 50px);
     }
 
     .slide {
@@ -563,13 +650,50 @@ body.menu-open {
         font-size: 15px;
     }
 
-    .color-line {
-        width: calc(100% + 44px);
-        margin-left: -22px;
+    .full-menu-inner {
+        padding: 30px 22px 44px;
+    }
+
+    .full-menu-list {
+        margin-top: 62px;
+        gap: 24px;
+    }
+
+    .full-menu-item {
+        grid-template-columns: 62px minmax(0, 1fr);
+        gap: 18px;
+        align-items: center;
+    }
+
+    .full-menu-icon {
+        width: 62px;
+        height: 62px;
+    }
+
+    .full-menu-icon svg {
+        width: 31px;
+        height: 31px;
+    }
+
+    .full-menu-text {
+        min-height: 62px;
+        font-size: 25px;
+        line-height: 1.1;
+        display: flex;
+        align-items: center;
+    }
+
+    .full-menu-watermark {
+        font-size: 92px;
+    }
+
+    .footer-logo {
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
     }
 }
-</style>
-</head>
+</style></head>
 
 <body>
 
@@ -714,7 +838,7 @@ body.menu-open {
 
     <section class="carousel-section">
         <h2 class="carousel-title">Un avenir prometteur</h2>
-        <p class="carousel-hint">Glissez vers la gauche pour découvrir →</p>
+        <p class="carousel-hint">Glissez vers la droite pour découvrir →</p>
 
         <div class="carousel" id="carousel">
             <div class="slide">
