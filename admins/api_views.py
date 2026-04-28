@@ -46,7 +46,7 @@ def api_admin_required(view_func):
 def cors_json_response(data, status=200):
     return JsonResponse(data, status=status)
 
-
+@csrf_exempt
 def api_login(request):
     if request.method == 'OPTIONS':
         return cors_json_response({'success': True})
@@ -150,6 +150,8 @@ def api_login(request):
             'message': 'Utilisateur introuvable ❌'
         }, status=404)
 
+
+@csrf_exempt
 @api_admin_required
 def api_change_admin_password(request):
     if request.method == 'OPTIONS':
@@ -222,6 +224,9 @@ def api_change_admin_password(request):
         'message': 'Mot de passe changé avec succès ✅'
     })
 
+
+
+@csrf_exempt
 @api_admin_required
 def api_create_member(request):
     if request.method == 'OPTIONS':
