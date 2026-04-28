@@ -223,7 +223,7 @@ def reject_withdrawal_request(withdrawal_request, admin_user, admin_note=None):
     return withdrawal_request
 
 
-def validate_uploaded_image(uploaded_file, allowed_extensions=None, max_size_mb=5):
+def validate_uploaded_image(uploaded_file, allowed_extensions=None, max_size_mb=20):
     if not uploaded_file:
         return
 
