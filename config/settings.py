@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'admins',
     'members',
     'logs',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
