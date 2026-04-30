@@ -203,7 +203,7 @@ async function fetchMemberByNim() {
     }
 
     try {
-        const response = await fetch(`/admins/member-by-nim/?nim=${encodeURIComponent(nim)}`);
+        const response = await fetch(`/admins/api/member-by-nim/?nim=${encodeURIComponent(nim)}`);
         const data = await response.json();
 
         if (!data.success) {
