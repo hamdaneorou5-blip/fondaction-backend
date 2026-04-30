@@ -368,7 +368,13 @@ def api_get_member_by_nim(request):
         }, status=400)
 
     try:
-        member = Member.objects.get(nim=nim)
+        member = Member.objects.filter(nim__iexact=nim.strip()).first()
+
+        if not member:
+            return cors_json_response({
+                 'success': False,
+                 'message': 'Membre introuvable'
+            }, status=404)
         return cors_json_response({
             'success': True,
             'member': {

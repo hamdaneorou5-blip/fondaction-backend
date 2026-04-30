@@ -876,9 +876,7 @@ def member_list(request):
     nim = (request.GET.get('nim') or '').strip()
     phone = (request.GET.get('phone') or '').strip()
 
-    members = Member.objects.filter(
-        created_by=current_admin
-    ).order_by('-created_at')
+    members = Member.objects.all().order_by('-created_at')
 
     if nim:
         members = members.filter(nim__icontains=nim)
