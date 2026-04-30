@@ -153,27 +153,3 @@ SESSION_SAVE_EVERY_REQUEST = True
 LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5
 LOGIN_RATE_LIMIT_WINDOW_SECONDS = 10 * 60  # 10 minutes
 
-# ==============================
-# STOCKAGE WASABI (PRODUCTION READY)
-# ==============================
-
-USE_WASABI = os.getenv("USE_WASABI", "False") == "True"
-
-if USE_WASABI:
-    INSTALLED_APPS += ['storages']
-
-    AWS_ACCESS_KEY_ID = os.getenv("WASABI_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY = os.getenv("WASABI_SECRET_ACCESS_KEY")
-
-    AWS_STORAGE_BUCKET_NAME = "fondaction-media"
-    AWS_S3_REGION_NAME = "eu-central-1"
-
-    AWS_S3_ENDPOINT_URL = "https://s3.eu-central-1.wasabisys.com"
-
-    AWS_S3_ADDRESSING_STYLE = "virtual"
-    AWS_DEFAULT_ACL = None
-    AWS_QUERYSTRING_AUTH = False
-
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-
-    MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.wasabisys.com/"
