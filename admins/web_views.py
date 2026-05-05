@@ -554,7 +554,7 @@ def global_admin_performance(request):
     total_admins = AdminUser.objects.count()
     total_members_all_time = Member.objects.count()
 
-    total_payments_amount = MemberTransaction.objects.filter(
+    payment_transactions = MemberTransaction.objects.filter(
         member__in=get_global_members_with_payment_status(
             start_date=start_date,
             end_date=end_date,
@@ -562,26 +562,44 @@ def global_admin_performance(request):
         ),
         transaction_type='payment',
         status='success'
-    ).aggregate(total=Sum('amount'))['total'] or 0
+    )
+
+    if start_date:
+        payment_transactions = payment_transactions.filter(created_at__date__gte=start_date)
+
+    if end_date:
+        payment_transactions = payment_transactions.filter(created_at__date__lte=end_date)
+
+    total_payments_amount = payment_transactions.aggregate(total=Sum('amount'))['total'] or 0
 
     admins_summary_data = []
     admins = AdminUser.objects.all().order_by('-created_at')
 
     for admin in admins:
-        admin_members = Member.objects.filter(created_by=admin)
+        admin_members_in_period = Member.objects.filter(created_by=admin)
 
         if start_date:
-            admin_members = admin_members.filter(created_at__date__gte=start_date)
+            admin_members_in_period = admin_members_in_period.filter(created_at__date__gte=start_date)
 
         if end_date:
-            admin_members = admin_members.filter(created_at__date__lte=end_date)
+            admin_members_in_period = admin_members_in_period.filter(created_at__date__lte=end_date)
 
-        created_count = admin_members.count()
+        created_count = admin_members_in_period.count()
 
-        paid_count = admin_members.filter(
+        all_admin_members = Member.objects.filter(created_by=admin)
+
+        paid_members = all_admin_members.filter(
             transactions__transaction_type='payment',
             transactions__status='success'
-        ).distinct().count()
+        )
+
+        if start_date:
+            paid_members = paid_members.filter(transactions__created_at__date__gte=start_date)
+
+        if end_date:
+            paid_members = paid_members.filter(transactions__created_at__date__lte=end_date)
+
+        paid_count = paid_members.distinct().count()
 
         unpaid_count = created_count - paid_count
         salary_total = paid_count * 100
@@ -701,20 +719,30 @@ def export_admins_summary_excel(request):
     admins = AdminUser.objects.all().order_by('-created_at')
 
     for admin in admins:
-        admin_members = Member.objects.filter(created_by=admin)
+        admin_members_in_period = Member.objects.filter(created_by=admin)
 
         if start_date:
-            admin_members = admin_members.filter(created_at__date__gte=start_date)
+            admin_members_in_period = admin_members_in_period.filter(created_at__date__gte=start_date)
 
         if end_date:
-            admin_members = admin_members.filter(created_at__date__lte=end_date)
+            admin_members_in_period = admin_members_in_period.filter(created_at__date__lte=end_date)
 
-        created_count = admin_members.count()
+        created_count = admin_members_in_period.count()
 
-        paid_count = admin_members.filter(
+        all_admin_members = Member.objects.filter(created_by=admin)
+
+        paid_members = all_admin_members.filter(
             transactions__transaction_type='payment',
             transactions__status='success'
-        ).distinct().count()
+        )
+
+        if start_date:
+            paid_members = paid_members.filter(transactions__created_at__date__gte=start_date)
+
+        if end_date:
+            paid_members = paid_members.filter(transactions__created_at__date__lte=end_date)
+
+        paid_count = paid_members.distinct().count()
 
         unpaid_count = created_count - paid_count
         salary_total = paid_count * 100
