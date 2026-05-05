@@ -621,6 +621,7 @@
                             <th>Membres créés</th>
                             <th>Ont payé</th>
                             <th>N’ont pas payé</th>
+                            <th>Salaire</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -636,6 +637,7 @@
                                 <td><strong>{{ item.created_count }}</strong></td>
                                 <td><span class="badge badge-paid">{{ item.paid_count }}</span></td>
                                 <td><span class="badge badge-unpaid">{{ item.unpaid_count }}</span></td>
+                                <td><strong>{{ item.salary_total }} FCFA</strong></td>
                                 <td>
                                     <a href="/admins/admins/{{ item.admin.id }}/?start_date={{ start_date }}&end_date={{ end_date }}&payment_status=all"
                                        class="btn btn-outline">

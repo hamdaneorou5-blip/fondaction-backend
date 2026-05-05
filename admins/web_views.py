@@ -16,6 +16,7 @@ from xhtml2pdf import pisa
 from members.models import InfoPost
 from django.shortcuts import get_object_or_404
 from admins.models import AdminUser
+from decimal import Decimal
 from members.models import Member, MemberTransaction, WithdrawalRequest
 from admins.utils import (
     log_activity,
@@ -563,9 +564,6 @@ def global_admin_performance(request):
         status='success'
     ).aggregate(total=Sum('amount'))['total'] or 0
 
-    
-
-    # Version plus robuste pour le résumé par admin
     admins_summary_data = []
     admins = AdminUser.objects.all().order_by('-created_at')
 
@@ -586,12 +584,14 @@ def global_admin_performance(request):
         ).distinct().count()
 
         unpaid_count = created_count - paid_count
+        salary_total = paid_count * 100
 
         admins_summary_data.append({
             'admin': admin,
             'created_count': created_count,
             'paid_count': paid_count,
             'unpaid_count': unpaid_count,
+            'salary_total': salary_total,
         })
 
     admins_summary_data.sort(key=lambda x: x['created_count'], reverse=True)
@@ -694,6 +694,7 @@ def export_admins_summary_excel(request):
         "Membres créés",
         "Ont payé",
         "N’ont pas payé",
+        "Salaire total",
     ]
     sheet.append(headers)
 
@@ -716,6 +717,7 @@ def export_admins_summary_excel(request):
         ).distinct().count()
 
         unpaid_count = created_count - paid_count
+        salary_total = paid_count * 100
 
         sheet.append([
             admin.nim,
@@ -726,6 +728,7 @@ def export_admins_summary_excel(request):
             created_count,
             paid_count,
             unpaid_count,
+            salary_total,
         ])
 
     response = HttpResponse(
@@ -906,9 +909,26 @@ def member_detail(request, member_id):
         member=member
     ).order_by('-created_at')
 
+    total_contributions = MemberTransaction.objects.filter(
+        member=member,
+        transaction_type='contribution',
+        status='success'
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+    total_withdrawals = MemberTransaction.objects.filter(
+        member=member,
+        transaction_type='withdrawal',
+        status='success'
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+    available_balance = total_contributions - total_withdrawals
+
     return render(request, 'admins/member_detail.html', {
         'member': member,
         'transactions': transactions,
+        'total_contributions': total_contributions,
+        'total_withdrawals': total_withdrawals,
+        'available_balance': available_balance,
     })
 
 
