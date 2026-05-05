@@ -117,6 +117,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            gap: 8px;
             text-decoration: none;
             padding: 12px 18px;
             border-radius: 14px;
@@ -125,6 +126,15 @@
             transition: 0.2s ease;
             border: none;
             cursor: pointer;
+        }
+
+        .hero-btn svg {
+            width: 19px;
+            height: 19px;
+        }
+
+        .hero-btn svg path {
+            fill: currentColor;
         }
 
         .hero-btn:hover,
@@ -256,9 +266,24 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
             margin-bottom: 16px;
             background: rgba(15, 23, 42, 0.06);
+        }
+
+        .card .icon svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .card .icon svg path,
+        .card .icon svg line,
+        .card .icon svg rect {
+            stroke: currentColor;
+        }
+
+        .card .icon svg path[fill],
+        .card .icon svg g path[fill] {
+            fill: currentColor;
         }
 
         .card h3 {
@@ -296,6 +321,7 @@
             gap: 14px;
             flex-wrap: wrap;
             margin-top: 8px;
+            justify-content: center;
         }
 
         .btn-back {
@@ -305,16 +331,6 @@
 
         .btn-logout {
             background: var(--danger);
-            color: white;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-dark {
-            background: #0f172a;
             color: white;
         }
 
@@ -380,7 +396,14 @@
 
             <div class="hero-actions">
                 <a href="/admins/dashboard/" class="hero-btn hero-btn-light">← Retour au dashboard</a>
-                <a href="/admins/members/create/" class="hero-btn hero-btn-outline">📝 Enregistrer un membre</a>
+                <a href="/admins/members/create/" class="hero-btn hero-btn-outline">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path opacity="0.4" d="M21.0901 21.5C21.0901 21.78 20.8701 22 20.5901 22H3.41016C3.13016 22 2.91016 21.78 2.91016 21.5C2.91016 17.36 6.99015 14 12.0002 14C13.0302 14 14.0302 14.14 14.9502 14.41C14.3602 15.11 14.0002 16.02 14.0002 17C14.0002 17.75 14.2101 18.46 14.5801 19.06C14.7801 19.4 15.0401 19.71 15.3401 19.97C16.0401 20.61 16.9702 21 18.0002 21C19.1202 21 20.1302 20.54 20.8502 19.8C21.0102 20.34 21.0901 20.91 21.0901 21.5Z"></path>
+                        <path d="M20.97 14.33C20.25 13.51 19.18 13 18 13C16.88 13 15.86 13.46 15.13 14.21C14.43 14.93 14 15.92 14 17C14 17.75 14.21 18.46 14.58 19.06C14.78 19.4 15.04 19.71 15.34 19.97C16.04 20.61 16.97 21 18 21C19.46 21 20.73 20.22 21.42 19.06C21.63 18.72 21.79 18.33 21.88 17.93C21.96 17.63 22 17.32 22 17C22 15.98 21.61 15.04 20.97 14.33ZM19.5 17.73H18.75V18.51C18.75 18.92 18.41 19.26 18 19.26C17.59 19.26 17.25 18.92 17.25 18.51V17.73H16.5C16.09 17.73 15.75 17.39 15.75 16.98C15.75 16.57 16.09 16.23 16.5 16.23H17.25V15.52C17.25 15.11 17.59 14.77 18 14.77C18.41 14.77 18.75 15.11 18.75 15.52V16.23H19.5C19.91 16.23 20.25 16.57 20.25 16.98C20.25 17.39 19.91 17.73 19.5 17.73Z"></path>
+                        <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z"></path>
+                    </svg>
+                    Enregistrer un membre
+                </a>
             </div>
         </div>
 
@@ -420,56 +443,99 @@
 
             <div class="grid">
                 <a href="/admins/members/" class="card card-blue">
-                    <div class="icon">📋</div>
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M3 18C3 15.3945 4.66081 13.1768 6.98156 12.348C7.61232 12.1227 8.29183 12 9 12C9.70817 12 10.3877 12.1227 11.0184 12.348C11.3611 12.4703 11.6893 12.623 12 12.8027C12.3107 12.623 12.6389 12.4703 12.9816 12.348C13.6123 12.1227 14.2918 12 15 12C15.7082 12 16.3877 12.1227 17.0184 12.348C19.3392 13.1768 21 15.3945 21 18V21H15.75V19.5H19.5V18C19.5 15.5147 17.4853 13.5 15 13.5C14.4029 13.5 13.833 13.6163 13.3116 13.8275C14.3568 14.9073 15 16.3785 15 18V21H3V18ZM9 11.25C8.31104 11.25 7.66548 11.0642 7.11068 10.74C5.9977 10.0896 5.25 8.88211 5.25 7.5C5.25 5.42893 6.92893 3.75 9 3.75C10.2267 3.75 11.3158 4.33901 12 5.24963C12.6842 4.33901 13.7733 3.75 15 3.75C17.0711 3.75 18.75 5.42893 18.75 7.5C18.75 8.88211 18.0023 10.0896 16.8893 10.74C16.3345 11.0642 15.689 11.25 15 11.25C14.311 11.25 13.6655 11.0642 13.1107 10.74C12.6776 10.4869 12.2999 10.1495 12 9.75036C11.7001 10.1496 11.3224 10.4869 10.8893 10.74C10.3345 11.0642 9.68896 11.25 9 11.25ZM13.5 18V19.5H4.5V18C4.5 15.5147 6.51472 13.5 9 13.5C11.4853 13.5 13.5 15.5147 13.5 18ZM11.25 7.5C11.25 8.74264 10.2426 9.75 9 9.75C7.75736 9.75 6.75 8.74264 6.75 7.5C6.75 6.25736 7.75736 5.25 9 5.25C10.2426 5.25 11.25 6.25736 11.25 7.5ZM15 5.25C13.7574 5.25 12.75 6.25736 12.75 7.5C12.75 8.74264 13.7574 9.75 15 9.75C16.2426 9.75 17.25 8.74264 17.25 7.5C17.25 6.25736 16.2426 5.25 15 5.25Z"></path>
+                        </svg>
+                    </div>
                     <h3>Voir les membres</h3>
                     <p>Consulter la liste des membres enregistrés, accéder à leurs détails et suivre leur situation dans le système.</p>
                     <span class="card-tag">Consultation</span>
                 </a>
 
                 <a href="/admins/members/create/" class="card card-green">
-                    <div class="icon">📝</div>
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path opacity="0.4" d="M21.0901 21.5C21.0901 21.78 20.8701 22 20.5901 22H3.41016C3.13016 22 2.91016 21.78 2.91016 21.5C2.91016 17.36 6.99015 14 12.0002 14C13.0302 14 14.0302 14.14 14.9502 14.41C14.3602 15.11 14.0002 16.02 14.0002 17C14.0002 17.75 14.2101 18.46 14.5801 19.06C14.7801 19.4 15.0401 19.71 15.3401 19.97C16.0401 20.61 16.9702 21 18.0002 21C19.1202 21 20.1302 20.54 20.8502 19.8C21.0102 20.34 21.0901 20.91 21.0901 21.5Z"></path>
+                            <path d="M20.97 14.33C20.25 13.51 19.18 13 18 13C16.88 13 15.86 13.46 15.13 14.21C14.43 14.93 14 15.92 14 17C14 17.75 14.21 18.46 14.58 19.06C14.78 19.4 15.04 19.71 15.34 19.97C16.04 20.61 16.97 21 18 21C19.46 21 20.73 20.22 21.42 19.06C21.63 18.72 21.79 18.33 21.88 17.93C21.96 17.63 22 17.32 22 17C22 15.98 21.61 15.04 20.97 14.33ZM19.5 17.73H18.75V18.51C18.75 18.92 18.41 19.26 18 19.26C17.59 19.26 17.25 18.92 17.25 18.51V17.73H16.5C16.09 17.73 15.75 17.39 15.75 16.98C15.75 16.57 16.09 16.23 16.5 16.23H17.25V15.52C17.25 15.11 17.59 14.77 18 14.77C18.41 14.77 18.75 15.11 18.75 15.52V16.23H19.5C19.91 16.23 20.25 16.57 20.25 16.98C20.25 17.39 19.91 17.73 19.5 17.73Z"></path>
+                            <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z"></path>
+                        </svg>
+                    </div>
                     <h3>Enregistrer un membre</h3>
                     <p>Créer une nouvelle fiche membre avec toutes les informations personnelles, administratives et utiles au suivi.</p>
                     <span class="card-tag">Création rapide</span>
                 </a>
 
                 <a href="/admins/member-login/" class="card card-purple">
-                    <div class="icon">🔐</div>
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10 11V8l5 4-5 4v-3H1v-2h9zm-7.542 4h2.124A8.003 8.003 0 0 0 20 12 8 8 0 0 0 4.582 9H2.458C3.732 4.943 7.522 2 12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10c-4.478 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </div>
                     <h3>Connexion membre</h3>
                     <p>Accéder à l’interface de connexion dédiée aux membres pour tester ou vérifier leur parcours utilisateur.</p>
                     <span class="card-tag">Accès membre</span>
                 </a>
 
                 <a href="/admins/members/history/" class="card card-cyan">
-                    <div class="icon">📜</div>
+                    <div class="icon">
+                        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M75.11,117h0A21.34,21.34,0,0,1,53.83,95.57V31.39A21.34,21.34,0,0,1,75.11,10h0A21.34,21.34,0,0,1,96.39,31.39V95.57A21.34,21.34,0,0,1,75.11,117Z" fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <rect height="64.17" width="319.22" x="96.39" y="31.39" fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"></rect>
+                            <rect height="320.87" width="319.22" x="96.39" y="95.57" fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"></rect>
+                            <path d="M34.34,39.08H53.83v48.8H34.34A24.34,24.34,0,0,1,10,63.54v-.13A24.34,24.34,0,0,1,34.34,39.08Z" fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <path d="M436.89,117h0a21.34,21.34,0,0,0,21.28-21.39V31.39A21.34,21.34,0,0,0,436.89,10h0a21.34,21.34,0,0,0-21.28,21.39V95.57A21.34,21.34,0,0,0,436.89,117Z" fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <path d="M75.11,395h0a21.34,21.34,0,0,0-21.28,21.39v64.18A21.34,21.34,0,0,0,75.11,502h0a21.34,21.34,0,0,0,21.28-21.39V416.43A21.34,21.34,0,0,0,75.11,395Z" fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <rect height="64.17" width="319.22" x="96.39" y="416.43" fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"></rect>
+                            <path d="M436.89,395h0a21.34,21.34,0,0,1,21.28,21.39v64.18A21.34,21.34,0,0,1,436.89,502h0a21.34,21.34,0,0,1-21.28-21.39V416.43A21.34,21.34,0,0,1,436.89,395Z" fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <line x1="143.41" x2="256" y1="140.11" y2="140.11" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"></line>
+                            <line x1="143.41" x2="371.26" y1="186.47" y2="186.47" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"></line>
+                            <line x1="143.41" x2="371.26" y1="232.82" y2="232.82" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"></line>
+                            <line x1="143.41" x2="371.26" y1="279.18" y2="279.18" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"></line>
+                            <line x1="143.41" x2="371.26" y1="325.53" y2="325.53" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"></line>
+                        </svg>
+                    </div>
                     <h3>Historique de création</h3>
                     <p>Voir l’historique détaillé des membres enregistrés et suivre les actions déjà réalisées dans le temps.</p>
                     <span class="card-tag">Suivi</span>
                 </a>
 
                 <a href="/admins/members/export/" class="card card-orange">
-                    <div class="icon">📤</div>
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8.5 7L8.5 14M8.5 14L11 11M8.5 14L6 11" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <path d="M15.5 7L15.5 14M15.5 14L18 11M15.5 14L13 11" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <path d="M18 17H12H6" stroke-width="1.5" stroke-linecap="round"></path>
+                            <path d="M2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C22 4.92893 22 7.28595 22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12Z" stroke-width="1.5"></path>
+                        </svg>
+                    </div>
                     <h3>Exporter les membres</h3>
                     <p>Télécharger la liste des membres au format Excel pour archivage, contrôle, impression ou exploitation externe.</p>
                     <span class="card-tag">Export Excel</span>
+                </a>
+
+                <a href="/admins/visiteur/" class="card card-blue">
+                    <div class="icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17.5291 7.77C17.4591 7.76 17.3891 7.76 17.3191 7.77C15.7691 7.72 14.5391 6.45 14.5391 4.89C14.5391 3.3 15.8291 2 17.4291 2C19.0191 2 20.3191 3.29 20.3191 4.89C20.3091 6.45 19.0791 7.72 17.5291 7.77Z"></path>
+                            <path d="M20.7916 14.7004C19.6716 15.4504 18.1016 15.7304 16.6516 15.5404C17.0316 14.7204 17.2316 13.8104 17.2416 12.8504C17.2416 11.8504 17.0216 10.9004 16.6016 10.0704C18.0816 9.8704 19.6516 10.1504 20.7816 10.9004C22.3616 11.9404 22.3616 13.6504 20.7916 14.7004Z"></path>
+                            <path d="M6.44016 7.77C6.51016 7.76 6.58016 7.76 6.65016 7.77C8.20016 7.72 9.43016 6.45 9.43016 4.89C9.43016 3.29 8.14016 2 6.54016 2C4.95016 2 3.66016 3.29 3.66016 4.89C3.66016 6.45 4.89016 7.72 6.44016 7.77Z"></path>
+                            <path d="M6.55109 12.8506C6.55109 13.8206 6.76109 14.7406 7.14109 15.5706C5.73109 15.7206 4.26109 15.4206 3.18109 14.7106C1.60109 13.6606 1.60109 11.9506 3.18109 10.9006C4.25109 10.1806 5.76109 9.89059 7.18109 10.0506C6.77109 10.8906 6.55109 11.8406 6.55109 12.8506Z"></path>
+                            <path d="M12.1208 15.87C12.0408 15.86 11.9508 15.86 11.8608 15.87C10.0208 15.81 8.55078 14.3 8.55078 12.44C8.56078 10.54 10.0908 9 12.0008 9C13.9008 9 15.4408 10.54 15.4408 12.44C15.4308 14.3 13.9708 15.81 12.1208 15.87Z"></path>
+                            <path d="M8.87078 17.9406C7.36078 18.9506 7.36078 20.6106 8.87078 21.6106C10.5908 22.7606 13.4108 22.7606 15.1308 21.6106C16.6408 20.6006 16.6408 18.9406 15.1308 17.9406C13.4208 16.7906 10.6008 16.7906 8.87078 17.9406Z"></path>
+                        </svg>
+                    </div>
+                    <h3>Page visiteur</h3>
+                    <p>Accéder rapidement à la page visiteur afin de vérifier l’affichage public et le parcours de présentation.</p>
+                    <span class="card-tag">Vue visiteur</span>
                 </a>
             </div>
         </div>
 
         <div class="section-card">
-            <div class="section-head">
-                <div>
-                    <h2>Actions rapides</h2>
-                    <p>Accès direct aux principales actions générales liées à cette section.</p>
-                </div>
-            </div>
-
             <div class="bottom-actions">
                 <a href="/admins/dashboard/" class="btn btn-back">Retour au dashboard</a>
-                <a href="/admins/members/" class="btn btn-primary">Voir les membres</a>
-                <a href="/admins/members/export/" class="btn btn-dark">Exporter les membres</a>
                 <a href="/admins/logout/" class="btn btn-logout">Se déconnecter</a>
-                <a href="/admins/visiteur/" class="btn">Page visiteur</a>
             </div>
         </div>
     </div>
