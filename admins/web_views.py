@@ -911,7 +911,7 @@ def member_detail(request, member_id):
 
     total_contributions = MemberTransaction.objects.filter(
         member=member,
-        transaction_type='contribution',
+        transaction_type='payment',
         status='success'
     ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
 
