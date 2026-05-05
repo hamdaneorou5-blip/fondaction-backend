@@ -1,56 +1,269 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-
     <meta name="robots" content="noindex, nofollow">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion Admin</title>
+    <title>Connexion Admin - FondAction SARL</title>
+
     <style>
         * {
             box-sizing: border-box;
+        }
+
+        :root {
+            --green: #178a37;
+            --green-light: #22c55e;
+            --yellow: #f59e0b;
+            --dark: #020617;
+            --dark-2: #0f172a;
+            --text: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --white-soft: rgba(255,255,255,0.94);
         }
 
         body {
             margin: 0;
             padding: 0;
             font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
             min-height: 100vh;
+            background:
+                radial-gradient(circle at top left, rgba(23, 138, 55, 0.30), transparent 30%),
+                radial-gradient(circle at bottom left, rgba(34, 197, 94, 0.20), transparent 32%),
+                radial-gradient(circle at top right, rgba(245, 158, 11, 0.25), transparent 30%),
+                linear-gradient(135deg, #020617 0%, #0f172a 48%, #111827 100%);
+            color: white;
+        }
+
+        .login-page {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1.12fr 0.88fr;
+            align-items: center;
+            gap: 46px;
+            padding: 48px 7%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-page::before {
+            content: "";
+            position: absolute;
+            width: 560px;
+            height: 560px;
+            left: -230px;
+            bottom: -240px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(34,197,94,0.28), transparent 68%);
+            pointer-events: none;
+        }
+
+        .login-page::after {
+            content: "";
+            position: absolute;
+            width: 460px;
+            height: 460px;
+            right: -180px;
+            top: -200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245,158,11,0.22), transparent 68%);
+            pointer-events: none;
+        }
+
+        .brand-section,
+        .login-card {
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-box {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 24px;
+            padding: 14px 20px;
+            margin-bottom: 32px;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.20);
+            backdrop-filter: blur(12px);
+        }
+
+        .logo-box img {
+            width: 230px;
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 11px 16px;
+            border-radius: 999px;
+            background: rgba(23, 138, 55, 0.20);
+            border: 1px solid rgba(34, 197, 94, 0.26);
+            color: #bbf7d0;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 26px;
+        }
+
+        .brand-badge svg {
+            width: 17px;
+            height: 17px;
+            fill: #22c55e;
+        }
+
+        .brand-title {
+            margin: 0 0 22px;
+            font-size: clamp(44px, 6vw, 76px);
+            line-height: 1.04;
+            font-weight: 900;
+            letter-spacing: -1.8px;
+        }
+
+        .brand-title span {
+            color: var(--green-light);
+        }
+
+        .title-line {
+            width: 82px;
+            height: 5px;
+            border-radius: 999px;
+            background: var(--yellow);
+            margin-bottom: 24px;
+        }
+
+        .brand-text {
+            margin: 0;
+            max-width: 560px;
+            color: rgba(255,255,255,0.76);
+            font-size: 17px;
+            line-height: 1.8;
+        }
+
+        .trust-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-top: 34px;
+            max-width: 620px;
+        }
+
+        .trust-card {
+            min-height: 142px;
+            padding: 18px;
+            border-radius: 22px;
+            background: rgba(255,255,255,0.075);
+            border: 1px solid rgba(255,255,255,0.12);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 16px 35px rgba(0,0,0,0.14);
+        }
+
+        .trust-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
+            margin-bottom: 14px;
         }
 
-        .login-container {
+        .trust-icon svg {
+            width: 26px;
+            height: 26px;
+        }
+
+        .trust-icon.secure {
+            background: rgba(34, 197, 94, 0.14);
+        }
+
+        .trust-icon.secure svg path {
+            fill: #22c55e;
+        }
+
+        .trust-icon.stats {
+            background: rgba(245, 158, 11, 0.14);
+        }
+
+        .trust-icon.stats svg path {
+            fill: #f59e0b;
+        }
+
+        .trust-icon.control {
+            background: rgba(239, 68, 68, 0.13);
+        }
+
+        .trust-icon.control svg path {
+            stroke: #ef4444;
+        }
+
+        .trust-card strong {
+            display: block;
+            color: white;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .trust-card span {
+            display: block;
+            color: rgba(255,255,255,0.62);
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .login-card {
             width: 100%;
-            max-width: 420px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
-            padding: 35px 30px;
+            max-width: 470px;
+            justify-self: end;
+            background: var(--white-soft);
+            color: var(--text);
+            border-radius: 34px;
+            padding: 40px 34px;
+            box-shadow: 0 34px 85px rgba(0,0,0,0.36);
+            border: 1px solid rgba(255,255,255,0.70);
+        }
+
+        .login-lock {
+            width: 76px;
+            height: 76px;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #178a37, #22c55e 55%, #f59e0b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 22px;
+            box-shadow: 0 18px 36px rgba(23, 138, 55, 0.28);
+        }
+
+        .login-lock svg {
+            width: 38px;
+            height: 38px;
+            fill: white;
         }
 
         .login-header {
             text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .login-header .icon {
-            font-size: 50px;
-            margin-bottom: 10px;
+            margin-bottom: 28px;
         }
 
         .login-header h2 {
-            margin: 0;
-            font-size: 30px;
-            color: #111827;
+            margin: 0 0 9px;
+            font-size: 32px;
+            line-height: 1.2;
+            color: #0f172a;
         }
 
         .login-header p {
-            margin-top: 8px;
-            color: #6b7280;
+            margin: 0;
+            color: var(--muted);
             font-size: 15px;
+            line-height: 1.6;
         }
 
         .form-group {
@@ -60,92 +273,336 @@
         label {
             display: block;
             margin-bottom: 8px;
-            color: #374151;
+            color: #334155;
             font-weight: bold;
-            font-size: 15px;
+            font-size: 14px;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 21px;
+            height: 21px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .input-icon svg {
+            width: 21px;
+            height: 21px;
+        }
+
+        .input-icon.email svg path {
+            fill: var(--green);
+        }
+
+        .input-icon.password svg path {
+            fill: var(--green);
         }
 
         input {
             width: 100%;
-            padding: 14px 15px;
-            border: 1px solid #d1d5db;
-            border-radius: 12px;
+            padding: 16px 16px 16px 48px;
+            border: 1px solid #dbe3ee;
+            border-radius: 16px;
             outline: none;
             font-size: 15px;
-            transition: 0.3s;
+            transition: 0.25s ease;
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        input::placeholder {
+            color: #94a3b8;
         }
 
         input:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+            background: white;
+            border-color: var(--green);
+            box-shadow: 0 0 0 4px rgba(23, 138, 55, 0.13);
         }
 
         .login-btn {
             width: 100%;
-            padding: 14px;
+            padding: 16px;
             border: none;
-            border-radius: 12px;
-            background: #2563eb;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #15803d, #16a34a);
             color: white;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 900;
             cursor: pointer;
-            transition: 0.3s;
+            transition: 0.25s ease;
             margin-top: 10px;
+            box-shadow: 0 18px 34px rgba(22, 163, 74, 0.28);
         }
 
         .login-btn:hover {
-            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 22px 38px rgba(22, 163, 74, 0.35);
         }
 
-        .footer-text {
+        .security-note {
+            margin-top: 22px;
+            padding: 15px 16px;
+            border-radius: 18px;
+            background: rgba(23, 138, 55, 0.08);
+            border: 1px solid rgba(23, 138, 55, 0.14);
+            color: #166534;
+            font-size: 13px;
+            line-height: 1.55;
             text-align: center;
-            margin-top: 20px;
-            color: #6b7280;
-            font-size: 14px;
+            font-weight: 600;
         }
 
-        @media (max-width: 500px) {
-            .login-container {
-                margin: 20px;
-                padding: 28px 22px;
+        @media (max-width: 980px) {
+            .login-page {
+                grid-template-columns: 1fr;
+                padding: 32px 20px;
+                gap: 28px;
+            }
+
+            .brand-section {
+                text-align: center;
+                margin: 0 auto;
+                width: 100%;
+            }
+
+            .logo-box {
+                margin-bottom: 24px;
+                padding: 12px 16px;
+            }
+
+            .logo-box img {
+                width: 190px;
+            }
+
+            .brand-badge {
+                margin-bottom: 20px;
+            }
+
+            .brand-title {
+                font-size: 42px;
+                letter-spacing: -1px;
+            }
+
+            .title-line {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .brand-text {
+                margin: 0 auto;
+                font-size: 15px;
+                max-width: 500px;
+            }
+
+            .trust-grid {
+                grid-template-columns: 1fr;
+                margin: 24px auto 0;
+                max-width: 430px;
+            }
+
+            .trust-card {
+                min-height: auto;
+                display: grid;
+                grid-template-columns: 52px 1fr;
+                align-items: center;
+                text-align: left;
+                gap: 12px;
+                padding: 15px;
+            }
+
+            .trust-icon {
+                margin-bottom: 0;
+            }
+
+            .login-card {
+                justify-self: center;
+                max-width: 470px;
+                padding: 32px 24px;
+                border-radius: 30px;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .login-page {
+                padding: 24px 16px;
+            }
+
+            .logo-box img {
+                width: 170px;
+            }
+
+            .brand-title {
+                font-size: 34px;
+            }
+
+            .brand-text {
+                font-size: 14px;
+                line-height: 1.7;
+            }
+
+            .login-card {
+                padding: 28px 20px;
+                border-radius: 26px;
             }
 
             .login-header h2 {
-                font-size: 25px;
+                font-size: 26px;
+            }
+
+            .login-lock {
+                width: 66px;
+                height: 66px;
+                border-radius: 22px;
+            }
+
+            .login-lock svg {
+                width: 32px;
+                height: 32px;
             }
         }
     </style>
 </head>
+
 <body>
 
-    <div class="login-container">
+<div class="login-page">
+
+    <section class="brand-section">
+
+        <div class="logo-box">
+            <img src="{% static 'images/logo2.png' %}" alt="FondAction SARL">
+        </div>
+
+        <div class="brand-badge">
+            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                <path d="m 2 0 c -0.550781 0 -1 0.449219 -1 1 v 8 c 0 2.5 1.816406 4.246094 3.445312 5.332031 c 1.628907 1.085938 3.238282 1.617188 3.238282 1.617188 c 0.207031 0.070312 0.425781 0.070312 0.632812 0 c 0 0 1.609375 -0.53125 3.238282 -1.617188 c 1.628906 -1.085937 3.445312 -2.832031 3.445312 -5.332031 v -8 c 0 -0.550781 -0.449219 -1 -1 -1 z m 1 2 h 10 v 7 c 0 1.5 -1.183594 2.753906 -2.554688 3.667969 c -1.214843 0.808593 -2.179687 1.128906 -2.445312 1.226562 c -0.265625 -0.097656 -1.230469 -0.417969 -2.445312 -1.226562 c -1.371094 -0.914063 -2.554688 -2.167969 -2.554688 -3.667969 z m 1 1 v 6 c 0 1 0.867188 2.007812 2.109375 2.835938 c 0.933594 0.621093 1.472656 0.785156 1.890625 0.949218 v -9.785156 z m 0 0"></path>
+            </svg>
+            Administration sécurisée FondAction SARL
+        </div>
+
+        <h1 class="brand-title">
+            Pilotez votre<br>
+            espace <span>admin</span>
+        </h1>
+
+        <div class="title-line"></div>
+
+        <p class="brand-text">
+            Accédez à votre interface de gestion pour suivre les membres,
+            contrôler les opérations, gérer les publications et administrer
+            la plateforme en toute sécurité.
+        </p>
+
+        <div class="trust-grid">
+
+            <div class="trust-card">
+                <div class="trust-icon secure">
+                    <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                        <path d="m 2 0 c -0.550781 0 -1 0.449219 -1 1 v 8 c 0 2.5 1.816406 4.246094 3.445312 5.332031 c 1.628907 1.085938 3.238282 1.617188 3.238282 1.617188 c 0.207031 0.070312 0.425781 0.070312 0.632812 0 c 0 0 1.609375 -0.53125 3.238282 -1.617188 c 1.628906 -1.085937 3.445312 -2.832031 3.445312 -5.332031 v -8 c 0 -0.550781 -0.449219 -1 -1 -1 z m 1 2 h 10 v 7 c 0 1.5 -1.183594 2.753906 -2.554688 3.667969 c -1.214843 0.808593 -2.179687 1.128906 -2.445312 1.226562 c -0.265625 -0.097656 -1.230469 -0.417969 -2.445312 -1.226562 c -1.371094 -0.914063 -2.554688 -2.167969 -2.554688 -3.667969 z m 1 1 v 6 c 0 1 0.867188 2.007812 2.109375 2.835938 c 0.933594 0.621093 1.472656 0.785156 1.890625 0.949218 v -9.785156 z m 0 0"></path>
+                    </svg>
+                </div>
+                <div>
+                    <strong>Accès sécurisé</strong>
+                    <span>Connexion réservée aux administrateurs autorisés.</span>
+                </div>
+            </div>
+
+            <div class="trust-card">
+                <div class="trust-icon stats">
+                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M416 896V128h192v768H416zm-288 0V448h192v448H128zm576 0V320h192v576H704z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <strong>Suivi transparent</strong>
+                    <span>Les opérations importantes sont suivies et contrôlées.</span>
+                </div>
+            </div>
+
+            <div class="trust-card">
+                <div class="trust-icon control">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10.49 2.23006L5.50003 4.10005C4.35003 4.53005 3.41003 5.89004 3.41003 7.12004V14.55C3.41003 15.73 4.19005 17.28 5.14005 17.99L9.44003 21.2001C10.85 22.2601 13.17 22.2601 14.58 21.2001L18.88 17.99C19.83 17.28 20.61 15.73 20.61 14.55V7.12004C20.61 5.89004 19.67 4.53005 18.52 4.10005L13.53 2.23006C12.68 1.92006 11.32 1.92006 10.49 2.23006Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M12.0001 10.92C11.9601 10.92 11.9101 10.92 11.8701 10.92C10.9301 10.89 10.1801 10.11 10.1801 9.16003C10.1801 8.19003 10.9701 7.40002 11.9401 7.40002C12.9101 7.40002 13.7001 8.19003 13.7001 9.16003C13.6901 10.12 12.9401 10.89 12.0001 10.92Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M10.01 13.72C9.05004 14.36 9.05004 15.41 10.01 16.05C11.1 16.78 12.89 16.78 13.98 16.05C14.94 15.41 14.94 14.36 13.98 13.72C12.9 12.99 11.11 12.99 10.01 13.72Z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                </div>
+                <div>
+                    <strong>Gestion contrôlée</strong>
+                    <span>Un espace conçu pour piloter la plateforme avec rigueur.</span>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="login-card">
+
+        <div class="login-lock">
+            <svg version="1.1" id="Icons" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                <g>
+                    <path d="M23,14.1V8.9C23,5.1,19.9,2,16,2S9,5.1,9,8.9v5.2c-2.3,0.5-4,2.5-4,4.9v5c0,2.8,2.2,5,5,5h12c2.8,0,5-2.2,5-5v-5 C27,16.6,25.3,14.6,23,14.1z M17,23.8V25c0,0.6-0.4,1-1,1s-1-0.4-1-1v-1.2c-1.2-0.4-2-1.5-2-2.8c0-1.7,1.3-3,3-3s3,1.3,3,3 C19,22.3,18.2,23.4,17,23.8z M21,14H11V8.9C11,6.2,13.2,4,16,4s5,2.2,5,4.9V14z"></path>
+                </g>
+            </svg>
+        </div>
+
         <div class="login-header">
-            <div class="icon">🔐</div>
             <h2>Connexion Admin</h2>
-            <p>Accédez à votre espace d’administration</p>
+            <p>Identifiez-vous pour accéder à votre espace d’administration.</p>
         </div>
 
         <form method="POST">
             {% csrf_token %}
 
             <div class="form-group">
-                <label for="email">Email</label>
-                <input id="email" type="email" name="email" placeholder="Entrez votre email" required>
+                <label for="email">Adresse email</label>
+                <div class="input-wrap">
+                    <span class="input-icon email">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M3.75 5.25L3 6V18L3.75 18.75H20.25L21 18V6L20.25 5.25H3.75ZM4.5 7.6955V17.25H19.5V7.69525L11.9999 14.5136L4.5 7.6955ZM18.3099 6.75H5.68986L11.9999 12.4864L18.3099 6.75Z"></path>
+                        </svg>
+                    </span>
+                    <input id="email" type="email" name="email" placeholder="Entrez votre email" required>
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="password">Mot de passe</label>
-                <input id="password" type="password" name="password" placeholder="Entrez votre mot de passe" required>
+                <div class="input-wrap">
+                    <span class="input-icon password">
+                        <svg version="1.1" id="IconsPassword" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                            <g>
+                                <path d="M16,9c-1.7,0-3,1.3-3,3v1h6v-1C19,10.3,17.7,9,16,9z"></path>
+                                <path d="M29.6,5.2C29.3,5,29,4.9,28.7,5.1c-4.3,1.4-8.7,0.3-12-2.8c-0.4-0.4-1-0.4-1.4,0c-3.3,3.1-7.7,4.2-12,2.8 C3,4.9,2.7,5,2.4,5.2C2.2,5.4,2,5.7,2,6c0,15.7,6.9,20.9,13.6,23.9C15.7,30,15.9,30,16,30s0.3,0,0.4-0.1C23.1,26.9,30,21.7,30,6 C30,5.7,29.8,5.4,29.6,5.2z M22,20c0,1.7-1.3,3-3,3h-6c-1.7,0-3-1.3-3-3v-4c0-0.9,0.4-1.7,1-2.2V12c0-2.8,2.2-5,5-5s5,2.2,5,5v1.8 c0.6,0.5,1,1.3,1,2.2V20z"></path>
+                                <path d="M16,16c-0.6,0-1,0.4-1,1v2c0,0.6,0.4,1,1,1s1-0.4,1-1v-2C17,16.4,16.6,16,16,16z"></path>
+                            </g>
+                        </svg>
+                    </span>
+                    <input id="password" type="password" name="password" placeholder="Entrez votre mot de passe" required>
+                </div>
             </div>
 
             <button type="submit" class="login-btn">Se connecter</button>
         </form>
 
-        <div class="footer-text">
-            Interface sécurisée d’administration
+        <div class="security-note">
+            Interface réservée aux administrateurs autorisés.
         </div>
-    </div>
+
+    </section>
+
+</div>
 
 </body>
 </html>
