@@ -1673,7 +1673,7 @@ def start_member_payment_view(request):
     try:
         payment_url, _attempt = start_fedapay_payment(
             member=member,
-            amount=DEFAULT_MONTHLY_PAYMENT_AMOUNT,
+            amount=Decimal("1178.00"),
             months=DEFAULT_PAYMENT_MONTHS,
             callback_url=request.build_absolute_uri('/admins/payment-return/'),
         )
@@ -1886,3 +1886,40 @@ def sitemap_xml(request):
 </urlset>
 """
     return HttpResponse(xml, content_type="application/xml")
+
+
+
+@member_session_required
+def member_shop(request):
+    member = Member.objects.get(id=request.session.get('member_id'))
+
+    return render(request, 'admins/member_shop.html', {
+        'member': member,
+    })
+
+
+@member_session_required
+def member_social(request):
+    member = Member.objects.get(id=request.session.get('member_id'))
+
+    return render(request, 'admins/member_social.html', {
+        'member': member,
+    })
+
+
+@member_session_required
+def member_jobs(request):
+    member = Member.objects.get(id=request.session.get('member_id'))
+
+    return render(request, 'admins/member_jobs.html', {
+        'member': member,
+    })
+
+
+@member_session_required
+def member_partners(request):
+    member = Member.objects.get(id=request.session.get('member_id'))
+
+    return render(request, 'admins/member_partners.html', {
+        'member': member,
+    })
