@@ -3,254 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retrait</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+    <title>Retrait membre</title>
 
-        html, body {
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
             margin: 0;
             padding: 0;
             font-family: Arial, sans-serif;
             background: #f4f7fb;
             color: #111827;
-        }
-
-        body {
-            padding-top: 0;
             padding-bottom: 100px;
         }
 
-        
-        .simple-header {
-    background: white;
-    border-radius: 24px;
-    padding: 22px 18px;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
-    margin-bottom: 16px;
-}
+        .page {
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 18px 16px;
+        }
 
-.simple-header h1 {
-    margin: 0;
-    font-size: 28px;
-    font-weight: bold;
-    color: #111827;
-}
+        .topbar {
+            background: white;
+            border-radius: 24px;
+            padding: 22px 18px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+            margin-bottom: 16px;
+        }
 
-.back-btn {
-    display: inline-block;
-    margin-top: 12px;
-    background: #111827;
-    color: white;
-    text-decoration: none;
-    padding: 10px 16px;
-    border-radius: 10px;
-    font-size: 14px;
-    font-weight: 600;
-    transition: 0.2s ease;
-}
+        .topbar h1 {
+            margin: 0 0 12px;
+            font-size: 28px;
+        }
 
-.back-btn:hover {
-    background: #000;
-    transform: translateY(-1px);
-}
-       
+        .back-btn {
+            display: inline-block;
+            background: #111827;
+            color: white;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+        }
 
-.page {
-    max-width: 520px;
-    margin: 0 auto;
-    padding: 18px 16px 0;
-}
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 22px 18px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+            margin-bottom: 16px;
+        }
 
-.info-card,
-.form-card {
-    background: white;
-    border-radius: 24px;
-    padding: 20px 16px;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
-    margin-bottom: 16px;
-}
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 18px;
+            font-size: 22px;
+        }
 
-.balance-box {
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-    color: white;
-    border-radius: 20px;
-    padding: 18px;
-}
+        .summary-box {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            padding: 16px;
+            margin-bottom: 18px;
+        }
 
-.balance-label {
-    font-size: 13px;
-    color: rgba(255,255,255,0.75);
-    margin-bottom: 8px;
-}
+        .summary-item {
+            margin-bottom: 14px;
+        }
 
-.balance-value {
-    font-size: 30px;
-    font-weight: bold;
-}
+        .summary-item:last-child {
+            margin-bottom: 0;
+        }
 
-.field {
-    margin-bottom: 14px;
-}
+        .summary-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
 
-.field label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 6px;
-    color: #111827;
-}
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0f172a;
+            word-break: break-word;
+        }
 
-.field input,
-.field textarea {
-    width: 100%;
-    padding: 13px 14px;
-    border: 1px solid #d1d5db;
-    border-radius: 14px;
-    font-size: 15px;
-    outline: none;
-}
+        .summary-note {
+            margin-top: 6px;
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.6;
+        }
 
-.field textarea {
-    min-height: 100px;
-    resize: vertical;
-}
+        .form-group {
+            margin-bottom: 18px;
+        }
 
-.submit-btn {
-    width: 100%;
-    border: none;
-    background: #16a34a;
-    color: white;
-    padding: 14px 16px;
-    border-radius: 14px;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-}
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+        }
 
-.submit-btn:hover {
-    background: #15803d;
-}
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 14px;
+            padding: 14px 14px;
+            font-size: 15px;
+            background: white;
+            outline: none;
+        }
 
-.msg {
-    padding: 14px;
-    border-radius: 14px;
-    margin-bottom: 14px;
-    font-size: 14px;
-    line-height: 1.6;
-}
+        .form-group textarea {
+            resize: vertical;
+            min-height: 110px;
+        }
 
-.msg-error {
-    background: #fef2f2;
-    color: #b91c1c;
-    border: 1px solid #fecaca;
-}
+        .submit-btn {
+            width: 100%;
+            border: none;
+            background: #16a34a;
+            color: white;
+            padding: 15px 18px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
-.msg-success {
-    background: #f0fdf4;
-    color: #166534;
-    border: 1px solid #bbf7d0;
-}
+        .error-box {
+            margin-bottom: 16px;
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            padding: 14px 16px;
+            border-radius: 14px;
+            line-height: 1.6;
+        }
 
-.warning-box {
-    background: #fff7ed;
-    border: 1px solid #fdba74;
-    color: #9a3412;
-    padding: 16px;
-    border-radius: 16px;
-    margin-bottom: 16px;
-    font-size: 14px;
-    line-height: 1.6;
-}
+        .success-box {
+            margin-bottom: 16px;
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+            padding: 14px 16px;
+            border-radius: 14px;
+            line-height: 1.7;
+        }
 
-.warning-box strong {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 15px;
-}
-
-
+        .important-note {
+            margin-top: 18px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e3a8a;
+            padding: 16px;
+            border-radius: 16px;
+            line-height: 1.8;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
 
-    
+<div class="page">
 
-    <main class="page">
-
-        <div class="simple-header">
-    <h1>Retrait</h1>
-    <a href="/admins/member-space/" class="back-btn"> Retour à l’espace membre</a>
+    <div class="topbar">
+        <h1>Retrait membre</h1>
+        <a href="/admins/member-space/" class="back-btn">
+            Retour à l’espace membre
+        </a>
     </div>
 
-        
+    <div class="card">
+        <h2>Résumé financier</h2>
 
+        <div class="summary-box">
 
-        
+            <div class="summary-item">
+                <div class="summary-label">
+                    Contribution principale cumulée
+                </div>
 
+                <div class="summary-value">
+                    {{ total_contributions|default:"0.00" }} FCFA
+                </div>
 
-        <section class="info-card">
-            <div class="balance-box">
-                <div class="balance-label">Solde disponible</div>
-                <div class="balance-value">{{ available_balance }} FCFA</div>
+                <div class="summary-note">
+                    Seule la contribution principale est prise en compte dans ce montant.
+                </div>
             </div>
-        </section>
 
+            <div class="summary-item">
+                <div class="summary-label">
+                    Valorisation calculée automatiquement
+                </div>
 
-        <div class="warning-box">
-    <strong>⚠️ Avertissement important</strong>
-    <p>
-        FondAction n’est pas seulement une plateforme, mais une communauté engagée vers des projets et avantages futurs destinés à ses membres. Ces opportunités vous seront communiquées en temps voulu.
-        <br><br>
-        Effectuer un retrait signifie réduire votre participation à cette dynamique collective.
-        <br><br>
-        Toute demande de retrait doit être faite avec sérieux.
-        Une fois validée par l’administration, elle devient irréversible.
-        <br><br>
-        ⚠️ Toute demande inutile ou de test est fortement déconseillée :
-        le montant pourra être prélevé sans garantie de transfert en cas d’erreur.
-        <br><br>
-        Avant de valider, assurez-vous que toutes les informations saisies sont correctes.
-    </p>
+                <div class="summary-value">
+                    {{ withdrawal_valorization|default:"0.00" }} FCFA
+                </div>
+
+                <div class="summary-note">
+                    Cette valorisation est calculée automatiquement selon vos contributions validées.
+                </div>
+            </div>
+
+            <div class="summary-item">
+                <div class="summary-label">
+                    Solde retirable disponible
+                </div>
+
+                <div class="summary-value">
+                    {{ available_balance|default:"0.00" }} FCFA
+                </div>
+
+                <div class="summary-note">
+                    Ce montant tient compte des retraits déjà effectués et des demandes en attente.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="card">
+
+        <h2>Demande de retrait</h2>
+
+        {% if error_message %}
+            <div class="error-box">
+                {{ error_message }}
+            </div>
+        {% endif %}
+
+        {% if success_message %}
+            <div class="success-box">
+                {{ success_message }}
+            </div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Montant à retirer</label>
+                <input
+                    type="number"
+                    name="amount"
+                    placeholder="Entrez le montant"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Numéro destinataire</label>
+                <input
+                    type="text"
+                    name="receiver_phone"
+                    placeholder="Exemple : 0190000000"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Motif du retrait</label>
+                <textarea
+                    name="reason"
+                    placeholder="Expliquez brièvement votre demande"
+                ></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Code PIN</label>
+                <input
+                    type="password"
+                    name="pin"
+                    placeholder="Votre code PIN"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="submit-btn">
+                Envoyer la demande
+            </button>
+        </form>
+
+        <div class="important-note">
+            Lorsque vous effectuez un retrait, votre demande est transmise à l’administration pour vérification et validation avant traitement.
+        </div>
+
+    </div>
+
 </div>
-
-
-        <section class="form-card">
-            {% if error_message %}
-                <div class="msg msg-error">{{ error_message }}</div>
-            {% endif %}
-
-            {% if success_message %}
-                <div class="msg msg-success">{{ success_message }}</div>
-            {% endif %}
-
-            <form method="POST">
-                {% csrf_token %}
-
-                <div class="field">
-                    <label>Montant</label>
-                    <input type="number" name="amount" min="1" step="1" required>
-                </div>
-
-                <div class="field">
-                    <label>Numéro qui va recevoir l'argent</label>
-                    <input type="text" name="receiver_phone" required>
-                </div>
-
-                <div class="field">
-                    <label>Motif</label>
-                    <textarea name="reason" placeholder="Motif du retrait"></textarea>
-                </div>
-
-                <div class="field">
-                    <label>Code PIN</label>
-                    <input type="password" name="pin" maxlength="5" autocomplete="new-password" inputmode="numeric" required>
-                </div>
-
-                <button type="submit" class="submit-btn">Valider la demande</button>
-            </form>
-        </section>
-    </main>
 
 </body>
 </html>

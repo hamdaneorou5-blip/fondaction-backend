@@ -8,10 +8,18 @@ from django.db.models import Sum
 from django.utils import timezone
 
 from .models import Member, MemberTransaction, WithdrawalRequest
+from .constants import (
+    DEFAULT_MONTHLY_CONTRIBUTION,
+    WITHDRAWAL_VALORIZATION_RATE,
+)
 
 
 def generate_reference(prefix='TRX'):
     return f"{prefix}-{uuid.uuid4().hex[:10].upper()}"
+
+
+def generate_receipt_number(transaction):
+    return f"RCPT-FAS-{transaction.created_at.year}-{transaction.id:08d}"
 
 
 def get_total_payments(member):
@@ -20,7 +28,16 @@ def get_total_payments(member):
         transaction_type='payment',
         status='success'
     ).aggregate(total=Sum('amount'))
+
     return result['total'] or Decimal('0.00')
+
+
+def get_payment_months_count(member):
+    return MemberTransaction.objects.filter(
+        member=member,
+        transaction_type='payment',
+        status='success'
+    ).count()
 
 
 def get_total_success_withdrawals(member):
@@ -29,6 +46,7 @@ def get_total_success_withdrawals(member):
         transaction_type='withdrawal',
         status='success'
     ).aggregate(total=Sum('amount'))
+
     return result['total'] or Decimal('0.00')
 
 
@@ -38,6 +56,7 @@ def get_total_pending_withdrawals(member):
         transaction_type='withdrawal',
         status='pending'
     ).aggregate(total=Sum('amount'))
+
     return result['total'] or Decimal('0.00')
 
 
@@ -53,17 +72,51 @@ def get_total_contributions(member):
     return total
 
 
-def get_available_balance(member):
+def get_withdrawal_valorization(member):
     total_payments = get_total_payments(member)
+    months_count = get_payment_months_count(member)
+
+    if total_payments <= 0 or months_count <= 0:
+        return Decimal('0.00')
+
+    valorization = total_payments * WITHDRAWAL_VALORIZATION_RATE * Decimal(str(months_count))
+
+    if valorization <= 0:
+        return Decimal('0.00')
+
+    return valorization.quantize(Decimal('0.01'))
+
+
+def get_total_withdrawable_balance(member):
+    total_payments = get_total_payments(member)
+    valorization = get_withdrawal_valorization(member)
+
+    return total_payments + valorization
+
+
+def get_available_balance(member):
+    total_withdrawable = get_total_withdrawable_balance(member)
     total_success_withdrawals = get_total_success_withdrawals(member)
     total_pending_withdrawals = get_total_pending_withdrawals(member)
 
-    available = total_payments - total_success_withdrawals - total_pending_withdrawals
+    available = total_withdrawable - total_success_withdrawals - total_pending_withdrawals
 
     if available <= 0:
         return Decimal('0.00')
 
-    return available
+    return available.quantize(Decimal('0.01'))
+
+
+def has_paid_current_month(member):
+    now = timezone.localtime()
+
+    return MemberTransaction.objects.filter(
+        member=member,
+        transaction_type='payment',
+        status='success',
+        created_at__year=now.year,
+        created_at__month=now.month,
+    ).exists()
 
 
 def get_recent_transactions(member, limit=5):
@@ -75,12 +128,12 @@ def get_recent_transactions(member, limit=5):
 @transaction.atomic
 def create_manual_payment_transaction(
     member,
-    amount,
+    amount=None,
     description=None,
     reference=None,
     validated_at=None,
 ):
-    amount = Decimal(str(amount))
+    amount = Decimal(str(amount or DEFAULT_MONTHLY_CONTRIBUTION))
 
     if amount <= 0:
         raise ValueError("Le montant doit être supérieur à zéro.")
@@ -90,11 +143,11 @@ def create_manual_payment_transaction(
         "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
     ]
 
-    now = timezone.now()
+    now = timezone.localtime()
     current_month = f"{months[now.month - 1]} {now.year}"
 
     if not description:
-        description = f"Paiement mensuel - {current_month}"
+        description = f"Contribution principale - {current_month}"
 
     if not reference:
         reference = generate_reference('PAY')
@@ -121,10 +174,6 @@ def create_manual_payment_transaction(
     return transaction_record
 
 
-def generate_receipt_number(transaction):
-    return f"RCPT-FAS-{transaction.created_at.year}-{transaction.id:08d}"    
-
-
 @transaction.atomic
 def create_withdrawal_request(member, amount, receiver_phone, reason, pin):
     amount = Decimal(str(amount))
@@ -144,6 +193,7 @@ def create_withdrawal_request(member, amount, receiver_phone, reason, pin):
         raise ValueError("Code PIN incorrect.")
 
     available_balance = get_available_balance(member)
+
     if amount > available_balance:
         raise ValueError("Solde insuffisant pour effectuer ce retrait.")
 
@@ -153,7 +203,7 @@ def create_withdrawal_request(member, amount, receiver_phone, reason, pin):
         amount=amount,
         reference=generate_reference('WDR'),
         status='pending',
-        description='Retrait',
+        description='Demande de retrait',
     )
 
     transaction_record.receipt_number = generate_receipt_number(transaction_record)
@@ -230,6 +280,7 @@ def validate_uploaded_image(uploaded_file, allowed_extensions=None, max_size_mb=
     allowed_extensions = allowed_extensions or ['.jpg', '.jpeg', '.png']
 
     filename = uploaded_file.name.lower()
+
     if not any(filename.endswith(ext) for ext in allowed_extensions):
         raise ValueError("Format de fichier non autorisé")
 

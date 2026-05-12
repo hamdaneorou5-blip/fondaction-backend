@@ -6,6 +6,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from members.models import FedapayPaymentAttempt, MemberTransaction
+from members.constants import DEFAULT_MONTHLY_CONTRIBUTION
 from members.services import create_manual_payment_transaction
 
 
@@ -50,6 +51,7 @@ def start_fedapay_payment(member, amount, months, callback_url):
         json=payload,
         timeout=30,
     )
+
     create_data = create_response.json()
 
     if create_response.status_code not in [200, 201]:
@@ -87,6 +89,7 @@ def start_fedapay_payment(member, amount, months, callback_url):
         json={"transaction_id": transaction_id},
         timeout=30,
     )
+
     token_data = token_response.json()
 
     if token_response.status_code not in [200, 201]:
@@ -151,27 +154,22 @@ def process_fedapay_webhook(payload):
 
     attempt.fedapay_payload = verify_data
 
-    # 🔴 Paiement refusé
     if verified_status in ['declined', 'failed', 'canceled', 'cancelled']:
         attempt.status = 'declined'
         attempt.save(update_fields=['status', 'fedapay_payload', 'updated_at'])
         return 'declined'
 
-    # 🟡 En attente
     if verified_status not in ['approved', 'successful', 'success']:
         attempt.status = 'pending'
         attempt.save(update_fields=['status', 'fedapay_payload', 'updated_at'])
         return 'pending'
 
-    # 🔁 Anti double traitement
     if attempt.is_processed:
         return 'already_processed'
 
-    # 🔒 Vérification montant
     if amount != attempt.total_amount:
         raise ValueError("Montant incohérent")
 
-    # 🔒 Vérification membre
     if not attempt.member:
         raise ValueError("Membre invalide")
 
@@ -183,8 +181,11 @@ def process_fedapay_webhook(payload):
     if not existing:
         create_manual_payment_transaction(
             member=attempt.member,
-            amount=amount,
-            description=f'Paiement FedaPay ({attempt.months} mois)',
+            amount=DEFAULT_MONTHLY_CONTRIBUTION * Decimal(str(attempt.months)),
+            description=(
+                f"Contribution principale validée par FedaPay "
+                f"({attempt.months} mois, paiement reçu : {amount} FCFA)"
+            ),
             reference=str(transaction_id),
             validated_at=timezone.now(),
         )
@@ -192,14 +193,12 @@ def process_fedapay_webhook(payload):
     attempt.status = 'approved'
     attempt.is_processed = True
     attempt.processed_at = timezone.now()
-    attempt.save(
-        update_fields=[
-            'status',
-            'is_processed',
-            'processed_at',
-            'fedapay_payload',
-            'updated_at'
-        ]
-    )
+    attempt.save(update_fields=[
+        'status',
+        'is_processed',
+        'processed_at',
+        'fedapay_payload',
+        'updated_at'
+    ])
 
     return 'approved'

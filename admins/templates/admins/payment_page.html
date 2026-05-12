@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paiement membre</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         html, body {
             margin: 0;
@@ -18,7 +16,6 @@
         }
 
         body {
-            padding-top: 0;
             padding-bottom: 100px;
         }
 
@@ -28,7 +25,7 @@
             padding: 18px 16px 0;
         }
 
-        .topbar {
+        .topbar, .card {
             background: white;
             border-radius: 24px;
             padding: 22px 18px;
@@ -36,47 +33,26 @@
             margin-bottom: 16px;
         }
 
-        
         .topbar h1 {
-            margin: 0 0 10px 0;
+            margin: 0 0 10px;
             font-size: 28px;
-            color: #111827;
         }
 
         .back-btn {
-    display: inline-block;
-    margin-top: 12px;
-
-    background: #111827;
-    color: white;
-    text-decoration: none;
-
-    padding: 10px 16px;
-    border-radius: 10px;
-
-    font-size: 14px;
-    font-weight: 600;
-
-    transition: 0.2s ease;
-}
-
-/* effet hover pro */
-.back-btn:hover {
-    background: #000;
-    transform: translateY(-1px);
-}
-
-        .card {
-            background: white;
-            border-radius: 24px;
-            padding: 20px 16px;
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+            display: inline-block;
+            margin-top: 12px;
+            background: #111827;
+            color: white;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
         }
 
         .card h2 {
             margin-top: 0;
             margin-bottom: 18px;
-            color: #111827;
             font-size: 22px;
         }
 
@@ -89,28 +65,6 @@
             line-height: 1.7;
             font-size: 15px;
             border: 1px solid #e5e7eb;
-        }
-
-        .alert-success {
-            margin-bottom: 16px;
-            padding: 14px 16px;
-            border-radius: 14px;
-            background: #dcfce7;
-            color: #166534;
-            font-weight: bold;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .alert-error {
-            margin-bottom: 16px;
-            padding: 14px 16px;
-            border-radius: 14px;
-            background: #fee2e2;
-            color: #991b1b;
-            font-weight: bold;
-            font-size: 14px;
-            line-height: 1.6;
         }
 
         .table-wrap {
@@ -132,13 +86,10 @@
             border-bottom: 1px solid #e5e7eb;
             text-align: left;
             font-size: 14px;
-            vertical-align: top;
         }
 
         th {
             background: #f3f4f6;
-            color: #111827;
-            font-size: 13px;
         }
 
         tr:last-child td {
@@ -152,7 +103,6 @@
         }
 
         .btn-submit {
-            display: inline-block;
             width: 100%;
             border: none;
             background: #16a34a;
@@ -162,10 +112,6 @@
             font-size: 15px;
             font-weight: bold;
             cursor: pointer;
-        }
-
-        .btn-submit:hover {
-            opacity: 0.92;
         }
 
         .info-note {
@@ -178,6 +124,23 @@
             font-size: 14px;
         }
 
+        .success-block {
+            padding: 18px;
+            border-radius: 18px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            line-height: 1.8;
+            font-size: 15px;
+            margin-bottom: 18px;
+        }
+
+        .success-block strong {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
         .resume-box {
             margin-top: 14px;
             padding: 14px 16px;
@@ -188,56 +151,39 @@
             font-size: 14px;
             border: 1px solid #e5e7eb;
         }
-
-        @media (max-width: 520px) {
-            .topbar h1 {
-                font-size: 24px;
-            }
-
-            .card h2 {
-                font-size: 20px;
-            }
-
-            th, td {
-                font-size: 13px;
-                padding: 12px 10px;
-            }
-
-            .amount {
-                font-size: 15px;
-            }
-        }
     </style>
 </head>
 <body>
 
-    <div class="page">
+<div class="page">
 
     <div class="topbar">
-    <h1>Paiement membre</h1>
+        <h1>Paiement membre</h1>
+        <a href="/admins/member-space/" class="back-btn">Retour à l’espace membre</a>
+    </div>
 
-    <a href="/admins/member-space/" class="back-btn">
-         Retour à l’espace membre
-    </a>
-</div>
+    <div class="card">
+        <h2>Contribution mensuelle</h2>
 
-        <div class="card">
-            <h2>Effectuer mon paiement</h2>
+        <div class="member-box">
+            <div><strong>Membre :</strong> {{ member.first_name }} {{ member.last_name }}</div>
+            <div><strong>NIM :</strong> {{ member.nim }}</div>
+            <div><strong>Téléphone :</strong> {{ member.phone }}</div>
+        </div>
 
-            {% if message %}
-                <div class="alert-success">{{ message }}</div>
-            {% endif %}
-
-            {% if error %}
-                <div class="alert-error">{{ error }}</div>
-            {% endif %}
-
-            <div class="member-box">
-                <div><strong>Membre :</strong> {{ member.first_name }} {{ member.last_name }}</div>
-                <div><strong>NIM :</strong> {{ member.nim }}</div>
-                <div><strong>Téléphone :</strong> {{ member.phone }}</div>
+        {% if already_paid_current_month %}
+            <div class="success-block">
+                <strong>Contribution déjà effectuée pour {{ current_month_label }}</strong>
+                Votre contribution de ce mois a bien été enregistrée. Merci pour votre engagement au sein de FondAction SARL.
+                <br><br>
+                Chaque contribution renforce notre capacité à bâtir ensemble des opportunités concrètes, utiles et durables.
+                Revenez le mois prochain pour poursuivre cette dynamique collective.
             </div>
 
+            <div class="resume-box">
+                La page de paiement sera automatiquement disponible dès le premier jour du mois prochain.
+            </div>
+        {% else %}
             <form method="POST" action="/admins/member-payment/start/">
                 {% csrf_token %}
 
@@ -246,12 +192,17 @@
                         <tr>
                             <th>Libellé</th>
                             <th>Période</th>
-                            <th>Montant</th>
+                            <th>Montant payé</th>
                         </tr>
                         <tr>
-                            <td>Paiement de cotisation mensuelle</td>
+                            <td>Cotisation mensuelle</td>
                             <td>{{ current_month_label }}</td>
                             <td class="amount">{{ amount }} FCFA</td>
+                        </tr>
+                        <tr>
+                            <td>Part contribution principale</td>
+                            <td>{{ current_month_label }}</td>
+                            <td class="amount">{{ contribution_amount }} FCFA</td>
                         </tr>
                     </table>
                 </div>
@@ -260,14 +211,16 @@
             </form>
 
             <div class="info-note">
-                Le paiement affiché correspond automatiquement au mois en cours. Le montant mensuel est fixe et s'élève à <strong>1200,00 FCFA</strong>.
+                Le paiement mensuel est de <strong>{{ amount }} FCFA</strong>.
+                Après validation, <strong>{{ contribution_amount }} FCFA</strong> sont comptabilisés dans votre solde de contribution.
             </div>
 
             <div class="resume-box">
                 Après validation, vous serez redirigé vers la plateforme de paiement sécurisée afin de finaliser votre cotisation mensuelle.
             </div>
-        </div>
+        {% endif %}
     </div>
+</div>
 
 </body>
 </html>

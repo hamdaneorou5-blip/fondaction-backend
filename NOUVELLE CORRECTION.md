@@ -37,15 +37,11 @@ from members.services import (
     create_withdrawal_request,
     approve_withdrawal_request,
     reject_withdrawal_request,
-    get_withdrawal_valorization,
-    get_total_withdrawable_balance,
-    has_paid_current_month,
 )
 
 
 from members.permissions import forbid_if_no_member_access
 from members.constants import (
-    DEFAULT_MONTHLY_PAYMENT_AMOUNT,
     DEFAULT_MONTHLY_CONTRIBUTION,
     DEFAULT_PAYMENT_MONTHS,
     MEMBER_STATUS_ACTIVE,
@@ -54,7 +50,6 @@ from members.constants import (
     ADMIN_STATUS_SUSPENDED,
     MAX_MEMBER_PIN_ATTEMPTS,
 )
-
 from members.payment_services import start_fedapay_payment
 from members.services import create_member_record, validate_uploaded_image
 
@@ -1057,20 +1052,14 @@ def member_space(request):
         return redirect('/admins/member-login/')
 
     total_contributions = get_total_contributions(member)
-    withdrawal_valorization = get_withdrawal_valorization(member)
-    total_withdrawable_balance = get_total_withdrawable_balance(member)
     available_balance = get_available_balance(member)
     recent_transactions = get_recent_transactions(member)
-    already_paid_current_month = has_paid_current_month(member)
 
     return render(request, 'admins/member_space.html', {
         'member': member,
         'total_contributions': total_contributions,
-        'withdrawal_valorization': withdrawal_valorization,
-        'total_withdrawable_balance': total_withdrawable_balance,
         'available_balance': available_balance,
         'recent_transactions': recent_transactions,
-        'already_paid_current_month': already_paid_current_month,
     })
 
 @member_session_required
@@ -1103,22 +1092,16 @@ def member_withdrawal(request):
                 reason=reason,
                 pin=pin,
             )
-            success_message = "Votre demande de retrait a été envoyée avec succès. Elle est en attente de validation par l’administration."
+            success_message = "Votre demande de retrait a été envoyée avec succès. Elle est en attente de validation."
         except ValueError as e:
             error_message = str(e)
         except Exception:
             error_message = "Une erreur est survenue lors de la demande de retrait."
 
-    total_contributions = get_total_contributions(member)
-    withdrawal_valorization = get_withdrawal_valorization(member)
-    total_withdrawable_balance = get_total_withdrawable_balance(member)
     available_balance = get_available_balance(member)
 
     return render(request, 'admins/member_withdrawal.html', {
         'member': member,
-        'total_contributions': total_contributions,
-        'withdrawal_valorization': withdrawal_valorization,
-        'total_withdrawable_balance': total_withdrawable_balance,
         'available_balance': available_balance,
         'error_message': error_message,
         'success_message': success_message,
@@ -1628,7 +1611,6 @@ def member_payment(request):
         return redirect('/admins/member-login/')
 
     now = timezone.localtime()
-
     french_months = {
         1: "Janvier",
         2: "Février",
@@ -1645,14 +1627,11 @@ def member_payment(request):
     }
 
     current_month_label = f"{french_months[now.month]} {now.year}"
-    already_paid_current_month = has_paid_current_month(member)
 
     return render(request, 'admins/payment_page.html', {
         'member': member,
         'current_month_label': current_month_label,
-        'amount': DEFAULT_MONTHLY_PAYMENT_AMOUNT,
-        'contribution_amount': DEFAULT_MONTHLY_CONTRIBUTION,
-        'already_paid_current_month': already_paid_current_month,
+        'amount': DEFAULT_MONTHLY_CONTRIBUTION,
     })
 
 
@@ -1667,20 +1646,20 @@ def start_member_payment_view(request):
         request.session.flush()
         return redirect('/admins/member-login/')
 
-    if has_paid_current_month(member):
-        return redirect('/admins/member-payment/')
-
     try:
         payment_url, _attempt = start_fedapay_payment(
             member=member,
-            amount=DEFAULT_MONTHLY_PAYMENT_AMOUNT,
+            amount=DEFAULT_MONTHLY_CONTRIBUTION,
             months=DEFAULT_PAYMENT_MONTHS,
             callback_url=request.build_absolute_uri('/admins/payment-return/'),
         )
         return redirect(payment_url)
-
     except Exception as e:
         return HttpResponse(f"Erreur paiement : {str(e)} ❌")
+
+
+def start_member_payment(request):
+    return start_member_payment_view(request)
 
 
 @member_session_required
@@ -1886,3 +1865,1484 @@ def sitemap_xml(request):
 </urlset>
 """
     return HttpResponse(xml, content_type="application/xml")
+
+
+
+
+
+from decimal import Decimal
+
+DEFAULT_MONTHLY_CONTRIBUTION = Decimal("1200.00")
+DEFAULT_PAYMENT_MONTHS = 1
+
+MEMBER_STATUS_ACTIVE = "active"
+MEMBER_STATUS_SUSPENDED = "suspended"
+MEMBER_STATUS_INACTIVE = "inactive"
+
+ADMIN_STATUS_ACTIVE = "active"
+ADMIN_STATUS_SUSPENDED = "suspended"
+ADMIN_STATUS_INACTIVE = "inactive"
+
+ADMIN_ROLE_SUPER = "super_admin"
+ADMIN_ROLE_STANDARD = "admin"
+
+MAX_MEMBER_PIN_ATTEMPTS = 3
+TEMP_ADMIN_PASSWORD_LENGTH = 12
+TEMP_MEMBER_PIN_LENGTH = 5
+
+
+
+from decimal import Decimal
+
+import requests
+from django.conf import settings
+from django.db import transaction
+from django.utils import timezone
+
+from members.models import FedapayPaymentAttempt, MemberTransaction
+from members.services import create_manual_payment_transaction
+
+
+def build_fedapay_headers():
+    return {
+        "Authorization": f"Bearer {settings.FEDAPAY_SECRET_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+
+def build_fedapay_verify_headers():
+    return {
+        "Authorization": f"Bearer {settings.FEDAPAY_SECRET_KEY}",
+        "Accept": "application/json",
+    }
+
+
+def start_fedapay_payment(member, amount, months, callback_url):
+    amount = Decimal(str(amount))
+    total_amount = amount * Decimal(str(months))
+
+    payload = {
+        "description": f"Cotisation mensuelle - {member.nim}",
+        "amount": float(total_amount),
+        "currency": {"iso": "XOF"},
+        "callback_url": callback_url,
+        "customer": {
+            "firstname": member.first_name or "",
+            "lastname": member.last_name or "",
+            "email": f"{member.nim.lower()}@fondaction.local",
+            "phone_number": {
+                "number": member.phone or "00000000",
+                "country": "bj",
+            }
+        }
+    }
+
+    create_response = requests.post(
+        f"{settings.FEDAPAY_API_BASE}/transactions",
+        headers=build_fedapay_headers(),
+        json=payload,
+        timeout=30,
+    )
+    create_data = create_response.json()
+
+    if create_response.status_code not in [200, 201]:
+        raise ValueError(f"Erreur FedaPay création : {create_data}")
+
+    transaction_data = (
+        create_data.get('v1/transaction')
+        or create_data.get('transaction')
+        or create_data
+    )
+
+    transaction_id = transaction_data.get('id')
+    transaction_reference = transaction_data.get('reference')
+
+    if not transaction_id:
+        raise ValueError("Transaction FedaPay introuvable")
+
+    attempt, _ = FedapayPaymentAttempt.objects.update_or_create(
+        transaction_id=str(transaction_id),
+        defaults={
+            'member': member,
+            'nim': member.nim,
+            'months': months,
+            'monthly_amount': amount,
+            'total_amount': total_amount,
+            'transaction_reference': transaction_reference,
+            'status': 'pending',
+            'fedapay_payload': create_data,
+        }
+    )
+
+    token_response = requests.post(
+        f"{settings.FEDAPAY_API_BASE}/transactions/{transaction_id}/token",
+        headers=build_fedapay_headers(),
+        json={"transaction_id": transaction_id},
+        timeout=30,
+    )
+    token_data = token_response.json()
+
+    if token_response.status_code not in [200, 201]:
+        raise ValueError(f"Erreur FedaPay token : {token_data}")
+
+    payment_url = (
+        token_data.get('url')
+        or token_data.get('token', {}).get('url')
+        or token_data.get('v1/token', {}).get('url')
+    )
+
+    if not payment_url:
+        raise ValueError("Lien de paiement introuvable")
+
+    attempt.payment_url = payment_url
+    attempt.save(update_fields=['payment_url', 'updated_at'])
+
+    return payment_url, attempt
+
+
+@transaction.atomic
+def process_fedapay_webhook(payload):
+    entity = payload.get('entity') or {}
+    transaction_data = entity.get('data') or entity
+    transaction_id = transaction_data.get('id')
+
+    if not transaction_id:
+        raise ValueError("Transaction introuvable")
+
+    try:
+        attempt = FedapayPaymentAttempt.objects.select_for_update().get(
+            transaction_id=str(transaction_id)
+        )
+    except FedapayPaymentAttempt.DoesNotExist:
+        raise ValueError("Tentative de paiement inexistante")
+
+    try:
+        verify_response = requests.get(
+            f"{settings.FEDAPAY_API_BASE}/transactions/{transaction_id}",
+            headers=build_fedapay_verify_headers(),
+            timeout=30,
+        )
+    except requests.RequestException:
+        raise ValueError("Erreur réseau lors de la vérification FedaPay")
+
+    if verify_response.status_code not in [200, 201]:
+        raise ValueError("Vérification FedaPay échouée")
+
+    try:
+        verify_data = verify_response.json()
+    except Exception:
+        raise ValueError("Réponse FedaPay invalide")
+
+    transaction_verified = (
+        verify_data.get('v1/transaction')
+        or verify_data.get('transaction')
+        or verify_data
+    )
+
+    verified_status = (transaction_verified.get('status') or '').lower()
+    amount = Decimal(str(transaction_verified.get('amount', 0)))
+
+    attempt.fedapay_payload = verify_data
+
+    # 🔴 Paiement refusé
+    if verified_status in ['declined', 'failed', 'canceled', 'cancelled']:
+        attempt.status = 'declined'
+        attempt.save(update_fields=['status', 'fedapay_payload', 'updated_at'])
+        return 'declined'
+
+    # 🟡 En attente
+    if verified_status not in ['approved', 'successful', 'success']:
+        attempt.status = 'pending'
+        attempt.save(update_fields=['status', 'fedapay_payload', 'updated_at'])
+        return 'pending'
+
+    # 🔁 Anti double traitement
+    if attempt.is_processed:
+        return 'already_processed'
+
+    # 🔒 Vérification montant
+    if amount != attempt.total_amount:
+        raise ValueError("Montant incohérent")
+
+    # 🔒 Vérification membre
+    if not attempt.member:
+        raise ValueError("Membre invalide")
+
+    existing = MemberTransaction.objects.filter(
+        member=attempt.member,
+        reference=str(transaction_id)
+    ).first()
+
+    if not existing:
+        create_manual_payment_transaction(
+            member=attempt.member,
+            amount=amount,
+            description=f'Paiement FedaPay ({attempt.months} mois)',
+            reference=str(transaction_id),
+            validated_at=timezone.now(),
+        )
+
+    attempt.status = 'approved'
+    attempt.is_processed = True
+    attempt.processed_at = timezone.now()
+    attempt.save(
+        update_fields=[
+            'status',
+            'is_processed',
+            'processed_at',
+            'fedapay_payload',
+            'updated_at'
+        ]
+    )
+
+    return 'approved'
+
+
+
+
+from decimal import Decimal
+import uuid
+
+from PIL import Image
+from django.contrib.auth.hashers import make_password, check_password
+from django.db import transaction
+from django.db.models import Sum
+from django.utils import timezone
+
+from .models import Member, MemberTransaction, WithdrawalRequest
+
+
+def generate_reference(prefix='TRX'):
+    return f"{prefix}-{uuid.uuid4().hex[:10].upper()}"
+
+
+def get_total_payments(member):
+    result = MemberTransaction.objects.filter(
+        member=member,
+        transaction_type='payment',
+        status='success'
+    ).aggregate(total=Sum('amount'))
+    return result['total'] or Decimal('0.00')
+
+
+def get_total_success_withdrawals(member):
+    result = MemberTransaction.objects.filter(
+        member=member,
+        transaction_type='withdrawal',
+        status='success'
+    ).aggregate(total=Sum('amount'))
+    return result['total'] or Decimal('0.00')
+
+
+def get_total_pending_withdrawals(member):
+    result = MemberTransaction.objects.filter(
+        member=member,
+        transaction_type='withdrawal',
+        status='pending'
+    ).aggregate(total=Sum('amount'))
+    return result['total'] or Decimal('0.00')
+
+
+def get_total_contributions(member):
+    total_payments = get_total_payments(member)
+    total_success_withdrawals = get_total_success_withdrawals(member)
+
+    total = total_payments - total_success_withdrawals
+
+    if total <= 0:
+        return Decimal('0.00')
+
+    return total
+
+
+def get_available_balance(member):
+    total_payments = get_total_payments(member)
+    total_success_withdrawals = get_total_success_withdrawals(member)
+    total_pending_withdrawals = get_total_pending_withdrawals(member)
+
+    available = total_payments - total_success_withdrawals - total_pending_withdrawals
+
+    if available <= 0:
+        return Decimal('0.00')
+
+    return available
+
+
+def get_recent_transactions(member, limit=5):
+    return MemberTransaction.objects.filter(
+        member=member
+    ).order_by('-created_at')[:limit]
+
+
+@transaction.atomic
+def create_manual_payment_transaction(
+    member,
+    amount,
+    description=None,
+    reference=None,
+    validated_at=None,
+):
+    amount = Decimal(str(amount))
+
+    if amount <= 0:
+        raise ValueError("Le montant doit être supérieur à zéro.")
+
+    months = [
+        "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+        "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+    ]
+
+    now = timezone.now()
+    current_month = f"{months[now.month - 1]} {now.year}"
+
+    if not description:
+        description = f"Paiement mensuel - {current_month}"
+
+    if not reference:
+        reference = generate_reference('PAY')
+
+    if validated_at is None:
+        validated_at = timezone.now()
+
+    transaction_record, created = MemberTransaction.objects.get_or_create(
+        reference=reference,
+        defaults={
+            'member': member,
+            'transaction_type': 'payment',
+            'amount': amount,
+            'status': 'success',
+            'description': description,
+            'validated_at': validated_at,
+        }
+    )
+
+    if not transaction_record.receipt_number:
+        transaction_record.receipt_number = generate_receipt_number(transaction_record)
+        transaction_record.save(update_fields=['receipt_number'])
+
+    return transaction_record
+
+
+def generate_receipt_number(transaction):
+    return f"RCPT-FAS-{transaction.created_at.year}-{transaction.id:08d}"    
+
+
+@transaction.atomic
+def create_withdrawal_request(member, amount, receiver_phone, reason, pin):
+    amount = Decimal(str(amount))
+
+    if amount <= 0:
+        raise ValueError("Le montant doit être supérieur à zéro.")
+
+    if not receiver_phone:
+        raise ValueError("Le numéro destinataire est obligatoire.")
+
+    if not pin:
+        raise ValueError("Le code PIN est obligatoire.")
+
+    member = Member.objects.select_for_update().get(pk=member.pk)
+
+    if not member.member_pin or not check_password(pin, member.member_pin):
+        raise ValueError("Code PIN incorrect.")
+
+    available_balance = get_available_balance(member)
+    if amount > available_balance:
+        raise ValueError("Solde insuffisant pour effectuer ce retrait.")
+
+    transaction_record = MemberTransaction.objects.create(
+        member=member,
+        transaction_type='withdrawal',
+        amount=amount,
+        reference=generate_reference('WDR'),
+        status='pending',
+        description='Retrait',
+    )
+
+    transaction_record.receipt_number = generate_receipt_number(transaction_record)
+    transaction_record.save(update_fields=['receipt_number'])
+
+    withdrawal_request = WithdrawalRequest.objects.create(
+        member=member,
+        transaction=transaction_record,
+        amount=amount,
+        receiver_phone=receiver_phone,
+        reason=reason or '',
+        status='pending',
+    )
+
+    return withdrawal_request
+
+
+@transaction.atomic
+def approve_withdrawal_request(withdrawal_request, admin_user, admin_note=None):
+    withdrawal_request = WithdrawalRequest.objects.select_for_update().get(pk=withdrawal_request.pk)
+
+    if withdrawal_request.status != 'pending':
+        raise ValueError("Cette demande a déjà été traitée.")
+
+    withdrawal_request.status = 'approved'
+    withdrawal_request.admin_note = admin_note
+    withdrawal_request.processed_by = admin_user
+    withdrawal_request.processed_at = timezone.now()
+    withdrawal_request.save(update_fields=[
+        'status',
+        'admin_note',
+        'processed_by',
+        'processed_at',
+    ])
+
+    transaction_record = withdrawal_request.transaction
+    transaction_record.status = 'success'
+    transaction_record.validated_at = timezone.now()
+    transaction_record.save(update_fields=['status', 'validated_at'])
+
+    return withdrawal_request
+
+
+@transaction.atomic
+def reject_withdrawal_request(withdrawal_request, admin_user, admin_note=None):
+    withdrawal_request = WithdrawalRequest.objects.select_for_update().get(pk=withdrawal_request.pk)
+
+    if withdrawal_request.status != 'pending':
+        raise ValueError("Cette demande a déjà été traitée.")
+
+    withdrawal_request.status = 'rejected'
+    withdrawal_request.admin_note = admin_note
+    withdrawal_request.processed_by = admin_user
+    withdrawal_request.processed_at = timezone.now()
+    withdrawal_request.save(update_fields=[
+        'status',
+        'admin_note',
+        'processed_by',
+        'processed_at',
+    ])
+
+    transaction_record = withdrawal_request.transaction
+    transaction_record.status = 'failed'
+    transaction_record.validated_at = timezone.now()
+    transaction_record.save(update_fields=['status', 'validated_at'])
+
+    return withdrawal_request
+
+
+def validate_uploaded_image(uploaded_file, allowed_extensions=None, max_size_mb=20):
+    if not uploaded_file:
+        return
+
+    allowed_extensions = allowed_extensions or ['.jpg', '.jpeg', '.png']
+
+    filename = uploaded_file.name.lower()
+    if not any(filename.endswith(ext) for ext in allowed_extensions):
+        raise ValueError("Format de fichier non autorisé")
+
+    if uploaded_file.size > max_size_mb * 1024 * 1024:
+        raise ValueError(f"Le fichier dépasse {max_size_mb} Mo")
+
+    try:
+        uploaded_file.seek(0)
+        img = Image.open(uploaded_file)
+        img.verify()
+        uploaded_file.seek(0)
+    except Exception:
+        raise ValueError("Fichier image invalide ou corrompu")
+
+
+def create_member_record(data, files, current_admin):
+    raw_pin = (data.get('member_pin') or '').strip()
+
+    if not raw_pin or not raw_pin.isdigit() or len(raw_pin) != 5:
+        raise ValueError("Le code PIN doit contenir exactement 5 chiffres")
+
+    id_card_number = (data.get('id_card_number') or '').strip()
+    phone = (data.get('phone') or '').strip() or None
+
+    validate_uploaded_image(files.get('photo'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+    validate_uploaded_image(files.get('id_card_front'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+    validate_uploaded_image(files.get('id_card_back'), ['.jpg', '.jpeg', '.png'], max_size_mb=5)
+    validate_uploaded_image(files.get('signature'), ['.png'], max_size_mb=2)
+
+    if not id_card_number:
+        raise ValueError("Le numéro de pièce est obligatoire")
+
+    if Member.objects.filter(id_card_number=id_card_number).exists():
+        raise ValueError("Un membre avec ce numéro de pièce existe déjà")
+
+    if phone and Member.objects.filter(phone=phone).exists():
+        raise ValueError("Un membre avec ce numéro de téléphone existe déjà")
+
+    member = Member.objects.create(
+        first_name=(data.get('first_name') or '').strip(),
+        last_name=(data.get('last_name') or '').strip(),
+        birth_date=data.get('birth_date'),
+        birth_place=(data.get('birth_place') or '').strip(),
+        department=(data.get('department') or '').strip(),
+        commune=(data.get('commune') or '').strip(),
+        city=(data.get('city') or '').strip(),
+        district=(data.get('district') or '').strip(),
+        phone=phone,
+        photo=files.get('photo'),
+        id_card_type=(data.get('id_card_type') or '').strip(),
+        id_card_number=id_card_number,
+        id_card_front=files.get('id_card_front'),
+        id_card_back=files.get('id_card_back'),
+        signature=files.get('signature'),
+        member_pin=make_password(raw_pin),
+        emergency_last_name=(data.get('emergency_last_name') or '').strip() or None,
+        emergency_first_name=(data.get('emergency_first_name') or '').strip() or None,
+        emergency_phone=(data.get('emergency_phone') or '').strip() or None,
+        created_by=current_admin,
+        status='active',
+    )
+
+    member.nim = f"FAS-{member.id:010d}"
+    member.save(update_fields=['nim'])
+
+    return member
+
+
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiement membre</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #111827;
+        }
+
+        body {
+            padding-top: 0;
+            padding-bottom: 100px;
+        }
+
+        .page {
+            max-width: 520px;
+            margin: 0 auto;
+            padding: 18px 16px 0;
+        }
+
+        .topbar {
+            background: white;
+            border-radius: 24px;
+            padding: 22px 18px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+            margin-bottom: 16px;
+        }
+
+        
+        .topbar h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+            color: #111827;
+        }
+
+        .back-btn {
+    display: inline-block;
+    margin-top: 12px;
+
+    background: #111827;
+    color: white;
+    text-decoration: none;
+
+    padding: 10px 16px;
+    border-radius: 10px;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    transition: 0.2s ease;
+}
+
+/* effet hover pro */
+.back-btn:hover {
+    background: #000;
+    transform: translateY(-1px);
+}
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 20px 16px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 18px;
+            color: #111827;
+            font-size: 22px;
+        }
+
+        .member-box {
+            margin-bottom: 18px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 16px;
+            color: #374151;
+            line-height: 1.7;
+            font-size: 15px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .alert-success {
+            margin-bottom: 16px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: #dcfce7;
+            color: #166534;
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .alert-error {
+            margin-bottom: 16px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: #fee2e2;
+            color: #991b1b;
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            margin-bottom: 18px;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            font-size: 14px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f3f4f6;
+            color: #111827;
+            font-size: 13px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .amount {
+            font-weight: bold;
+            color: #166534;
+            font-size: 16px;
+        }
+
+        .btn-submit {
+            display: inline-block;
+            width: 100%;
+            border: none;
+            background: #16a34a;
+            color: white;
+            padding: 14px 18px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-submit:hover {
+            opacity: 0.92;
+        }
+
+        .info-note {
+            margin-top: 16px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: #eff6ff;
+            color: #1e3a8a;
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .resume-box {
+            margin-top: 14px;
+            padding: 14px 16px;
+            border-radius: 14px;
+            background: #f9fafb;
+            color: #374151;
+            line-height: 1.7;
+            font-size: 14px;
+            border: 1px solid #e5e7eb;
+        }
+
+        @media (max-width: 520px) {
+            .topbar h1 {
+                font-size: 24px;
+            }
+
+            .card h2 {
+                font-size: 20px;
+            }
+
+            th, td {
+                font-size: 13px;
+                padding: 12px 10px;
+            }
+
+            .amount {
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page">
+
+    <div class="topbar">
+    <h1>Paiement membre</h1>
+
+    <a href="/admins/member-space/" class="back-btn">
+         Retour à l’espace membre
+    </a>
+</div>
+
+        <div class="card">
+            <h2>Effectuer mon paiement</h2>
+
+            {% if message %}
+                <div class="alert-success">{{ message }}</div>
+            {% endif %}
+
+            {% if error %}
+                <div class="alert-error">{{ error }}</div>
+            {% endif %}
+
+            <div class="member-box">
+                <div><strong>Membre :</strong> {{ member.first_name }} {{ member.last_name }}</div>
+                <div><strong>NIM :</strong> {{ member.nim }}</div>
+                <div><strong>Téléphone :</strong> {{ member.phone }}</div>
+            </div>
+
+            <form method="POST" action="/admins/member-payment/start/">
+                {% csrf_token %}
+
+                <div class="table-wrap">
+                    <table>
+                        <tr>
+                            <th>Libellé</th>
+                            <th>Période</th>
+                            <th>Montant</th>
+                        </tr>
+                        <tr>
+                            <td>Paiement de cotisation mensuelle</td>
+                            <td>{{ current_month_label }}</td>
+                            <td class="amount">{{ amount }} FCFA</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <button type="submit" class="btn-submit">Effectuer le paiement</button>
+            </form>
+
+            <div class="info-note">
+                Le paiement affiché correspond automatiquement au mois en cours. Le montant mensuel est fixe et s'élève à <strong>1200,00 FCFA</strong>.
+            </div>
+
+            <div class="resume-box">
+                Après validation, vous serez redirigé vers la plateforme de paiement sécurisée afin de finaliser votre cotisation mensuelle.
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
+
+
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace membre</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #111827;
+        }
+
+        body {
+            padding-top: 78px;
+            padding-bottom: 100px;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            height: 78px;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+        }
+
+        .header-logo {
+    display: flex;
+    align-items: center;
+
+    /* 👉 contrôle position horizontale */
+    margin-left: 0px;   /* déplace à droite */
+    margin-right: 0px;  /* déplace à gauche */
+}
+
+.header-logo img {
+    /* 👉 contrôle taille */
+    height: 85px;   /* change ici */
+    width: auto;
+
+    object-fit: contain;
+
+    /* 👉 contrôle position fine */
+    transform: translateX(-18px); /* décalage gauche/droite */
+}
+
+        .header-nim {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    background: #f1f5f9;
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    line-height: 1.2;
+}
+
+.nim-label {
+    font-size: 10px;
+    color: #6b7280;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.nim-value {
+    font-size: 13px;
+    font-weight: bold;
+    color: #111827;
+}
+
+        .page {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 18px 16px 0;
+        }
+
+        .welcome-box {
+            margin-top: 6px;
+            margin-bottom: 18px;
+        }
+
+        .welcome-label {
+            font-size: 15px;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+
+        .welcome-name {
+            font-size: 15px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .welcome-fullname {
+            font-size: 28px;
+            font-weight: bold;
+            color: #111827;
+            line-height: 1.25;
+            word-break: break-word;
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            border-radius: 28px;
+            padding: 24px 20px;
+            color: white;
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.18);
+            margin-bottom: 24px;
+        }
+
+        .balance-label {
+            font-size: 14px;
+            color: rgba(255,255,255,0.78);
+            margin-bottom: 10px;
+        }
+
+        .balance-value {
+            font-size: 34px;
+            font-weight: bold;
+            line-height: 1.15;
+            word-break: break-word;
+            margin-bottom: 16px;
+        }
+
+        .balance-bottom {
+            border-top: 1px solid rgba(255,255,255,0.12);
+            padding-top: 14px;
+        }
+
+        .balance-text {
+            margin: 0;
+            font-size: 14px;
+            color: rgba(255,255,255,0.88);
+            line-height: 1.8;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .action-item {
+            background: white;
+            border-radius: 24px;
+            padding: 18px 10px 16px;
+            text-align: center;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.07);
+            border: 1px solid #edf2f7;
+            min-height: 126px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .action-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 30px rgba(15, 23, 42, 0.1);
+        }
+
+        .action-icon {
+            width: 62px;
+            height: 62px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            box-shadow: inset 0 0 0 1px #e5e7eb;
+        }
+
+        .action-item:nth-child(1) .action-icon {
+            background: #eaf2ff;
+        }
+
+        .action-item:nth-child(2) .action-icon {
+            background: #ecfdf3;
+        }
+
+        .action-item:nth-child(3) .action-icon {
+            background: #ecfeff;
+        }
+
+        .action-icon svg {
+            width: 34px;
+            height: 34px;
+        }
+
+        .action-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #111827;
+            line-height: 1.3;
+        }
+
+        .footer-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid #e5e7eb;
+    padding: 10px 8px 14px;
+}
+
+.footer-nav-inner {
+    max-width: 500px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    color: #6b7280;
+    padding: 8px 3px;
+    border-radius: 14px;
+    min-height: 62px;
+    text-align: center;
+    overflow: hidden;
+}
+
+.nav-item.active {
+    background: #eaf2ff;
+    color: #2563eb;
+}
+
+.nav-item svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.1;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+}
+
+        @media (max-width: 420px) {
+            .header-title {
+                font-size: 20px;
+            }
+
+            .welcome-fullname {
+                font-size: 24px;
+            }
+
+            .balance-value {
+                font-size: 30px;
+            }
+
+            .action-item {
+                min-height: 118px;
+                padding: 16px 8px 14px;
+            }
+
+            .action-icon {
+                width: 56px;
+                height: 56px;
+            }
+
+            .action-title {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+    <div class="header-logo">
+    <img src="/static/images/logo.png" alt="FondAction Logo">
+</div>
+
+    <div class="header-nim">
+        <span class="nim-label">NIM</span>
+        <span class="nim-value">{{ member.nim }}</span>
+    </div>
+</header>
+
+    <main class="page">
+        <section class="welcome-box">
+            <div class="welcome-label">Bienvenue</div>
+            
+            <div class="welcome-fullname">
+                {{ member.last_name|default:"" }} {{ member.first_name|default:"" }}
+            </div>
+        </section>
+
+        <section class="balance-card">
+            <div class="balance-label">Montant total cotisé</div>
+            <div class="balance-value">{{ total_contributions|default:"0.00" }} FCFA</div>
+
+            <div class="balance-bottom">
+                <p class="balance-text">
+                    Votre contribution participe à bâtir notre avenir commun.
+                    Merci de faire partie de cette communauté engagée.
+                </p>
+            </div>
+        </section>
+
+        <section class="actions-grid">
+            <a href="/admins/member-payment/" class="action-item">
+                <div class="action-icon">
+                    <svg viewBox="-0.5 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18 10.9199V2.91992" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M14.8008 6.11992L18.0008 2.91992L21.2008 6.11992" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M10.58 3.96997H6C4.93913 3.96997 3.92178 4.39146 3.17163 5.1416C2.42149 5.89175 2 6.9091 2 7.96997V17.97C2 19.0308 2.42149 20.0482 3.17163 20.7983C3.92178 21.5485 4.93913 21.97 6 21.97H18C19.0609 21.97 20.0783 21.5485 20.8284 20.7983C21.5786 20.0482 22 19.0308 22 17.97V13.8999" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M2 9.96997H5.37006C6.16571 9.96997 6.92872 10.286 7.49133 10.8486C8.05394 11.4112 8.37006 12.1743 8.37006 12.97C8.37006 13.7656 8.05394 14.5287 7.49133 15.0913C6.92872 15.6539 6.16571 15.97 5.37006 15.97H2" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                </div>
+                <div class="action-title">Payer</div>
+            </a>
+
+            <a href="/admins/member-withdrawal/" class="action-item">
+                <div class="action-icon">
+                    <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" fill="#16a34a">
+                        <path fill="#16a34a" d="M258 21.89c-.5 0-1.2 0-1.8.12-4.6.85-10.1 5.1-13.7 14.81-3.8 9.7-4.6 23.53-1.3 38.34 3.4 14.63 10.4 27.24 18.2 34.94 7.6 7.7 14.5 9.8 19.1 9 4.8-.7 10.1-5.1 13.7-14.7 3.8-9.64 4.8-23.66 1.4-38.35-3.5-14.8-10.4-27.29-18.2-34.94-6.6-6.8-12.7-9.22-17.4-9.22zM373.4 151.4c-11 .3-24.9 3.2-38.4 8.9-15.6 6.8-27.6 15.9-34.2 24.5-6.6 8.3-7.2 14.6-5.1 18.3 2.2 3.7 8.3 7.2 20 7.7 11.7.7 27.5-2.2 43-8.8 15.5-6.7 27.7-15.9 34.3-24.3 6.6-8.3 7.1-14.8 5-18.5-2.1-3.8-8.3-7.1-20-7.5-1.6-.3-3-.3-4.6-.3zm-136.3 92.9c-6.6.1-12.6.9-18 2.3-11.8 3-18.6 8.4-20.8 14.9-2.5 6.5 0 14.3 7.8 22.7 8.2 8.2 21.7 16.1 38.5 20.5 16.7 4.4 32.8 4.3 44.8 1.1 12.1-3.1 18.9-8.6 21.1-15 2.3-6.5 0-14.2-8.1-22.7-7.9-8.2-21.4-16.1-38.2-20.4-9.5-2.5-18.8-3.5-27.1-3.4zm160.7 58.1L336 331.7c4.2.2 14.7.5 14.7.5l6.6 8.7 54.7-28.5-14.2-10zm-54.5.1l-57.4 27.2c5.5.3 18.5.5 23.7.8l49.8-23.6-16.1-4.4zm92.6 10.8l-70.5 37.4 14.5 18.7 74.5-44.6-18.5-11.5zm-278.8 9.1a40.33 40.33 0 0 0-9 1c-71.5 16.5-113.7 17.9-126.2 17.9H18v107.5s11.6-1.7 30.9-1.8c37.3 0 103 6.4 167 43.8 3.4 2.1 10.7 2.9 19.8 2.9 24.3 0 61.2-5.8 69.7-9C391 452.6 494 364.5 494 364.5l-32.5-28.4s-79.8 50.9-89.9 55.8c-91.1 44.7-164.9 16.8-164.9 16.8s119.9 3 158.4-27.3l-22.6-34s-82.8-2.3-112.3-6.2c-15.4-2-48.7-18.8-73.1-18.8z"></path>
+                    </svg>
+                </div>
+                <div class="action-title">Retrait</div>
+            </a>
+
+            <a href="/admins/member-transactions/" class="action-item">
+                <div class="action-icon">
+                    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="#0f766e">
+                        <path d="M52,7H12a6,6,0,0,0-6,6V51a6,6,0,0,0,6,6H52a6,6,0,0,0,6-6V13A6,6,0,0,0,52,7Zm2,44a2,2,0,0,1-2,2H12a2,2,0,0,1-2-2V13a2,2,0,0,1,2-2H52a2,2,0,0,1,2,2Z"></path>
+                        <path d="M45,29a2,2,0,0,0,0-4H22.83l2.58-2.59a2,2,0,0,0-2.82-2.82l-6,6a2,2,0,0,0-.44,2.18A2,2,0,0,0,18,29Z"></path>
+                        <path d="M47,36H20a2,2,0,0,0,0,4H42.17l-2.58,2.59a2,2,0,1,0,2.82,2.82l6-6a2,2,0,0,0,.44-2.18A2,2,0,0,0,47,36Z"></path>
+                    </svg>
+                </div>
+                <div class="action-title">Transactions</div>
+            </a>
+        </section>
+    </main>
+
+<nav class="footer-nav">
+    <div class="footer-nav-inner">
+        <a href="/admins/member-space/" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+            </svg>
+            <div class="nav-label">Accueil</div>
+        </a>
+
+        <a href="/admins/member-card/" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" />
+            </svg>
+            <div class="nav-label">Carte</div>
+        </a>
+
+        <a href="/admins/member-infos/" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+            </svg>
+            <div class="nav-label">Infos</div>
+        </a>
+
+        <a href="/admins/member-profile/" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            </svg>
+            <div class="nav-label">Profil</div>
+        </a>
+
+        <a href="/admins/member-settings/" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            </svg>
+            <div class="nav-label">Paramètres</div>
+        </a>
+    </div>
+</nav>
+
+</body>
+</html>
+
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retrait</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #111827;
+        }
+
+        body {
+            padding-top: 0;
+            padding-bottom: 100px;
+        }
+
+        
+        .simple-header {
+    background: white;
+    border-radius: 24px;
+    padding: 22px 18px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+    margin-bottom: 16px;
+}
+
+.simple-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: bold;
+    color: #111827;
+}
+
+.back-btn {
+    display: inline-block;
+    margin-top: 12px;
+    background: #111827;
+    color: white;
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.back-btn:hover {
+    background: #000;
+    transform: translateY(-1px);
+}
+       
+
+.page {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 18px 16px 0;
+}
+
+.info-card,
+.form-card {
+    background: white;
+    border-radius: 24px;
+    padding: 20px 16px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+    margin-bottom: 16px;
+}
+
+.balance-box {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: white;
+    border-radius: 20px;
+    padding: 18px;
+}
+
+.balance-label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 8px;
+}
+
+.balance-value {
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.field {
+    margin-bottom: 14px;
+}
+
+.field label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: #111827;
+}
+
+.field input,
+.field textarea {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 14px;
+    font-size: 15px;
+    outline: none;
+}
+
+.field textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.submit-btn {
+    width: 100%;
+    border: none;
+    background: #16a34a;
+    color: white;
+    padding: 14px 16px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.submit-btn:hover {
+    background: #15803d;
+}
+
+.msg {
+    padding: 14px;
+    border-radius: 14px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.msg-error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.msg-success {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.warning-box {
+    background: #fff7ed;
+    border: 1px solid #fdba74;
+    color: #9a3412;
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.warning-box strong {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+
+    </style>
+</head>
+<body>
+
+    
+
+    <main class="page">
+
+        <div class="simple-header">
+    <h1>Retrait</h1>
+    <a href="/admins/member-space/" class="back-btn"> Retour à l’espace membre</a>
+    </div>
+
+        
+
+
+        
+
+
+        <section class="info-card">
+            <div class="balance-box">
+                <div class="balance-label">Solde disponible</div>
+                <div class="balance-value">{{ available_balance }} FCFA</div>
+            </div>
+        </section>
+
+
+        <div class="warning-box">
+    <strong>⚠️ Avertissement important</strong>
+    <p>
+        FondAction n’est pas seulement une plateforme, mais une communauté engagée vers des projets et avantages futurs destinés à ses membres. Ces opportunités vous seront communiquées en temps voulu.
+        <br><br>
+        Effectuer un retrait signifie réduire votre participation à cette dynamique collective.
+        <br><br>
+        Toute demande de retrait doit être faite avec sérieux.
+        Une fois validée par l’administration, elle devient irréversible.
+        <br><br>
+        ⚠️ Toute demande inutile ou de test est fortement déconseillée :
+        le montant pourra être prélevé sans garantie de transfert en cas d’erreur.
+        <br><br>
+        Avant de valider, assurez-vous que toutes les informations saisies sont correctes.
+    </p>
+</div>
+
+
+        <section class="form-card">
+            {% if error_message %}
+                <div class="msg msg-error">{{ error_message }}</div>
+            {% endif %}
+
+            {% if success_message %}
+                <div class="msg msg-success">{{ success_message }}</div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="field">
+                    <label>Montant</label>
+                    <input type="number" name="amount" min="1" step="1" required>
+                </div>
+
+                <div class="field">
+                    <label>Numéro qui va recevoir l'argent</label>
+                    <input type="text" name="receiver_phone" required>
+                </div>
+
+                <div class="field">
+                    <label>Motif</label>
+                    <textarea name="reason" placeholder="Motif du retrait"></textarea>
+                </div>
+
+                <div class="field">
+                    <label>Code PIN</label>
+                    <input type="password" name="pin" maxlength="5" autocomplete="new-password" inputmode="numeric" required>
+                </div>
+
+                <button type="submit" class="submit-btn">Valider la demande</button>
+            </form>
+        </section>
+    </main>
+
+</body>
+</html>

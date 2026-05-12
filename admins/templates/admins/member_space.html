@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Espace membre</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         html, body {
             margin: 0;
@@ -22,9 +20,7 @@
             padding-bottom: 100px;
         }
 
-        a {
-            text-decoration: none;
-        }
+        a { text-decoration: none; }
 
         .header {
             position: fixed;
@@ -42,49 +38,36 @@
             padding: 0 18px;
         }
 
-        .header-logo {
-    display: flex;
-    align-items: center;
-
-    /* 👉 contrôle position horizontale */
-    margin-left: 0px;   /* déplace à droite */
-    margin-right: 0px;  /* déplace à gauche */
-}
-
-.header-logo img {
-    /* 👉 contrôle taille */
-    height: 85px;   /* change ici */
-    width: auto;
-
-    object-fit: contain;
-
-    /* 👉 contrôle position fine */
-    transform: translateX(-18px); /* décalage gauche/droite */
-}
+        .header-logo img {
+            height: 85px;
+            width: auto;
+            object-fit: contain;
+            transform: translateX(-18px);
+        }
 
         .header-nim {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    background: #f1f5f9;
-    padding: 8px 12px;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    line-height: 1.2;
-}
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            background: #f1f5f9;
+            padding: 8px 12px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            line-height: 1.2;
+        }
 
-.nim-label {
-    font-size: 10px;
-    color: #6b7280;
-    font-weight: 600;
-    letter-spacing: 1px;
-}
+        .nim-label {
+            font-size: 10px;
+            color: #6b7280;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
 
-.nim-value {
-    font-size: 13px;
-    font-weight: bold;
-    color: #111827;
-}
+        .nim-value {
+            font-size: 13px;
+            font-weight: bold;
+            color: #111827;
+        }
 
         .page {
             max-width: 500px;
@@ -103,12 +86,6 @@
             margin-bottom: 6px;
         }
 
-        .welcome-name {
-            font-size: 15px;
-            color: #6b7280;
-            margin-bottom: 4px;
-        }
-
         .welcome-fullname {
             font-size: 28px;
             font-weight: bold;
@@ -123,7 +100,7 @@
             padding: 24px 20px;
             color: white;
             box-shadow: 0 16px 32px rgba(15, 23, 42, 0.18);
-            margin-bottom: 24px;
+            margin-bottom: 18px;
         }
 
         .balance-label {
@@ -152,6 +129,52 @@
             line-height: 1.8;
         }
 
+        .mini-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .mini-card {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+            border: 1px solid #edf2f7;
+        }
+
+        .mini-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .mini-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        .mini-note {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .paid-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            border-radius: 18px;
+            padding: 14px 16px;
+            margin-bottom: 18px;
+            line-height: 1.6;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
         .actions-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -171,12 +194,7 @@
             align-items: center;
             justify-content: center;
             gap: 14px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .action-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 16px 30px rgba(15, 23, 42, 0.1);
+            color: #111827;
         }
 
         .action-icon {
@@ -190,23 +208,6 @@
             box-shadow: inset 0 0 0 1px #e5e7eb;
         }
 
-        .action-item:nth-child(1) .action-icon {
-            background: #eaf2ff;
-        }
-
-        .action-item:nth-child(2) .action-icon {
-            background: #ecfdf3;
-        }
-
-        .action-item:nth-child(3) .action-icon {
-            background: #ecfeff;
-        }
-
-        .action-icon svg {
-            width: 34px;
-            height: 34px;
-        }
-
         .action-title {
             font-size: 15px;
             font-weight: bold;
@@ -215,94 +216,72 @@
         }
 
         .footer-nav {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1000;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid #e5e7eb;
-    padding: 10px 8px 14px;
-}
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid #e5e7eb;
+            padding: 10px 8px 14px;
+        }
 
-.footer-nav-inner {
-    max-width: 500px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 4px;
-}
+        .footer-nav-inner {
+            max-width: 500px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 4px;
+        }
 
-.nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    color: #6b7280;
-    padding: 8px 3px;
-    border-radius: 14px;
-    min-height: 62px;
-    text-align: center;
-    overflow: hidden;
-}
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            color: #6b7280;
+            padding: 8px 3px;
+            border-radius: 14px;
+            min-height: 62px;
+            text-align: center;
+            overflow: hidden;
+        }
 
-.nav-item.active {
-    background: #eaf2ff;
-    color: #2563eb;
-}
+        .nav-item.active {
+            background: #eaf2ff;
+            color: #2563eb;
+        }
 
-.nav-item svg {
-    width: 22px;
-    height: 22px;
-    flex-shrink: 0;
-}
+        .nav-item svg {
+            width: 22px;
+            height: 22px;
+            flex-shrink: 0;
+        }
 
-.nav-label {
-    font-size: 10px;
-    font-weight: 600;
-    line-height: 1.1;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    max-width: 100%;
-}
+        .nav-label {
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.1;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+        }
 
         @media (max-width: 420px) {
-            .header-title {
-                font-size: 20px;
-            }
-
-            .welcome-fullname {
-                font-size: 24px;
-            }
-
-            .balance-value {
-                font-size: 30px;
-            }
-
-            .action-item {
-                min-height: 118px;
-                padding: 16px 8px 14px;
-            }
-
-            .action-icon {
-                width: 56px;
-                height: 56px;
-            }
-
-            .action-title {
-                font-size: 14px;
-            }
+            .welcome-fullname { font-size: 24px; }
+            .balance-value { font-size: 30px; }
+            .action-item { min-height: 118px; }
         }
     </style>
 </head>
 <body>
 
-    <header class="header">
+<header class="header">
     <div class="header-logo">
-    <img src="/static/images/logo.png" alt="FondAction Logo">
-</div>
+        <img src="/static/images/logo.png" alt="FondAction Logo">
+    </div>
 
     <div class="header-nim">
         <span class="nim-label">NIM</span>
@@ -310,61 +289,83 @@
     </div>
 </header>
 
-    <main class="page">
-        <section class="welcome-box">
-            <div class="welcome-label">Bienvenue</div>
-            
-            <div class="welcome-fullname">
-                {{ member.last_name|default:"" }} {{ member.first_name|default:"" }}
+<main class="page">
+    <section class="welcome-box">
+        <div class="welcome-label">Bienvenue</div>
+        <div class="welcome-fullname">
+            {{ member.last_name|default:"" }} {{ member.first_name|default:"" }}
+        </div>
+    </section>
+
+    <section class="balance-card">
+        <div class="balance-label">Solde de contribution principale</div>
+        <div class="balance-value">{{ total_contributions|default:"0.00" }} FCFA</div>
+
+        <div class="balance-bottom">
+            <p class="balance-text">
+                Seule la part principale de votre cotisation est comptabilisée dans ce solde.
+                Votre contribution participe à bâtir notre avenir commun.
+            </p>
+        </div>
+    </section>
+
+    <section class="mini-grid">
+        <div class="mini-card">
+            <div class="mini-label">Valorisation retrait calculée automatiquement</div>
+            <div class="mini-value">{{ withdrawal_valorization|default:"0.00" }} FCFA</div>
+            <div class="mini-note">
+                Cette valorisation correspond au mécanisme de 1% appliqué selon vos contributions validées.
             </div>
-        </section>
+        </div>
 
-        <section class="balance-card">
-            <div class="balance-label">Montant total cotisé</div>
-            <div class="balance-value">{{ total_contributions|default:"0.00" }} FCFA</div>
-
-            <div class="balance-bottom">
-                <p class="balance-text">
-                    Votre contribution participe à bâtir notre avenir commun.
-                    Merci de faire partie de cette communauté engagée.
-                </p>
+        <div class="mini-card">
+            <div class="mini-label">Solde retirable estimé</div>
+            <div class="mini-value">{{ available_balance|default:"0.00" }} FCFA</div>
+            <div class="mini-note">
+                Ce montant tient compte de votre contribution principale, de la valorisation, des retraits validés et des demandes en attente.
             </div>
-        </section>
+        </div>
+    </section>
 
-        <section class="actions-grid">
-            <a href="/admins/member-payment/" class="action-item">
-                <div class="action-icon">
-                    <svg viewBox="-0.5 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M18 10.9199V2.91992" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                        <path d="M14.8008 6.11992L18.0008 2.91992L21.2008 6.11992" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                        <path d="M10.58 3.96997H6C4.93913 3.96997 3.92178 4.39146 3.17163 5.1416C2.42149 5.89175 2 6.9091 2 7.96997V17.97C2 19.0308 2.42149 20.0482 3.17163 20.7983C3.92178 21.5485 4.93913 21.97 6 21.97H18C19.0609 21.97 20.0783 21.5485 20.8284 20.7983C21.5786 20.0482 22 19.0308 22 17.97V13.8999" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                        <path d="M2 9.96997H5.37006C6.16571 9.96997 6.92872 10.286 7.49133 10.8486C8.05394 11.4112 8.37006 12.1743 8.37006 12.97C8.37006 13.7656 8.05394 14.5287 7.49133 15.0913C6.92872 15.6539 6.16571 15.97 5.37006 15.97H2" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-                    </svg>
-                </div>
-                <div class="action-title">Payer</div>
-            </a>
+    {% if already_paid_current_month %}
+        <div class="paid-box">
+            Votre contribution du mois en cours est déjà enregistrée. Merci pour votre engagement.
+        </div>
+    {% endif %}
 
-            <a href="/admins/member-withdrawal/" class="action-item">
-                <div class="action-icon">
-                    <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" fill="#16a34a">
-                        <path fill="#16a34a" d="M258 21.89c-.5 0-1.2 0-1.8.12-4.6.85-10.1 5.1-13.7 14.81-3.8 9.7-4.6 23.53-1.3 38.34 3.4 14.63 10.4 27.24 18.2 34.94 7.6 7.7 14.5 9.8 19.1 9 4.8-.7 10.1-5.1 13.7-14.7 3.8-9.64 4.8-23.66 1.4-38.35-3.5-14.8-10.4-27.29-18.2-34.94-6.6-6.8-12.7-9.22-17.4-9.22zM373.4 151.4c-11 .3-24.9 3.2-38.4 8.9-15.6 6.8-27.6 15.9-34.2 24.5-6.6 8.3-7.2 14.6-5.1 18.3 2.2 3.7 8.3 7.2 20 7.7 11.7.7 27.5-2.2 43-8.8 15.5-6.7 27.7-15.9 34.3-24.3 6.6-8.3 7.1-14.8 5-18.5-2.1-3.8-8.3-7.1-20-7.5-1.6-.3-3-.3-4.6-.3zm-136.3 92.9c-6.6.1-12.6.9-18 2.3-11.8 3-18.6 8.4-20.8 14.9-2.5 6.5 0 14.3 7.8 22.7 8.2 8.2 21.7 16.1 38.5 20.5 16.7 4.4 32.8 4.3 44.8 1.1 12.1-3.1 18.9-8.6 21.1-15 2.3-6.5 0-14.2-8.1-22.7-7.9-8.2-21.4-16.1-38.2-20.4-9.5-2.5-18.8-3.5-27.1-3.4zm160.7 58.1L336 331.7c4.2.2 14.7.5 14.7.5l6.6 8.7 54.7-28.5-14.2-10zm-54.5.1l-57.4 27.2c5.5.3 18.5.5 23.7.8l49.8-23.6-16.1-4.4zm92.6 10.8l-70.5 37.4 14.5 18.7 74.5-44.6-18.5-11.5zm-278.8 9.1a40.33 40.33 0 0 0-9 1c-71.5 16.5-113.7 17.9-126.2 17.9H18v107.5s11.6-1.7 30.9-1.8c37.3 0 103 6.4 167 43.8 3.4 2.1 10.7 2.9 19.8 2.9 24.3 0 61.2-5.8 69.7-9C391 452.6 494 364.5 494 364.5l-32.5-28.4s-79.8 50.9-89.9 55.8c-91.1 44.7-164.9 16.8-164.9 16.8s119.9 3 158.4-27.3l-22.6-34s-82.8-2.3-112.3-6.2c-15.4-2-48.7-18.8-73.1-18.8z"></path>
-                    </svg>
-                </div>
-                <div class="action-title">Retrait</div>
-            </a>
+    <section class="actions-grid">
+        <a href="/admins/member-payment/" class="action-item">
+            <div class="action-icon">
+                <svg viewBox="-0.5 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 10.9199V2.91992" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"></path>
+                    <path d="M14.8008 6.11992L18.0008 2.91992L21.2008 6.11992" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"></path>
+                    <path d="M10.58 3.96997H6C4.93913 3.96997 2 6.9091 2 7.96997V17.97C2 19.0308 4.93913 21.97 6 21.97H18C19.0609 21.97 22 19.0308 22 17.97V13.8999" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"></path>
+                </svg>
+            </div>
+            <div class="action-title">Payer</div>
+        </a>
 
-            <a href="/admins/member-transactions/" class="action-item">
-                <div class="action-icon">
-                    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="#0f766e">
-                        <path d="M52,7H12a6,6,0,0,0-6,6V51a6,6,0,0,0,6,6H52a6,6,0,0,0,6-6V13A6,6,0,0,0,52,7Zm2,44a2,2,0,0,1-2,2H12a2,2,0,0,1-2-2V13a2,2,0,0,1,2-2H52a2,2,0,0,1,2,2Z"></path>
-                        <path d="M45,29a2,2,0,0,0,0-4H22.83l2.58-2.59a2,2,0,0,0-2.82-2.82l-6,6a2,2,0,0,0-.44,2.18A2,2,0,0,0,18,29Z"></path>
-                        <path d="M47,36H20a2,2,0,0,0,0,4H42.17l-2.58,2.59a2,2,0,1,0,2.82,2.82l6-6a2,2,0,0,0,.44-2.18A2,2,0,0,0,47,36Z"></path>
-                    </svg>
-                </div>
-                <div class="action-title">Transactions</div>
-            </a>
-        </section>
-    </main>
+        <a href="/admins/member-withdrawal/" class="action-item">
+            <div class="action-icon">
+                <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" fill="#16a34a">
+                    <path d="M157.1 322.4a40.33 40.33 0 0 0-9 1c-71.5 16.5-113.7 17.9-126.2 17.9H18v107.5s11.6-1.7 30.9-1.8c37.3 0 103 6.4 167 43.8 3.4 2.1 10.7 2.9 19.8 2.9 24.3 0 61.2-5.8 69.7-9C391 452.6 494 364.5 494 364.5l-32.5-28.4s-79.8 50.9-89.9 55.8c-91.1 44.7-164.9 16.8-164.9 16.8s119.9 3 158.4-27.3l-22.6-34s-82.8-2.3-112.3-6.2c-15.4-2-48.7-18.8-73.1-18.8z"></path>
+                </svg>
+            </div>
+            <div class="action-title">Retrait</div>
+        </a>
+
+        <a href="/admins/member-transactions/" class="action-item">
+            <div class="action-icon">
+                <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="#0f766e">
+                    <path d="M52,7H12a6,6,0,0,0-6,6V51a6,6,0,0,0,6,6H52a6,6,0,0,0,6-6V13A6,6,0,0,0,52,7Zm2,44a2,2,0,0,1-2,2H12a2,2,0,0,1-2-2V13a2,2,0,0,1,2-2H52a2,2,0,0,1,2,2Z"></path>
+                    <path d="M45,29a2,2,0,0,0,0-4H22.83l2.58-2.59a2,2,0,0,0-2.82-2.82l-6,6a2,2,0,0,0-.44,2.18A2,2,0,0,0,18,29Z"></path>
+                    <path d="M47,36H20a2,2,0,0,0,0,4H42.17l-2.58,2.59a2,2,0,1,0,2.82,2.82l6-6a2,2,0,0,0,.44-2.18A2,2,0,0,0,47,36Z"></path>
+                </svg>
+            </div>
+            <div class="action-title">Transactions</div>
+        </a>
+    </section>
+</main>
 
 <nav class="footer-nav">
     <div class="footer-nav-inner">
@@ -376,31 +377,18 @@
         </a>
 
         <a href="/admins/member-card/" class="nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" />
-            </svg>
             <div class="nav-label">Carte</div>
         </a>
 
         <a href="/admins/member-infos/" class="nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
-            </svg>
             <div class="nav-label">Infos</div>
         </a>
 
         <a href="/admins/member-profile/" class="nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-            </svg>
             <div class="nav-label">Profil</div>
         </a>
 
         <a href="/admins/member-settings/" class="nav-item">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-            </svg>
             <div class="nav-label">Paramètres</div>
         </a>
     </div>
