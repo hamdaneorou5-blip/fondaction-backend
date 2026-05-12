@@ -34,7 +34,7 @@ from .web_views import (
     export_members_excel,
     export_admins_excel,
     member_payment,
-    start_member_payment,
+    start_member_payment_view,
     payment_return,
     member_transactions,
     info_post_list,
@@ -117,7 +117,7 @@ urlpatterns = [
     path('member-card/', member_card),
     path('member-card/download-pdf/', download_member_card_pdf),
     path('member-payment/', member_payment),
-    path('member-payment/start/', start_member_payment),
+    path('member-payment/start/', start_member_payment_view),
     path('payment-return/', payment_return),
     path('member-transactions/', member_transactions),
 
