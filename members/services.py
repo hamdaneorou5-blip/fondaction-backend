@@ -74,12 +74,35 @@ def get_total_contributions(member):
 
 def get_withdrawal_valorization(member):
     total_payments = get_total_payments(member)
-    months_count = get_payment_months_count(member)
 
-    if total_payments <= 0 or months_count <= 0:
+    if total_payments <= 0:
         return Decimal('0.00')
 
-    valorization = total_payments * WITHDRAWAL_VALORIZATION_RATE * Decimal(str(months_count))
+    first_payment = MemberTransaction.objects.filter(
+        member=member,
+        transaction_type='payment',
+        status='success'
+    ).order_by('created_at').first()
+
+    if not first_payment:
+        return Decimal('0.00')
+
+    now = timezone.localtime()
+    first_date = timezone.localtime(first_payment.created_at)
+
+    elapsed_months = (
+        (now.year - first_date.year) * 12 +
+        (now.month - first_date.month)
+    ) + 1
+
+    if elapsed_months <= 0:
+        return Decimal('0.00')
+
+    valorization = (
+        total_payments *
+        WITHDRAWAL_VALORIZATION_RATE *
+        Decimal(str(elapsed_months))
+    )
 
     if valorization <= 0:
         return Decimal('0.00')
