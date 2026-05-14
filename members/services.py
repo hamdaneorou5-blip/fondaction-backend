@@ -73,41 +73,53 @@ def get_total_contributions(member):
 
 
 def get_withdrawal_valorization(member):
-    total_payments = get_total_payments(member)
-
-    if total_payments <= 0:
-        return Decimal('0.00')
-
-    first_payment = MemberTransaction.objects.filter(
+    payments = MemberTransaction.objects.filter(
         member=member,
         transaction_type='payment',
         status='success'
-    ).order_by('created_at').first()
+    ).order_by('created_at')
 
-    if not first_payment:
+    if not payments.exists():
         return Decimal('0.00')
 
+    first_payment = payments.first()
     now = timezone.localtime()
     first_date = timezone.localtime(first_payment.created_at)
 
-    elapsed_months = (
+    global_elapsed_months = (
         (now.year - first_date.year) * 12 +
         (now.month - first_date.month)
     ) + 1
 
-    if elapsed_months <= 0:
+    if global_elapsed_months < 3:
         return Decimal('0.00')
 
-    valorization = (
-        total_payments *
-        WITHDRAWAL_VALORIZATION_RATE *
-        Decimal(str(elapsed_months))
-    )
+    rate = WITHDRAWAL_VALORIZATION_RATE
+    total_valorization = Decimal('0.00')
 
-    if valorization <= 0:
+    for payment in payments:
+        payment_date = timezone.localtime(payment.created_at)
+
+        elapsed_months = (
+            (now.year - payment_date.year) * 12 +
+            (now.month - payment_date.month)
+        ) + 1
+
+        if elapsed_months <= 0:
+            continue
+
+        amount = Decimal(str(payment.amount))
+
+        future_value = amount * ((Decimal('1.00') + rate) ** Decimal(str(elapsed_months)))
+        valorization = future_value - amount
+
+        if valorization > 0:
+            total_valorization += valorization
+
+    if total_valorization <= 0:
         return Decimal('0.00')
 
-    return valorization.quantize(Decimal('0.01'))
+    return total_valorization.quantize(Decimal('0.01'))
 
 
 def get_total_withdrawable_balance(member):

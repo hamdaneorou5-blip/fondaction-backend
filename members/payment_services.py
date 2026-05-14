@@ -184,7 +184,7 @@ def process_fedapay_webhook(payload):
             amount=DEFAULT_MONTHLY_CONTRIBUTION * Decimal(str(attempt.months)),
             description=(
                 f"Contribution principale validée par FedaPay "
-                f"({attempt.months} mois, paiement reçu : {amount} FCFA)"
+                f"({attempt.months} mois)"
             ),
             reference=str(transaction_id),
             validated_at=timezone.now(),
